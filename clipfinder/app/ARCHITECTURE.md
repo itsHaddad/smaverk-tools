@@ -65,6 +65,21 @@ on tools people had already paid for, past three cold-user rounds and five desig
 rest, so every at-rest audit had skipped it entirely: the panel holding the key, the Copy button and the
 destructive control had shipped without one tap-target pass at any width in any theme.
 
+## Tools that look local and are not
+
+`Mission.ts` resolves its missions from `ROOT = process.env.MISSIONS_DIR ?? ~/projects/missions`, **not** from the
+working directory. So `Mission.ts log <slug> risk "…"` run inside a git worktree appends to the ledger in the
+shared tree, silently, while the worktree's own copy of that ledger is untouched. It prints "logged" either way.
+
+Two consequences, both of which happened on 2026-09-21: the entries sit uncommitted in a tree several agents
+share, where somebody else's `git add -A` can sweep them into an unrelated commit; and the branch carries its own
+copy of the same file, so the ledgers conflict at merge. **Take both sides' entries** — a ledger is append-only
+and no line in it is a replacement for another.
+
+It is the same shape as the other traps written down here: an action that looks local and is not, which reports
+success in both cases. Set `MISSIONS_DIR` when the mission's records should follow the branch, or run it from the
+shared tree deliberately. Whether the tool should take a directory or refuse to run outside one is not decided.
+
 ## A known defect in the deploy gate
 
 `deploy.sh` refuses to deploy unless the design review and the cold-user round are **newer than
