@@ -1,0 +1,42 @@
+4
+               total        used        free      shared  buff/cache   available
+Mem:              31           0          28           0           2          30
+-rw-r--r-- 1 root root 2759193 Sep 17 21:11 long300.mp4
+-rw-r--r-- 1 root root  556819 Sep 17 21:11 short60.mp4
+Chromium Headless Shell 143.0.7499.4 (playwright build v1200) downloaded to /root/.cache/ms-playwright/chromium_headless_shell-1200
+== probe
+[paid-300s] loaded duration=NaNs status="300-second clip loaded. First time here: the captions engine downloads to your d"
+[paid-300s] 17s Setting up the engine on your deviceone time, 12 s so far
+[paid-300s] 32s Setting up the engine on your deviceone time, 27 s so far
+[paid-300s] 47s Listening to your clipabout 443 s left
+[paid-300s] 62s Listening to your clipabout 428 s left
+[paid-300s] 77s Listening to your clipabout 413 s left
+[paid-300s] 92s Listening to your clipabout 398 s left
+[paid-300s] 107s Listening to your clipabout 383 s left
+[paid-300s] 122s Listening to your clipabout 368 s left
+[paid-300s] 137s Listening to your clipabout 353 s left
+[paid-300s] 152s Listening to your clipabout 338 s left
+[paid-300s] 167s Listening to your clipabout 323 s left
+[paid-300s] 182s Listening to your clipabout 308 s left
+[paid-300s] 197s Listening to your clipabout 293 s left
+[paid-300s] 212s Listening to your clipabout 278 s left
+[paid-300s] 227s Listening to your clipabout 263 s left
+[paid-300s] 242s Listening to your clipabout 248 s left
+[paid-300s] 257s Listening to your clipabout 233 s left
+[paid-300s] 272s Listening to your clipabout 218 s left
+[paid-300s] captions: {"state":"captioned","device":"wasm","decode":"webcodecs","engineMs":35959,"inferMs":232771,"words":873,"firstWords":"This is a Librivox recording. All Librivox recordings","lastWordEnd":300,"wordsPerMinute":{"0":156,"1":170,"2":179,"3":191,"4":176,"5":1},"heapMB":10,"error":null,"stage":null,"done":"Done. Received 80 MB (the engine, now kept on this device); nothing was sent. Playing with captions; save when it looks right.","pressToCaptionsS":272,"label":"paid-300s","durationS":null}
+[paid-300s] export: 300s 12960154 bytes file=long300-captions.mp4 err=null "long300-captions.mp4, 13.0 MB. Check your Downloads."
+[free-60s] loaded duration=NaNs status=""
+[free-60s] 16s Listening to your clipabout 83 s left
+[free-60s] 31s Listening to your clipabout 68 s left
+[free-60s] captions: {"state":"captioned","device":"wasm","decode":"webcodecs","engineMs":7262,"inferMs":22692,"words":155,"firstWords":"This is a lip -revox recording. All lip","lastWordEnd":63,"wordsPerMinute":{"0":154,"1":1},"heapMB":10,"error":null,"stage":null,"done":"Done. Received 44 MB (the engine, now kept on this device); nothing was sent. Playing with captions; save when it looks right.","pressToCaptionsS":32,"label":"free-60s","durationS":null}
+[free-60s] export: 60s 2351253 bytes file=short60-captions.mp4 err=null "short60-captions.mp4, 2.4 MB. Check your Downloads."
+RESULTS [{"state":"captioned","device":"wasm","decode":"webcodecs","engineMs":35959,"inferMs":232771,"words":873,"firstWords":"This is a Librivox recording. All Librivox recordings","lastWordEnd":300,"wordsPerMinute":{"0":156,"1":170,"2":179,"3":191,"4":176,"5":1},"heapMB":10,"error":null,"stage":null,"done":"Done. Received 80 MB (the engine, now kept on this device); nothing was sent. Playing with captions; save when it looks right.","pressToCaptionsS":272,"label":"paid-300s","durationS":null,"exportS":300,"exportBytes":12960154,"exportError":null,"exportFile":"long300-captions.mp4","result":"long300-captions.mp4, 13.0 MB. Check your Downloads.","errors":[]},{"state":"captioned","device":"wasm","decode":"webcodecs","engineMs":7262,"inferMs":22692,"words":155,"firstWords":"This is a lip -revox recording. All lip","lastWordEnd":63,"wordsPerMinute":{"0":154,"1":1},"heapMB":10,"error":null,"stage":null,"done":"Done. Received 44 MB (the engine, now kept on this device); nothing was sent. Playing with captions; save when it looks right.","pressToCaptionsS":32,"label":"free-60s","durationS":null,"exportS":60,"exportBytes":2351253,"exportError":null,"exportFile":"short60-captions.mp4","result":"short60-captions.mp4, 2.4 MB. Check your Downloads.","errors":[]}]
+
+STDERR: 
+/usr/local/lib/python3.12/dist-packages/mistune.py:435: SyntaxWarning: invalid escape sequence '\|'
+  cells[i][c] = re.sub('\\\\\|', '|', cell)
+/usr/local/lib/python3.12/dist-packages/nbconvert/filters/filter_links.py:36: SyntaxWarning: invalid escape sequence '\_'
+  text = re.sub(r'_', '\_', text) # Escape underscores in display text
+[NbConvertApp] Converting notebook __script__.ipynb to html
+[NbConvertApp] Writing 286456 bytes to __results__.html

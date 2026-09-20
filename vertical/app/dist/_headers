@@ -1,0 +1,28 @@
+/*
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Embedder-Policy: credentialless
+  X-Content-Type-Options: nosniff
+/
+  Cache-Control: no-cache
+/index.html
+  Cache-Control: no-cache
+/capcut-auto-reframe-alternative
+  Cache-Control: no-cache
+/capcut-auto-reframe-alternative.html
+  Cache-Control: no-cache
+/app.js
+  Cache-Control: no-cache
+/worker.js
+  Cache-Control: no-cache
+/sample-track.json
+  Cache-Control: no-cache
+/sample.mp4
+  Cache-Control: public, max-age=86400
+/poster.jpg
+  Cache-Control: public, max-age=86400
+/studio.html
+  Cache-Control: no-cache
+/mediapipe/*
+  Cache-Control: public, max-age=31536000, immutable
+/models/*
+  Cache-Control: public, max-age=31536000, immutable

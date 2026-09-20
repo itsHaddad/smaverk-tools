@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>AI captions, made on your device · Captions by Småverk</title>
+<meta name="description" content="AI captions on your short video in under a minute, made on your device. Nothing gets uploaded. Free up to 60 seconds. $19 once for five minutes, no mark.">
+<meta name="color-scheme" content="light dark">
+<meta property="og:title" content="Captions on your clip in under a minute. Nothing leaves your device.">
+<meta property="og:description" content="AI captions, made on your device. No upload, no account.">
+<meta property="og:image" content="https://captions.smaverk.com/poster.webp?v=1789832300">
+<link rel="preload" href="fonts/bricolage-grotesque-latin.woff2" as="font" type="font/woff2" crossorigin>
+<style>@font-face{font-family:"Bricolage Grotesque";font-style:normal;font-weight:200 800;font-stretch:100%;font-display:swap;src:url(fonts/bricolage-grotesque-latin.woff2) format("woff2")}</style>
+<link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="icon" type="image/png" sizes="64x64" href="/icon-64.png">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%277%27 fill=%27%23FFD84D%27/%3E%3Crect x=%277%27 y=%2720%27 width=%2718%27 height=%275%27 rx=%272.5%27 fill=%27%2316141D%27/%3E%3C/svg%3E">
+<link rel="canonical" href="https://captions.smaverk.com/">
+<meta name="google-site-verification" content="_eN1ywvXp9R-hebN0pJSivwAN8J8DuuaNGwfr_QqmnU">
+<meta property="og:url" content="https://captions.smaverk.com/"><meta property="og:type" content="website"><meta property="og:site_name" content="Småverk">
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Captions on your clip in under a minute. Nothing leaves your device."><meta name="twitter:description" content="AI captions, made on your device. No upload, no account. $19 once."><meta name="twitter:image" content="https://captions.smaverk.com/poster.webp?v=1789832300">
+<link rel="preload" as="image" href="poster.webp?v=1789832300" fetchpriority="high">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Where does my video go?","acceptedAnswer":{"@type":"Answer","text":"Nowhere. Everything runs inside the page, on your device. Your video stays on your device and there is no account."}},{"@type":"Question","name":"What does it cost?","acceptedAnswer":{"@type":"Answer","text":"Free for clips up to 60 seconds, with a small smaverk.com mark in the corner. $19 once removes the mark on up to three devices and allows clips up to five minutes."}}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Captions by Småverk","applicationCategory":"MultimediaApplication","operatingSystem":"Any (web browser)","description":"AI captions for short videos, made on your device. Nothing is uploaded.","offers":{"@type":"Offer","price":"19","priceCurrency":"USD","description":"One-time purchase"},"url":"https://captions.smaverk.com"}</script>
+<style>
+:root{color-scheme:light dark;
+  --ground:light-dark(#F3F2F7,#0E0D12);--surface:light-dark(#FFFFFF,#18161F);--ink:light-dark(#16141D,#F2F0F7);--muted:light-dark(#67637A,#9D99AE);
+  --line:light-dark(#DAD7E3,#2B2836);--btn:light-dark(#16141D,#F2F0F7);--btn-ink:light-dark(#FFFFFF,#16141D);--hi:#FFD84D;--hi-ink:#16141D;
+  --good:light-dark(#1F7A4D,#5DD39E);--bad:light-dark(#B5432E,#F08A76);
+  --display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;--body:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --r:14px;--gap:14px}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+html,body{overflow-x:clip}
+.grid>*{min-width:0}
+.result,.status,.caplabel,.fine,.words,.step,.trust,#paidpanel,#afterpay{overflow-wrap:anywhere}
+.result .name{font-weight:600;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+body{margin:0;background:var(--ground);color:var(--ink);font:16px/1.5 var(--body);padding-inline:max(16px,env(safe-area-inset-left)) max(16px,env(safe-area-inset-right));touch-action:manipulation}
+input,textarea,[contenteditable]{font-size:16px}
+a{color:inherit}
+button{font:inherit;color:inherit}
+.wrap{max-width:1100px;margin:0 auto;padding-block:20px 72px}
+.brand{text-decoration:none;display:flex;align-items:center;gap:10px;font:700 15px/1 var(--display);letter-spacing:.01em;min-height:44px;width:max-content;max-width:100%}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
+.tag{display:inline-flex;align-items:center;min-height:44px;font-size:15px;color:var(--muted);text-decoration:none;white-space:nowrap}
+.tag b{color:var(--ink);font:700 15px/1 var(--display);margin-left:.35em}
+.brand i{display:inline-block;width:14px;height:14px;background:var(--hi);border-radius:3px}
+.brand span{color:var(--muted);font:400 15px/1 var(--body)}
+h1{font:800 clamp(30px,8vw,46px)/1.04 var(--display);letter-spacing:-.025em;margin:0 0 12px;text-wrap:balance}
+h1 mark{background:linear-gradient(transparent 55%,var(--hi) 55%);color:inherit;padding:0 .08em}
+@media(prefers-color-scheme:dark){h1 mark{background:none;color:var(--hi);padding:0}}
+.sub{color:var(--muted);font-size:17px;margin:0 0 22px;text-wrap:pretty;max-width:34em}
+h2{font:700 21px/1.2 var(--display);letter-spacing:-.01em;margin:32px 0 10px}
+p{margin:0 0 12px;text-wrap:pretty}
+ul{padding-left:20px;margin:0 0 12px}li{margin-bottom:6px}
+.grid{display:grid;gap:28px}
+@media(min-width:900px){.grid{grid-template-columns:440px minmax(0,1fr);gap:56px;align-items:start}.demo{position:sticky;top:16px}.top{margin-bottom:28px}}
+.demo{display:flex;flex-direction:column;align-items:center;gap:var(--gap);--sw:min(100%,calc(54svh * var(--ar,0.5625)))}
+.demo>*{width:100%;max-width:100%;min-width:0}
+.demo>.btn.quiet{width:100%}
+@media(min-width:900px){.demo{--sw:min(100%,calc(52svh * var(--ar,0.5625)))}}
+.caplabel{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:10px;row-gap:2px;align-items:center;font-size:15px;color:var(--muted);min-height:22px;scroll-margin-top:12px}
+.caplabel b{color:var(--ink);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.caplabel #editwords{grid-column:2;grid-row:1}
+.caplabel #hint{grid-column:1/-1;font-size:15px}
+#hint:empty{display:none}
+.stage{position:relative;width:var(--sw);aspect-ratio:var(--ar,0.5625);margin-inline:auto;background:#000;border-radius:var(--r);overflow:hidden;box-shadow:0 1px 0 rgba(0,0,0,.05),0 12px 32px -18px rgba(0,0,0,.45)}
+.stage video{position:absolute;inset:0;width:100%;height:100%;display:block;opacity:0}
+.stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.stage img.poster{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.stage .tap{position:absolute;inset:0;width:100%;height:100%;background:transparent;border:0;cursor:pointer;padding:0;touch-action:none;-webkit-user-select:none;user-select:none}
+.stage .play{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.92);display:grid;place-items:center;pointer-events:none;transition:opacity .15s}
+.stage .play svg{width:26px;height:26px;margin-left:4px}
+.stage.playing .play{opacity:0}
+.stage.busy .play{opacity:0}
+.stage.busy .tap{pointer-events:none}
+.stage .sound{position:absolute;right:10px;top:10px;width:44px;height:44px;padding:0;border:0;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;display:grid;place-items:center;cursor:pointer;z-index:2}
+.stage .sound[data-side="left"]{left:10px;right:auto}
+.stage .sound[data-side="bottom"]{left:10px;right:auto;top:auto;bottom:52px}
+.stage .sound svg{width:21px;height:21px}
+.sound[hidden]{display:none}
+.sound[aria-pressed="false"] .wave,.sound[aria-pressed="true"] .mute{display:none}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.stage .seek{position:absolute;left:0;right:0;bottom:0;width:100%;height:44px;margin:0;opacity:0;cursor:pointer;touch-action:none}
+.stage .seekbar{position:absolute;left:0;right:0;bottom:0;height:28px;display:flex;align-items:flex-end;background:linear-gradient(transparent,rgba(0,0,0,.5));pointer-events:none}
+.stage .seekbar i{display:block;width:100%;height:4px;background:linear-gradient(to right,var(--hi) var(--p,0%),rgba(255,255,255,.45) var(--p,0%));transition:height .15s}
+.stage .seek.held ~ .seekbar i,.stage .seek:focus-visible ~ .seekbar i{height:8px}
+.stage .seek[hidden],.stage .seek[hidden] ~ .seekbar{display:none}
+@media (prefers-reduced-motion:reduce){.stage .seekbar i{transition:none}}
+.chips{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.chip{appearance:none;border:2px solid var(--line);border-radius:12px;background:var(--surface);padding:6px;cursor:pointer;display:flex;flex-direction:column;gap:6px;align-items:center;min-height:44px}
+.chip canvas{width:100%;aspect-ratio:9/6;border-radius:7px;background:#111;display:block}
+.chip span{font:700 15px/1 var(--display);padding-bottom:4px}
+.chip[aria-pressed="true"]{border-color:var(--hi);background:color-mix(in oklab,var(--hi) 22%,var(--surface));box-shadow:0 0 0 2px color-mix(in oklab,var(--hi) 35%,transparent)}
+.chip:focus-visible,.btn:focus-visible,input:focus-visible,a:focus-visible{outline:3px solid var(--hi);outline-offset:2px}
+.btn{appearance:none;border:0;border-radius:12px;min-height:52px;padding:0 20px;font:700 16px var(--display);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;width:100%;transition:transform .08s}
+.btn:active{transform:scale(.99)}
+.btn.primary{background:var(--btn);color:var(--btn-ink)}
+.btn.hi{background:var(--hi);color:var(--hi-ink)}
+.btn.quiet{background:transparent;color:var(--ink);border:1.5px solid var(--line);min-height:44px;width:auto;font-weight:600}
+.trust{font-size:15px;color:var(--muted);text-align:center;margin:0}
+.steps{display:none;flex-direction:column;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px}
+.steps.on{display:flex}
+.step{display:grid;grid-template-columns:22px 1fr auto;gap:10px;align-items:center;font-size:15px;color:var(--muted)}
+.step .dot{width:18px;height:18px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center}
+.step.active{color:var(--ink);font-weight:600}.step.active .dot{border-color:var(--ink)}
+.step.done{color:var(--good)}.step.done .dot{border-color:var(--good);background:var(--good)}
+.step.done .dot::after{content:"";width:5px;height:9px;border:solid #fff;border-width:0 2px 2px 0;rotate:45deg;translate:0 -1px}
+.step small{font-size:15px;font-weight:500;color:var(--muted);font-variant-numeric:tabular-nums}
+.bar{grid-column:2/4;height:6px;border-radius:3px;background:var(--line);overflow:hidden;display:none}
+.step.active .bar{display:block}
+.bar i{display:block;height:100%;width:0;background:var(--ink);border-radius:3px;transition:width .2s}
+.bar.pulse i{width:40%;animation:slide 1.2s ease-in-out infinite alternate}
+@keyframes slide{from{translate:-100% 0}to{translate:250% 0}}
+.result{display:none;background:var(--surface);border:1.5px solid var(--good);border-radius:var(--r);padding:14px 16px;gap:8px;flex-direction:column;font-size:15px}
+.result.on{display:flex}
+.result b{font:700 17px var(--display)}
+.result .row{display:flex;gap:10px;flex-wrap:wrap}
+#rmark{text-wrap:pretty;margin-bottom:6px}
+#rbuy{white-space:nowrap}
+#price{scroll-margin-top:16px}
+.status{font-size:15px;color:var(--muted);min-height:22px;text-align:center}
+.status.err{color:var(--bad)}
+.status.ok{color:var(--good);font-weight:600}
+.fine.err{color:var(--bad)}
+.grid section p a:not(.btn),.grid section li a,.result span a{padding:13px 0;margin:-13px 0}
+@media(min-width:900px){.grid section p a:not(.btn),.grid section li a,.result span a{padding:6px 0;margin:-6px 0}}
+.btn.small{min-height:44px;padding:0 14px;font-size:15px}
+.words{display:flex;flex-wrap:wrap;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px;max-height:40vh;overflow:auto}
+.words .w{padding:9px 10px;border-radius:8px;background:var(--ground);font-size:16px;min-width:1.5em;outline:none;line-height:1.4}
+.words .w:focus{box-shadow:0 0 0 2px var(--hi)}
+.words .w.on{background:color-mix(in oklab,var(--hi) 45%,var(--surface));color:var(--hi-ink)}
+.steps.done .step:not(#s3){display:none}
+@media(max-width:899px){#action.stuck{position:sticky;bottom:max(12px,env(safe-area-inset-bottom));z-index:5;box-shadow:0 10px 28px -10px rgba(0,0,0,.5)}.demo:has(#action.stuck){padding-bottom:64px}}
+.price{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;margin:24px 0 10px}
+.price .amt{font:800 34px/1 var(--display);letter-spacing:-.02em}
+.price .amt small{font:600 15px var(--body);color:var(--muted);margin-left:8px}
+.price .btn{width:auto;min-width:180px}
+.fine{font-size:15px;color:var(--muted)}
+.key{display:flex;gap:10px;flex-wrap:wrap;margin:8px 0}
+.key input{flex:1 1 220px;min-height:48px;border:1.5px solid var(--line);border-radius:12px;padding:0 14px;font:16px var(--body);background:var(--surface);color:var(--ink)}
+.key .btn{width:auto;min-height:48px}
+.ok{color:var(--good);font-weight:600}
+.foot{color:var(--muted);font-size:15px;margin-top:36px;display:flex;gap:4px 18px;flex-wrap:wrap;align-items:center}
+.foot a{color:var(--muted);display:inline-flex;align-items:center;min-height:44px}
+details{border-top:1px solid var(--line)}
+details summary{cursor:pointer;font-weight:600;font-size:16px;padding:12px 0;min-height:44px}
+details p{margin:0 0 14px}
+[hidden]{display:none!important}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><a class="brand" href="https://smaverk.com"><i></i>Småverk <span>Captions</span></a><a class="tag" id="tag" href="#price">Free ·<b>$19 once</b></a></div>
+  <div class="grid">
+    <section class="demo" aria-label="Try it">
+      <div class="caplabel"><b id="clipname">Sample clip</b><span id="hint">Tap a style. Drag the captions to move.</span><button class="btn quiet small" id="editwords" hidden>Fix a word</button></div>
+      <div class="stage" id="stage">
+        <img class="poster" id="poster" src="poster.webp?v=1789832300" alt="" width="540" height="960" decoding="async">
+        <video id="video" playsinline muted loop preload="metadata" crossorigin="anonymous"></video>
+        <canvas id="canvas"></canvas>
+        <button class="tap" id="tap" aria-label="Play or pause"></button>
+        <div class="play" id="playicon"><svg viewBox="0 0 24 24" fill="#16141D"><path d="M7 4.5v15l12-7.5z"/></svg></div>
+        <button class="sound" id="sound" aria-pressed="false" aria-label="Sound is off. Turn it on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10v4h4l5 4V6L8 10H4z"/><path class="wave" d="M16.5 9a4 4 0 0 1 0 6M19 6.5a8 8 0 0 1 0 11"/><path class="mute" d="M17 9.5l4.5 5M21.5 9.5l-4.5 5"/></svg><span id="soundtxt" class="sr">Sound off</span></button>
+        <input class="seek" id="seek" type="range" min="0" max="1000" step="1" value="0" aria-label="Position in the clip"><div class="seekbar" id="seekbar" aria-hidden="true"><i></i></div>
+      </div>
+      <div class="chips" role="group" aria-label="Caption style">
+        <button class="chip" data-style="bar" aria-pressed="true"><canvas width="180" height="120"></canvas><span>Bar</span></button>
+        <button class="chip" data-style="karaoke" aria-pressed="false"><canvas width="180" height="120"></canvas><span>Karaoke</span></button>
+        <button class="chip" data-style="big" aria-pressed="false"><canvas width="180" height="120"></canvas><span>Big</span></button>
+      </div>
+      <div class="words" id="wordlist" hidden aria-label="Caption words, editable"></div>
+      <div class="steps" id="steps" role="status" aria-live="polite">
+        <div class="step" id="s1"><span class="dot"></span><span id="s1t">Downloading the tool to your device</span><small id="s1n"></small><div class="bar"><i id="s1b"></i></div></div>
+        <div class="step" id="s2"><span class="dot"></span><span>Listening to your clip</span><small id="s2n"></small><div class="bar pulse"><i></i></div></div>
+        <div class="step" id="s3"><span class="dot"></span><span id="s3t">Done</span><small id="s3n"></small></div>
+      </div>
+      <div class="result" id="result">
+        <b id="rtitle">Saved</b>
+        <span class="name" id="rname"></span>
+        <span id="rline"></span>
+        <span id="rios" hidden>If it opened instead of saving, tap the share icon, then Save Video.</span>
+        <span id="rmark">Free videos carry a small smaverk.com mark. <a id="rbuy" href="https://polar.sh/smaverk" target="_blank" rel="noopener" aria-label="$19 once (opens the checkout in a new tab)">$19 once</a> removes it and allows clips up to five minutes.</span>
+        <div class="row"><button class="btn quiet" id="share" hidden>Share</button><a class="btn quiet" id="again" href="#">Save again</a></div>
+      </div>
+      <input id="file" type="file" accept="video/*,audio/*" hidden>
+      <button class="btn primary" id="action">Use my own clip</button>
+      <p class="trust" id="trust">Free up to 60 seconds. English. Nothing leaves your device.</p>
+      <div class="status" id="status"></div>
+      <button class="btn quiet" id="reset" hidden>Choose a different clip</button>
+    </section>
+
+    <section>
+      <h1>Captions on your clip in under a minute. <mark>Nothing leaves your device.</mark></h1>
+      <p class="sub">AI captions, made on your device. For Reels, TikToks and Shorts in English.</p>
+
+      <div class="price" id="price">
+        <div><div class="amt">$19<small>once</small></div><div class="fine">No mark, and clips up to five minutes.</div><div class="fine" id="paytrust">Your clip stays on your device. Refund within 14 days.</div><div class="fine" id="founding">Founding price for the first 100 buyers.</div></div>
+        <a class="btn hi" id="buy" href="https://polar.sh/smaverk" target="_blank" rel="noopener" aria-label="Buy once — $19 (opens the checkout in a new tab)">Buy once — $19</a>
+      </div>
+      <p class="fine" id="pricefine">Free: 60 seconds, with a small mark. Paid: five minutes, no mark, three devices.</p>
+
+      <div id="paidpanel" hidden><h2>Paid version on this device</h2><p class="fine">Your key <b id="paidkey"></b> is saved in this browser. Clips up to five minutes, no mark. For another device, use the key from the email Polar sent you. <a href="#" id="removekey">Remove the key from this device</a></p></div>
+      <div id="afterpay">
+      <h2>What happens after you pay</h2>
+      <ul>
+        <li>Pay on Polar: card, Apple Pay or Google Pay. Taxes included.</li>
+        <li>Your key comes by email. Paste it once.</li>
+        <li>Refund within 14 days, no questions.</li>
+      </ul>
+      </div>
+      <div class="key" id="keyrow"><input id="key" placeholder="Paste your key" autocomplete="off" spellcheck="false" aria-label="Your key"><button class="btn primary" id="keygo">Unlock</button></div>
+      <p class="fine" id="keystatus">Already paid? Paste your key here.</p>
+
+      <h2>Recorded in landscape?</h2>
+      <p><a href="https://vertical.smaverk.com/?src=captions">Vertical</a> cuts it to 9:16 first, speaker in frame.</p>
+
+      <h2>Where your video goes</h2>
+      <p>Nowhere. It all runs in this page. No account.</p>
+
+      <h2>More ways to use it</h2>
+      <ul>
+        <li><a href="/capcut-captions-alternative">CapCut auto captions alternative</a></li>
+        <li><a href="/submagic-alternative">Submagic alternative</a></li>
+      </ul>
+
+      <p class="foot"><a href="mailto:hello@smaverk.com">hello@smaverk.com</a><a href="https://smaverk.com">smaverk.com</a><a href="https://smaverk.com/privacy">Privacy</a><a href="https://smaverk.com/terms">Terms</a><a href="llms.txt">For automations and agents</a><a href="https://www.youtube.com/watch?v=96eBO8N3qn4" rel="noopener">Sample clip: Peter Kramm, CC BY</a></p>
+    </section>
+  </div>
+</div>
+<script type="module" src="app.js?v=1789832300"></script>
+<script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "91285919879f4672a4342550a4b0b07c"}'></script>
+</body>
+</html>

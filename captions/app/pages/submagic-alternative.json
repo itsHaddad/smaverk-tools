@@ -1,0 +1,59 @@
+{
+ "slug": "submagic-alternative",
+ "title": "Submagic alternative: captions for $19 once, not monthly",
+ "description": "Submagic starts at $19 a month. Captions costs $19 once and works on your device: no upload, no account. English only. Free up to 60 seconds with a mark.",
+ "ogTitle": "A Submagic alternative if captions are all you need",
+ "ogDescription": "AI captions, made on your device. $19 once, not $19 a month.",
+ "h1": "A Submagic alternative if captions are all you need",
+ "sub": "AI captions, made on your device. One payment.",
+ "crumb": "Submagic alternative",
+ "style": "big",
+ "body": [
+  "Submagic starts at $19 a month, or $12 a month paid yearly, for 15 videos of up to two minutes ([their pricing page](https://www.submagic.co/pricing), 19 September 2026). Here you pay $19 once: no monthly bill, no video count."
+ ],
+ "not": [
+  "English only; Submagic captions many languages.",
+  "No extra footage, zooms or sound effects.",
+  "No cutting long videos into shorts."
+ ],
+ "questions": [
+  {
+   "q": "Is Submagic free?",
+   "a": "You can try it without a card, their pricing page says. Its plans start at $19 a month, or $12 a month paid yearly, for 15 videos of up to two minutes each, read on 19 September 2026. Here, clips up to 60 seconds are free with a small mark.",
+   "source": {
+    "text": "Submagic pricing, 19 September 2026",
+    "url": "https://www.submagic.co/pricing"
+   }
+  },
+  {
+   "q": "Is there a subscription?",
+   "a": "No. One payment of $19, and nothing renews.",
+   "source": {
+    "text": "Our terms",
+    "url": "https://smaverk.com/terms"
+   }
+  },
+  {
+   "q": "Is there a mark?",
+   "a": "Free clips carry a small smaverk.com mark in the corner. The paid version has none.",
+   "source": {
+    "text": "Our terms",
+    "url": "https://smaverk.com/terms"
+   }
+  }
+ ],
+ "more": [
+  {
+   "text": "Captions home",
+   "href": "/"
+  },
+  {
+   "text": "CapCut captions alternative",
+   "href": "/capcut-captions-alternative"
+  },
+  {
+   "text": "Vertical",
+   "href": "https://vertical.smaverk.com/"
+  }
+ ]
+}

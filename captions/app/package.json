@@ -1,0 +1,34 @@
+{
+  "name": "app",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest",
+    "playwright": "1.63.0"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@huggingface/transformers": "^4.3.0",
+    "kokoro-js": "^1.2.1",
+    "mediabunny": "^1.57.0"
+  },
+  "trustedDependencies": [
+    "onnxruntime-node",
+    "protobufjs"
+  ],
+  "scripts": {
+    "build": "./build.sh",
+    "test": "bun test",
+    "smoke": "bun tests/smoke.mjs",
+    "test:e2e": "DISPLAY=:0 WAYLAND_DISPLAY=wayland-0 XDG_RUNTIME_DIR=/mnt/wslg/runtime-dir bun tests/e2e/verify-cap3.mjs https://captions.smaverk.com/",
+    "test:file": "bun tests/e2e/verify-file.mjs chromium https://captions.smaverk.com/",
+    "qa": "bun ${PAI_DIR:-$HOME/.claude}/../skills/Missions/Tools/Qa.ts https://captions.smaverk.com/ --out ../assets/verification/qa 2>/dev/null || bun $HOME/.claude/skills/Missions/Tools/Qa.ts https://captions.smaverk.com/ --out ../assets/verification/qa",
+    "deploy": "./deploy.sh",
+    "serve": "bun serve.ts 8791",
+    "test:speed": "bun tests/e2e/verify-speed.mjs",
+    "test:ui": "bun tests/e2e/verify-ui.mjs"
+  }
+}

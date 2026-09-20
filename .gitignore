@@ -1,0 +1,14 @@
+# Småverk tools. The browser gates run on GitHub Actions, so the tree they need is tracked.
+node_modules
+.wrangler
+.dev.vars*
+.env
+.env.*
+
+# Built output. dist/ itself is tracked: index.html, the sample, models and other static files are source.
+captions/app/dist/*.js
+vertical/app/dist/*.js
+captions/app/dist/studio-demo/
+
+# Screenshots and recordings the gates write as they run.
+**/tests/e2e/out/

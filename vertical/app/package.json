@@ -1,0 +1,27 @@
+{
+  "name": "vertical",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest",
+    "playwright": "1.63.0",
+    "wrangler": "^4.134.0"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@mediapipe/tasks-vision": "^1.0.1",
+    "mediabunny": "^1.57.0"
+  },
+  "scripts": {
+    "build": "./build.sh",
+    "test": "bun test",
+    "smoke": "bun tests/smoke.mjs",
+    "test:clip": "bun tests/e2e/verify-clip.mjs",
+    "test:ui": "bun tests/e2e/verify-ui.mjs",
+    "deploy": "wrangler deploy",
+    "serve": "bun serve.ts 8801",
+    "preview": "wrangler dev"
+  }
+}

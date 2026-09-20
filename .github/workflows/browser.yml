@@ -1,0 +1,57 @@
+# A browser that runs on a runner instead of the laptop, for the work an agent drives by hand: cold-user rounds, design
+# reviews, the sandbox purchase. ./ci.sh browser starts it and prints PW_WS; scripts connect with _tools/remote.mjs.
+# The endpoint path is a one-time secret and the runner is thrown away afterwards.
+name: browser
+run-name: browser ${{ inputs.tag }}
+on:
+  workflow_dispatch:
+    inputs:
+      secret:
+        description: Endpoint path (one-time)
+        required: true
+      minutes:
+        description: How long to stay up
+        default: "30"
+      tag:
+        description: Lets ci.sh find its own run when two sessions start together
+        default: manual
+permissions:
+  contents: read
+jobs:
+  serve:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    defaults:
+      run:
+        working-directory: captions/app
+    env:
+      SECRET: ${{ inputs.secret }}
+      MINUTES: ${{ inputs.minutes }}
+    steps:
+      - run: echo "::add-mask::$SECRET"
+        working-directory: .
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.2
+      - run: bun install --frozen-lockfile
+      - name: Chromium
+        run: bunx playwright install --with-deps chromium
+      - name: Tunnel binary
+        run: curl -fsSL -o /tmp/cloudflared https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 && chmod +x /tmp/cloudflared
+      - name: Serve
+        # Playwright refuses requests whose Host is not local, so the tunnel rewrites it.
+        run: |
+          echo "$(nproc) cores, $(free -m | awk '/Mem:/{print $2}') MB"
+          nohup xvfb-run -a --server-args="-screen 0 1600x1200x24" bunx playwright run-server --port 3000 --host 127.0.0.1 --path "/$SECRET" --unsafe > /tmp/pw.log 2>&1 &
+          nohup /tmp/cloudflared tunnel --no-autoupdate --url http://127.0.0.1:3000 --http-host-header 127.0.0.1:3000 > /tmp/tunnel.log 2>&1 &
+          for i in $(seq 1 45); do URL=$(grep -o 'https://[a-z0-9-]*\.trycloudflare\.com' /tmp/tunnel.log | head -1); [ -n "$URL" ] && break; sleep 2; done
+          [ -n "$URL" ] || { cat /tmp/tunnel.log; exit 1; }
+          mkdir -p /tmp/endpoint && echo "$URL" > /tmp/endpoint/endpoint.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: endpoint
+          path: /tmp/endpoint/endpoint.txt
+          retention-days: 1
+      - name: Hold
+        run: sleep $(( MINUTES * 60 )); tail -5 /tmp/pw.log || true

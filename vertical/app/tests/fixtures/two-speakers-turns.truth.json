@@ -1,0 +1,52 @@
+{
+  "clip": "two-speakers-turns.mp4",
+  "bytes": 2416876,
+  "width": 1280,
+  "height": 720,
+  "fps": 25,
+  "seconds": 28.04,
+  "audio": "aac, 48 kHz mono",
+  "source": {
+    "title": "Expedition 66 Space Station Crew Answers Ohio Student Questions - March 2, 2022",
+    "url": "https://www.youtube.com/watch?v=kpCsb3RCHLQ",
+    "uploader": "NASA Video",
+    "upload_date": "2022-03-02",
+    "youtube_license_field": "NA (yt-dlp --print license prints no Creative Commons string; YouTube's standard licence)",
+    "rights": "US government work. NASA: 'NASA content - images, audio, video ... generally are not subject to copyright in the United States' and 'NASA should be acknowledged as the source of the material' (https://www.nasa.gov/nasa-brand-center/images-and-media/). The same page warns that media with an identifiable person may need permission for COMMERCIAL use; this clip is test material only, never shipped or used in marketing.",
+    "on_screen": "Left: NASA astronaut Raja Chari. Right: NASA astronaut Thomas Marshburn. Fixed camera inside the ISS, both faces visible the whole time."
+  },
+  "assembled": true,
+  "assembly_note": "The source has one speaker change per answer, and each change is hidden behind a cutaway to the student asking. To get three changes inside 30 s, four turn segments of the SAME locked-off shot were cut and joined end to end. Nothing else was changed (same camera, same two men, same room). Turn boundaries are therefore exact.",
+  "segments": [
+    { "fixture_from": 0.0, "fixture_to": 7.0, "source_from": 939.0, "source_to": 946.0, "speaker": "left" },
+    { "fixture_from": 7.0, "fixture_to": 14.0, "source_from": 708.0, "source_to": 715.0, "speaker": "right" },
+    { "fixture_from": 14.0, "fixture_to": 21.0, "source_from": 957.0, "source_to": 964.0, "speaker": "left" },
+    { "fixture_from": 21.0, "fixture_to": 28.04, "source_from": 716.0, "source_to": 723.0, "speaker": "right" }
+  ],
+  "turns": [
+    { "from": 0.0, "to": 7.0, "speaker": "left" },
+    { "from": 7.0, "to": 14.0, "speaker": "right" },
+    { "from": 14.0, "to": 21.0, "speaker": "left" },
+    { "from": 21.0, "to": 28.04, "speaker": "right" }
+  ],
+  "changes": [7.0, 14.0, 21.0],
+  "faces": {
+    "note": "Face centres as fractions of the frame, read off grid overlays at 3, 10.5, 17.5 and 24 s. The men float, so the positions drift between segments. Face width is about 0.085 of the frame width throughout.",
+    "per_segment": [
+      { "from": 0.0, "to": 7.0, "left": { "cx": 0.313, "cy": 0.244 }, "right": { "cx": 0.625, "cy": 0.239 }, "gap": 0.312 },
+      { "from": 7.0, "to": 14.0, "left": { "cx": 0.283, "cy": 0.289 }, "right": { "cx": 0.589, "cy": 0.219 }, "gap": 0.306 },
+      { "from": 14.0, "to": 21.0, "left": { "cx": 0.321, "cy": 0.236 }, "right": { "cx": 0.629, "cy": 0.255 }, "gap": 0.308 },
+      { "from": 21.0, "to": 28.04, "left": { "cx": 0.290, "cy": 0.295 }, "right": { "cx": 0.590, "cy": 0.190 }, "gap": 0.300 }
+    ],
+    "window_width_fraction": 0.3164,
+    "comment": "The 9:16 window on a 16:9 source is 0.3164 of the width. The two faces sit 0.30 to 0.31 apart, so a window centred on one face leaves the other at or beyond its edge: the right move is a cut, not a pan."
+  },
+  "voicing": {
+    "method": "rms of the 16 kHz mono track per 0.25 s; voiced when rms > 0.02",
+    "samples": 112,
+    "voiced": 101,
+    "silent_at": [3.0, 7.75, 8.5, 12.25, 15.75, 18.5, 19.25, 22.0, 24.75, 26.5, 26.75],
+    "median_rms": 0.047
+  },
+  "ground_truth_method": "Speaker per segment was read from frames at 1 and 2 fps (mouth open and moving, the other man listening with a closed mouth) and cross-checked against the words in the source captions ('so tom and i came up here', 'like tom mentioned' - Chari, left). Every 0.5 s of the finished clip was looked at."
+}

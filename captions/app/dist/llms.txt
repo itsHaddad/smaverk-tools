@@ -1,0 +1,34 @@
+# Captions by Småverk
+
+> AI captions for short videos, made on your device, in the page at https://captions.smaverk.com. Nothing is uploaded. Free for clips up to 60 seconds with a small corner mark; $19 once removes the mark and allows clips up to five minutes.
+
+Captions is one of the tools by Småverk, a one-person studio in Sweden; https://smaverk.com is the studio page listing every tool.
+
+## What it does
+- Input: a video or audio file (mp4, mov, webm, m4a), up to 60 seconds free and up to five minutes paid. English speech. Output: the same clip with burned-in captions (mp4 on Safari and Chrome, webm elsewhere), plus word timings.
+- Everything runs in the page, on the device. There is no server API, by design: privacy is the product.
+
+## Driving it from a script or an agent (browser automation)
+The page exposes `window.captions` and stable element ids. Example with Playwright:
+
+```js
+await page.goto("https://captions.smaverk.com/?style=karaoke");
+await page.setInputFiles("#file", "clip.mp4");          // loads the clip
+await page.click("#action");                              // "Add captions"
+await page.waitForFunction(() => window.__cap.state === "captioned", null, { timeout: 300000 });
+const words = await page.evaluate(() => window.captions.words);   // [{text,start,end}, ...]
+const [dl] = await Promise.all([page.waitForEvent("download"), page.click("#action")]); // "Save video"
+await dl.saveAs("clip-captions.mp4");
+```
+
+- `?style=bar|karaoke|big` preselects the caption style. `window.captions.style("big")` changes it.
+- `window.__cap` mirrors state: `state`, `words`, `ms`, `exportBytes`, `error`.
+- A paid key can be applied by filling `#key` and clicking `#keygo`; it is stored in `localStorage` under `smaverk.captions.key`.
+
+## Pages
+- https://captions.smaverk.com/capcut-captions-alternative — For people who met CapCut Pro when saving auto captions: the same job here, $19 once.
+- https://captions.smaverk.com/submagic-alternative — For people paying Submagic monthly who only want the captions: $19 once, English only.
+
+## Rules
+- Do not upload other people's clips anywhere on their behalf; this tool keeps them on the device.
+- Contact: hello@smaverk.com

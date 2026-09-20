@@ -1,0 +1,39 @@
+{
+  "slug": "capcut-auto-reframe-alternative",
+  "title": "CapCut Auto Reframe alternative: no Pro, no upload",
+  "description": "CapCut moved Auto Reframe to Pro. Vertical turns a landscape clip into 9:16 and keeps the speaker in frame, on your device. Free up to 60 seconds.",
+  "ogTitle": "A CapCut Auto Reframe alternative with no Pro plan",
+  "ogDescription": "AI that follows the speaker, on your device. No install, no account, no upload.",
+  "h1": "A CapCut Auto Reframe alternative, no Pro plan",
+  "sub": "AI follows the speaker, on your device.",
+  "crumb": "CapCut Auto Reframe alternative",
+  "body": [
+    "CapCut moved Auto Reframe to the Pro plan in April 2026. Here a 9:16 window follows the speaker; 1080p becomes 608×1080."
+  ],
+  "not": [
+    "Follows one person; for two, hold still and drag.",
+    "It does not enlarge; rivals promise 1080×1920.",
+    "No captions."
+  ],
+  "questions": [
+    {
+      "q": "Is CapCut Auto Reframe free?",
+      "a": "Not now. CapCut's help page says it was \"moved to the CapCut Pro (premium) tier as part of ongoing product development\".",
+      "source": { "text": "CapCut help, 3 April 2026", "url": "https://www.capcut.com/help/why-do-i-have-to-pay-for-auto-reframe" }
+    },
+    {
+      "q": "Two people in the shot?",
+      "a": "It follows one of them; hold still, then drag the window to the other. Choppity, which takes an upload, says its tool \"detects multiple speakers and creates split-screen layouts or switches focus to the active speaker automatically\".",
+      "source": { "text": "Choppity, 19 Sep 2026", "url": "https://www.choppity.com/tools/ai-auto-reframing-tool/" }
+    },
+    {
+      "q": "Is my clip uploaded?",
+      "a": "No. It stays on your device, and there is no account.",
+      "source": { "text": "Our privacy page", "url": "https://smaverk.com/privacy" }
+    }
+  ],
+  "more": [
+    { "text": "Vertical", "href": "/" },
+    { "text": "CapCut captions alternative", "href": "https://captions.smaverk.com/capcut-captions-alternative" }
+  ]
+}

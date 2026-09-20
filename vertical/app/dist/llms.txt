@@ -1,0 +1,28 @@
+# Vertical by Småverk
+
+> AI turns a landscape video into a vertical (9:16) one that keeps the speaker in frame, on your device, in the page at https://vertical.smaverk.com. Nothing is uploaded. Free with a small corner mark for clips up to 60 seconds; $24 once (founding price) removes it and allows five minutes.
+
+Vertical is one of the tools by Småverk, a one-person studio in Sweden; https://smaverk.com lists every tool. Captions (https://captions.smaverk.com) adds captions to the saved clip.
+
+## What it does
+- Input: a video file (mp4, mov, webm). Output: the same clip cut to 9:16 at the source's full height (1920x1080 → 608x1080), the window following the speaker with calm pans; sound copied as it is.
+- Two people in the shot: it follows one of them (the larger face); place the window by hand ("hold still" and drag) for the other. Following whoever is talking is being tested and is off by default; `?two=1` on the address switches it on, and `window.__vert.switches` then lists the times it changed sides. It misses handovers when a hand or a microphone covers the mouth.
+- Everything runs in the page, on the device. No server, by design.
+- Not yet: silence cuts, captions (use Captions), enlarging.
+
+## Driving it from a script or an agent (browser automation)
+The page exposes `window.vertical` and stable element ids (`#file`, `#action`, `#status`, `#result`). Example with Playwright:
+
+```js
+await page.goto("https://vertical.smaverk.com/");
+await page.setInputFiles("#file", "talk.mp4");                       // state: loaded
+await page.click("#action");                                          // "Make it vertical": finds the speaker
+await page.waitForFunction(() => window.vertical.state === "ready");  // window.vertical.track = [{t, cx, cy}, …]
+window.vertical.mode("hold");                                         // or keep "follow"
+const [dl] = await Promise.all([page.waitForEvent("download"), page.click("#action")]);  // "Save video"
+await dl.saveAs("talk-vertical.mp4");
+```
+After a save, `window.__vert` holds `exportMs` and `found` (the share of the clip in which the speaker was found). After the search, it also holds `bothFound` (the share of the clip with two people in it) and `switches` (the times, in seconds, at which the window changed who it follows).
+
+## Pages
+- https://vertical.smaverk.com/capcut-auto-reframe-alternative — For people who met CapCut Pro when using Auto Reframe: the same job here, on the device.

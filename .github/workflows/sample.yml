@@ -1,0 +1,30 @@
+# Computes dist/sample-track.json for Vertical's sample clip with the tool's own tracker, on a runner (the script opens
+# a browser, and no browser work runs on the laptop). ./ci.sh sample starts it and puts the file in place.
+name: sample
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  track:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: vertical/app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.2
+      - run: bun install --frozen-lockfile
+      - name: Chromium
+        run: bunx playwright install --with-deps chromium
+      - run: ./build.sh
+      - name: Track the sample
+        run: bun tools/sample-track.mjs && head -c 300 dist/sample-track.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sample-track
+          path: vertical/app/dist/sample-track.json
+          retention-days: 7

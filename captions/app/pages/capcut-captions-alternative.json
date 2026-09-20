@@ -1,0 +1,41 @@
+{
+  "slug": "capcut-captions-alternative",
+  "title": "CapCut auto captions alternative: pay once, no account",
+  "description": "CapCut moved auto captions to Pro. Captions adds them on your device: no upload, no account. Free up to 60 seconds with a small mark. $19 once removes it.",
+  "ogTitle": "A CapCut captions alternative you pay for once",
+  "ogDescription": "AI captions, made on your device. No Pro plan, no account, no upload.",
+  "h1": "A CapCut captions alternative you pay for once",
+  "sub": "AI captions, made on your device. No Pro plan.",
+  "crumb": "CapCut captions alternative",
+  "style": "karaoke",
+  "body": [
+    "CapCut used to caption for free. Now saving can ask for Pro. If captions are all you need, this page does that one job: pick a clip, pick a look, fix a word, save."
+  ],
+  "not": [
+    "English only.",
+    "Three looks, no templates or stickers.",
+    "Not an editor: no cutting, music or filters."
+  ],
+  "questions": [
+    {
+      "q": "Is CapCut auto captions free?",
+      "a": "You can try it, but saving can ask for Pro. CapCut's help page says that prompt shows because auto captions \"includes Pro-only functionality\".",
+      "source": { "text": "CapCut help, 3 April 2026", "url": "https://www.capcut.com/help/capcut-pro-prompt-standard-user" }
+    },
+    {
+      "q": "Can I caption without CapCut Pro?",
+      "a": "Yes. Free up to 60 seconds with a small mark, or $19 once for no mark and clips up to five minutes.",
+      "source": { "text": "Our terms", "url": "https://smaverk.com/terms" }
+    },
+    {
+      "q": "Is my clip uploaded?",
+      "a": "No. It stays on your device, and there is no account.",
+      "source": { "text": "Our privacy page", "url": "https://smaverk.com/privacy" }
+    }
+  ],
+  "more": [
+    { "text": "Captions home", "href": "/" },
+    { "text": "Submagic alternative", "href": "/submagic-alternative" },
+    { "text": "CapCut Auto Reframe alternative", "href": "https://vertical.smaverk.com/capcut-auto-reframe-alternative" }
+  ]
+}

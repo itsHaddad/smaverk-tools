@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Småverk · small AI tools that run on your device</title>
+<meta name="description" content="Small AI tools that run on your device, in the browser. Nothing you put in leaves your device. Made by one person in Sweden.">
+<meta name="color-scheme" content="light dark">
+<link rel="canonical" href="https://smaverk.com/">
+<meta name="google-site-verification" content="_eN1ywvXp9R-hebN0pJSivwAN8J8DuuaNGwfr_QqmnU">
+<meta property="og:title" content="Småverk — small AI tools that run on your device">
+<meta property="og:description" content="Each tool does one job in your browser. Nothing uploaded. Pay once per tool.">
+<meta property="og:url" content="https://smaverk.com/"><meta property="og:type" content="website"><meta property="og:site_name" content="Småverk">
+<meta property="og:image" content="https://smaverk.com/studio-demo/vertical-poster.jpg?v=1789832300">
+<meta name="twitter:card" content="summary"><meta name="twitter:title" content="Småverk — small AI tools that run on your device"><meta name="twitter:description" content="Each tool does one job in your browser. Nothing uploaded. Pay once per tool.">
+<link rel="preload" href="fonts/bricolage-grotesque-latin.woff2" as="font" type="font/woff2" crossorigin>
+<style>@font-face{font-family:"Bricolage Grotesque";font-style:normal;font-weight:200 800;font-stretch:100%;font-display:swap;src:url(fonts/bricolage-grotesque-latin.woff2) format("woff2")}</style>
+<link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="icon" type="image/png" sizes="64x64" href="/icon-64.png">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%277%27 fill=%27%23FFD84D%27/%3E%3Crect x=%277%27 y=%2720%27 width=%2718%27 height=%275%27 rx=%272.5%27 fill=%27%2316141D%27/%3E%3C/svg%3E">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"Småverk","url":"https://smaverk.com","email":"hello@smaverk.com","description":"Small browser tools that run on the user's device. Nothing uploaded. Pay once per tool."}</script>
+<style>
+:root{color-scheme:light dark;
+  --ground:light-dark(#F3F2F7,#0E0D12);--surface:light-dark(#FFFFFF,#18161F);--ink:light-dark(#16141D,#F2F0F7);--muted:light-dark(#67637A,#9D99AE);
+  --line:light-dark(#DAD7E3,#2B2836);--btn:light-dark(#16141D,#F2F0F7);--btn-ink:light-dark(#FFFFFF,#16141D);--hi:#FFD84D;--hi-ink:#16141D;
+  --display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;--body:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;--r:14px}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}html,body{overflow-x:clip}
+body{margin:0;background:var(--ground);color:var(--ink);font:16px/1.5 var(--body);padding-inline:max(16px,env(safe-area-inset-left)) max(16px,env(safe-area-inset-right));touch-action:manipulation}
+a{color:inherit}
+.wrap{max-width:880px;margin:0 auto;padding-block:20px 72px}
+.brand{display:flex;align-items:center;gap:10px;font:700 15px/1 var(--display);letter-spacing:.01em;margin-bottom:36px}
+.brand i{display:inline-block;width:14px;height:14px;background:var(--hi);border-radius:3px}
+h1{font:800 clamp(32px,8vw,52px)/1.04 var(--display);letter-spacing:-.025em;margin:0 0 14px;text-wrap:balance;max-width:16ch}
+h1 mark{background:linear-gradient(transparent 55%,var(--hi) 55%);color:inherit;padding:0 .08em}
+@media(prefers-color-scheme:dark){h1 mark{background:none;color:var(--hi);padding:0}}
+.sub{color:var(--muted);font-size:18px;margin:0 0 32px;text-wrap:pretty;max-width:36em}
+h2{font:700 22px/1.2 var(--display);letter-spacing:-.01em;margin:40px 0 12px}
+p{margin:0 0 12px;text-wrap:pretty;overflow-wrap:anywhere}
+.tools{display:grid;gap:14px}
+@media(min-width:720px){.tools{grid-template-columns:1fr 1fr}}
+.tool{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.tool .btn{margin-top:auto;width:100%}
+.tool h3{font:800 24px/1.1 var(--display);letter-spacing:-.02em;margin:0;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.tool p{color:var(--muted);font-size:16px;margin:0}
+.demo{position:relative;aspect-ratio:16/9;border-radius:10px;overflow:hidden;background:#0E0D12;isolation:isolate}
+.demo video{display:block;width:100%;height:100%;object-fit:cover;object-position:center 32%}
+/* The Captions sample is a close vertical shot; a 16:9 cut of it would put the words over his mouth. The card shows the middle of the
+   clip at its own width on the card's dark ground, with the words kept inside the picture. */
+.demo[data-demo="captions"] video{width:64%;margin-inline:auto;object-position:center 27%}
+.demo[data-demo="captions"] .cap{left:19%;right:19%;bottom:9%;font-size:clamp(15px,3.9vw,18px);text-wrap:balance}
+.demo .cap{position:absolute;left:5%;right:5%;bottom:11%;margin:0;text-align:center;font:800 clamp(19px,5.4vw,27px)/1.15 var(--display);color:#fff;text-shadow:0 2px 10px rgba(0,0,0,.75),0 0 2px rgba(0,0,0,.6);letter-spacing:-.01em}
+.demo .cap b{color:var(--hi);font-weight:800}
+.demo .dim{position:absolute;top:0;bottom:0;background:rgba(0,0,0,.32)}
+.demo .win{position:absolute;top:0;bottom:0;border:2px solid var(--hi);border-radius:3px;box-shadow:0 0 0 1px rgba(0,0,0,.35)}
+.demo .inset{transition:left .25s,right .25s;position:absolute;bottom:4%;height:62%;aspect-ratio:9/16;border:1.5px solid rgba(255,255,255,.85);border-radius:6px;background:#000;box-shadow:0 6px 18px rgba(0,0,0,.45)}
+.demo .dtap{position:absolute;inset:0;width:100%;height:100%;appearance:none;border:0;padding:0;background:transparent;cursor:pointer}
+.demo .sound{position:absolute;right:10px;top:10px;z-index:2;width:44px;height:44px;padding:0;border:0;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;display:grid;place-items:center;cursor:pointer}
+.demo .sound svg{width:21px;height:21px}
+.demo .sound[hidden]{display:none}
+.demo .sound[aria-pressed="false"] .wave,.demo .sound[aria-pressed="true"] .mute{display:none}
+.demo .sound:focus-visible{outline:3px solid var(--hi);outline-offset:2px}
+.demo .dtap:focus-visible{outline:3px solid var(--hi);outline-offset:-3px}
+.demo .dtap::after{content:"";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.92) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M7 4.5v15l12-7.5z' fill='%2316141D'/%3E%3C/svg%3E") no-repeat center/24px 24px;opacity:0;transition:opacity .15s;pointer-events:none}
+.demo.is-paused .dtap::after{opacity:1}
+@media (prefers-reduced-motion:reduce){.demo .dtap::after,.demo .inset{transition:none}}
+.tool .price{color:var(--ink);font-size:15px}
+.btn{appearance:none;border:0;border-radius:12px;min-height:52px;padding:0 20px;font:700 16px var(--display);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;background:var(--btn);color:var(--btn-ink);margin-top:4px}
+.btn.quiet{background:transparent;color:var(--ink);border:1.5px solid var(--line);min-height:48px;font-weight:600}
+.btn:focus-visible,a:focus-visible{outline:3px solid var(--hi);outline-offset:2px}
+ul{padding-left:20px;margin:0 0 12px}li{margin-bottom:8px}
+.how li b{color:var(--ink)}
+.how{color:var(--muted)}
+.nb{white-space:nowrap}
+footer a,footer span{display:inline-flex;align-items:center;min-height:44px}
+footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--line);color:var(--muted);font-size:15px;display:flex;flex-wrap:wrap;gap:8px 18px}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <div class="brand"><i></i>Småverk</div>
+  <h1>Small AI tools that run on <mark>your</mark> device.</h1>
+  <p class="sub">One job each, in your browser. Nothing leaves your device. Pay once per tool.</p>
+
+  <section class="tools" aria-label="Tools">
+    <article class="tool">
+      <div class="demo" data-demo="captions">
+        <video src="sample.mp4?v=1789832300" poster="poster.webp?v=1789832300" muted loop playsinline preload="metadata" aria-label="A sample clip. Captions appear on it as each word is spoken."></video>
+        <p class="cap" aria-hidden="true"></p>
+        <button class="dtap" type="button" aria-label="Play or pause the Captions demo"></button>
+        <button class="sound" type="button" aria-pressed="false" aria-label="Sound is off. Turn it on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10v4h4l5 4V6L8 10H4z"/><path class="wave" d="M16.5 9a4 4 0 0 1 0 6M19 6.5a8 8 0 0 1 0 11"/><path class="mute" d="M17 9.5l4.5 5M21.5 9.5l-4.5 5"/></svg></button>
+      </div>
+      <h3>Captions</h3>
+      <p>AI captions on a short clip in under a minute. English.</p>
+      <p class="price">Free: clips up to 60 seconds, with a small smaverk.com mark. $19 once: clips up to five minutes, no mark.</p>
+      <a class="btn" href="https://captions.smaverk.com/?src=studio">Open Captions</a>
+    </article>
+    <article class="tool">
+      <div class="demo" data-demo="vertical">
+        <video src="studio-demo/vertical-sample.mp4?v=1789832300" poster="studio-demo/vertical-poster.jpg?v=1789832300" muted loop playsinline preload="none" aria-label="A landscape sample clip of a soccer coach talking as he moves across a field. A yellow window follows him, and the small picture shows the vertical result."></video>
+        <i class="dim" data-side="l"></i><i class="dim" data-side="r"></i><i class="win"></i>
+        <canvas class="inset" width="180" height="320" aria-hidden="true"></canvas>
+        <button class="dtap" type="button" aria-label="Play or pause the Vertical demo"></button>
+        <button class="sound" data-for="vertical-sound" type="button" aria-pressed="false" aria-label="Sound is off. Turn it on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10v4h4l5 4V6L8 10H4z"/><path class="wave" d="M16.5 9a4 4 0 0 1 0 6M19 6.5a8 8 0 0 1 0 11"/><path class="mute" d="M17 9.5l4.5 5M21.5 9.5l-4.5 5"/></svg></button>
+      </div>
+      <h3>Vertical</h3>
+      <p>A sideways clip made tall for Reels, TikTok and Shorts. AI keeps the speaker in the picture. The yellow window is what gets saved.</p>
+      <p class="price">Free: clips up to 60 seconds, with a small smaverk.com mark. $24 once: clips up to five minutes, no mark.</p>
+      <a class="btn" href="https://vertical.smaverk.com/?src=studio">Open Vertical</a>
+    </article>
+  </section>
+
+  <h2>How they work</h2>
+  <ul class="how">
+    <li><b>Runs in this page.</b> The tool loads once, then works offline.</li>
+    <li><b>Nothing uploaded.</b> Your video stays on your device. No account.</li>
+    <li><b>Pay once per tool.</b> Paid through Polar, a checkout company. Taxes included. <span class="nb">Refund within 14 days.</span></li>
+  </ul>
+
+  <footer>
+    <span>Småverk, Sweden</span>
+    <a href="mailto:hello@smaverk.com">hello@smaverk.com</a>
+    <a href="https://smaverk.com/privacy">Privacy</a>
+    <a href="https://smaverk.com/terms">Terms</a>
+    <a href="https://www.youtube.com/watch?v=96eBO8N3qn4" rel="noopener">Captions sample: Peter Kramm, CC BY</a>
+    <a href="https://www.youtube.com/watch?v=GoE-e8u-P1g" rel="noopener">Vertical sample: Coach Javi, CC BY</a>
+  </footer>
+</main>
+<script type="module">
+// The cards run the tools' own sample data, so a visitor sees what each tool does before opening it. No tool code loads here.
+const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const lerp = (a, b, k) => a + (b - a) * k;
+for (const box of document.querySelectorAll(".demo")) {
+  const v = box.querySelector("video"), tap = box.querySelector(".dtap"); let paint = () => {};
+  if (box.dataset.demo === "captions") {
+    const cap = box.querySelector(".cap"); let lines = [];
+    fetch("sample-words.json?v=1789832300").then((r) => r.json()).then((w) => { const marked = w.some((x) => x.br); let cur = []; for (const x of w) { cur.push(x); const end = /[.!?]$/.test(x.text), comma = /,$/.test(x.text); if (x.br || end || (!marked && ((comma && cur.length >= 3) || cur.length >= 5))) { lines.push(cur); cur = []; } } if (cur.length) lines.push(cur); paint(); }).catch(() => {});
+    let shown = "";
+    paint = () => { const t = v.currentTime; const line = lines.find((l) => t >= l[0].start - 0.05 && t <= l[l.length - 1].end + 0.35) ?? (t < (lines[0]?.[0].start ?? 0) ? lines[0] : null);
+      const key = line ? line[0].start + ":" + line.findIndex((x) => t >= x.start && t < x.end + 0.05) : ""; if (key === shown) return; shown = key;
+      cap.replaceChildren(...(line ?? []).flatMap((x, i) => { const on = t >= x.start && t < x.end + 0.05; const n = document.createElement(on ? "b" : "span"); n.textContent = x.text; return i ? [" ", n] : [n]; })); };
+  } else {
+    const win = box.querySelector(".win"), L = box.querySelector("[data-side=l]"), R = box.querySelector("[data-side=r]"), inset = box.querySelector(".inset"), g = inset.getContext("2d"); let track = [];
+    fetch("studio-demo/vertical-track.json?v=1789832300").then((r) => r.json()).then((t) => { track = t; paint(); }).catch(() => {});
+    paint = () => { if (!track.length) return; const t = v.currentTime; let i = track.findIndex((p) => p.t > t); if (i < 0) i = track.length - 1; const a = track[Math.max(0, i - 1)], b = track[i]; const cx = b.t > a.t ? lerp(a.cx, b.cx, Math.min(1, Math.max(0, (t - a.t) / (b.t - a.t)))) : a.cx;
+      const W = v.videoWidth || 1280, H = v.videoHeight || 720, w = Math.min(1, (H * 9 / 16) / W), left = Math.min(1 - w, Math.max(0, cx - w / 2));
+      win.style.left = left * 100 + "%"; win.style.width = w * 100 + "%"; L.style.left = "0"; L.style.width = left * 100 + "%"; R.style.left = (left + w) * 100 + "%"; R.style.right = "0";
+      const rightSide = left + w / 2 < 0.5; inset.style.left = rightSide ? "auto" : "3%"; inset.style.right = rightSide ? "3%" : "auto"; const sb = box.querySelector(".sound"); if (sb) { const clearRight = left + w < 0.84; sb.style.left = clearRight ? "auto" : "10px"; sb.style.right = clearRight ? "10px" : "auto"; }
+      if (v.readyState >= 2) g.drawImage(v, left * W, 0, w * W, H, 0, 0, inset.width, inset.height); };
+  }
+  let raf = 0; const rq = v.requestVideoFrameCallback ? v.requestVideoFrameCallback.bind(v) : requestAnimationFrame; const cn = v.cancelVideoFrameCallback ? v.cancelVideoFrameCallback.bind(v) : cancelAnimationFrame; const loop = () => { paint(); raf = rq(loop); };
+  const flag = () => { box.classList.toggle("is-paused", v.paused); tap.setAttribute("aria-pressed", String(!v.paused)); }; flag();
+  v.addEventListener("play", () => { cn(raf); flag(); loop(); }); v.addEventListener("pause", () => { cn(raf); flag(); paint(); }); v.addEventListener("loadeddata", paint); v.addEventListener("seeked", paint);
+  tap.addEventListener("click", () => { v.paused ? v.play().catch(() => {}) : v.pause(); });
+  const snd = box.querySelector(".sound"); if (snd) snd.addEventListener("click", () => { v.muted = !v.muted; snd.setAttribute("aria-pressed", String(!v.muted)); snd.setAttribute("aria-label", v.muted ? "Sound is off. Turn it on" : "Sound is on. Turn it off"); if (!v.muted && v.paused) v.play().catch(() => {}); });
+  // Plays only while it is on screen, and not at all for visitors who asked for less motion (tap to play).
+  new IntersectionObserver(([e]) => { if (e.isIntersecting && !still) v.play().catch(() => {}); else if (!e.isIntersecting) { v.pause(); if (snd && !v.muted) snd.click(); } }, { threshold: 0.8 }).observe(box);
+}
+</script>
+<script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "91285919879f4672a4342550a4b0b07c"}'></script>
+</body>
+</html>
