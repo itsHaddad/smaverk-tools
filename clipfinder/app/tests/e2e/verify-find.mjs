@@ -164,6 +164,8 @@ try {
   await page.route(/polar\.sh\/v1\/customer-portal\/license-keys\/validate/, (r) =>
     r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ status: "granted" }) }),
   );
+  // The paywall above opened the fold-out the key box lives in; this is the check that it did.
+  if (!(await page.evaluate(() => document.getElementById("afterpay").open))) fail("being told the price did not open the box the key goes in");
   await page.fill("#key", "SMVCF-TEST-0000-0000");
   await page.click("#keygo");
   await page.waitForFunction(() => window.__cf?.licensed === true, null, { timeout: 15000 });

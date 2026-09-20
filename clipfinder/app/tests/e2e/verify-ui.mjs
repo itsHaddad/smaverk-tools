@@ -174,6 +174,7 @@ try {
   await snap("5b-trimmed");
 
   await p.route(/polar\.sh\/v1\/customer-portal\/license-keys\/validate/, (r) => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ status: "granted" }) }));
+  await p.evaluate(() => { document.getElementById("afterpay").open = true; });
   await p.fill("#key", "SMVCF-TEST-0000-0000");
   await p.click("#keygo");
   await p.waitForFunction(() => window.__cf?.licensed === true, null, { timeout: 15000 });

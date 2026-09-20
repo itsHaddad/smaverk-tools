@@ -522,6 +522,9 @@ function showResult(title: string, name: string, line: string) {
 function needsPaying(): boolean {
   if (licensed) return false;
   say("Saving is the paid half. $29 once, and every export is open.", "");
+  // Someone who has already bought it needs the key box, and it lives inside a fold-out that is shut.
+  // Being told the price and then having to hunt for where to type the key is not an answer either.
+  ($("afterpay") as HTMLDetailsElement).open = true;
   $("price").scrollIntoView({ block: "center", behavior: "smooth" });
   return true;
 }
