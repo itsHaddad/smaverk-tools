@@ -126,6 +126,8 @@ try {
     await snap(`1-picked-${n.tag}`);
     const shown = await p.evaluate(() => ({ text: document.getElementById("clipname").textContent, title: document.getElementById("clipname").title }));
     check(shown.text.length <= 40 && (n.name.length <= 34 ? shown.text === n.name : shown.text.includes("…")) && shown.title === n.name, `${n.tag}: the name fits ("${shown.text}")`);
+    // There is a way out while it is still reading, which is when someone would want one.
+    check(await p.isVisible("#reset"), `${n.tag}: the way out is on screen while it reads`);
     await p.click("#reset");
     await p.waitForFunction(() => window.__cf?.state === "sample", null, { timeout: 10000 });
   }

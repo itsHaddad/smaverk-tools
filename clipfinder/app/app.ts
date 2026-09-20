@@ -452,7 +452,9 @@ $("file").addEventListener("change", async (e) => {
   $("hint").textContent = "Moments appear while it reads.";
   $("exportbox").hidden = true;
   $("result").classList.remove("on");
-  $("reset").hidden = true;
+  // A way out from the moment the file is picked, not only when it finishes. Reading an hour takes
+  // minutes, and someone who picked the wrong file should not have to wait it out or reload the page.
+  $("reset").hidden = false;
   render();
   showSteps(true);
   step(1, warmed && !worker ? "" : "active");
