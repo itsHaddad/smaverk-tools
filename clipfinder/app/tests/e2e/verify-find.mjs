@@ -7,12 +7,12 @@
 //   1. Moments appear BEFORE the reading is finished. That is the whole shape of the product.
 //   2. The final list is real: times inside the recording, a length near the one asked for, a reason on
 //      every one, and the words it opens on.
-//   3. The recording never leaves the device. Every request the page makes is either its own file or the
-//      one-off download of the tool; nothing carries a body.
-//   4. With the network off after the tool is on the device, it still works. That is the promise the
-//      page makes in words, so it is made in a test as well.
-//   5. The paid exports: a timeline file that contains the moments, and the clip itself, cut out of the
-//      file and checked with ffprobe.
+//   3. The recording never leaves the device: every host is one the privacy page accounts for, and
+//      nothing leaving is anywhere near the size of a recording.
+//   4. The paywall holds, and then, with a key, the paid exports: a timeline file that contains the
+//      moments, and the clip itself, cut out of the file and checked with ffprobe.
+//   5. With the network off, the whole pipeline still runs. It goes last because it picks a
+//      forty-second file and leaves the page with no list for anything above it to check.
 //
 // The key check is answered by a stub. Polar's validation is somebody else's service; what this gate is
 // for is the page's behaviour once a key is good. The paywall itself is checked first, unstubbed.
@@ -153,24 +153,13 @@ try {
   if (!strangers.length && !heavy.length)
     ok(`${sent.length} request(s) off this page, every host accounted for, the largest body ${Math.max(0, ...sent.map((s) => s.bytes))} bytes against a ${Math.round(2340958 / 1024)} KB recording`);
 
-  // 4. With the network off, it still works.
-  await page.click("#reset");
-  await ctx.setOffline(true);
-  const offlineT0 = Date.now();
-  await page.setInputFiles("#file", shortFixture);
-  const offlineOk = await waitSaying(page, "the offline run", () => window.__cf?.state === "found", 600000);
-  const offline = offlineOk ? await page.evaluate(() => ({ words: window.__cf.words, error: window.__cf.error })) : null;
-  if (offlineOk && !(offline.words > 0)) fail(`with the network off it finished without hearing anything: ${JSON.stringify(offline)}`);
-  else if (offlineOk) ok(`read 40 s and heard ${offline.words} words with the network off, in ${Math.round((Date.now() - offlineT0) / 1000)} s`);
-  await ctx.setOffline(false);
-
-  // 5a. The paywall, before it is opened.
+  // 4. The paywall, before it is opened.
   const before = page.waitForEvent("download", { timeout: 4000 }).then(() => "downloaded").catch(() => "blocked");
   await page.click('[data-save="premiere"]');
   if ((await before) !== "blocked") fail("an export was saved without paying");
   else ok("an export asks to be paid for first");
 
-  // 5b. With a key, the exports. The key check is a third-party call, so it is stubbed; everything the
+  // 5. With a key, the exports. The key check is a third-party call, so it is stubbed; everything the
   // page then does is real.
   await page.route(/polar\.sh\/v1\/customer-portal\/license-keys\/validate/, (r) =>
     r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ status: "granted" }) }),
@@ -198,7 +187,7 @@ try {
     else ok(`${kind}: ${dl.suggestedFilename()}, ${text.length} bytes, the first moment is in it`);
   }
 
-  // 5c. The clip itself, cut on the device and checked with ffprobe.
+  // 5b. The clip itself, cut on the device and checked with ffprobe.
   const [clip] = await Promise.all([page.waitForEvent("download", { timeout: 180000 }), page.click('[data-save="clip"]')]);
   const clipPath = join(outDir, clip.suggestedFilename());
   await clip.saveAs(clipPath);
@@ -211,6 +200,18 @@ try {
     else if (Math.abs(probed - wanted) > Math.max(3, wanted * 0.05)) fail(`the cut clip is ${probed.toFixed(1)} s, the moment is ${wanted.toFixed(1)} s`);
     else ok(`${clip.suggestedFilename()}: ${(saved.bytes / 1024).toFixed(0)} KB, ${probed.toFixed(1)} s against ${wanted.toFixed(1)} s asked for`);
   }
+
+  // 6. Last, because it picks a forty-second file and leaves the page with no list: with the network
+  //    off, the whole pipeline still runs.
+  await page.click("#reset");
+  await ctx.setOffline(true);
+  const offlineT0 = Date.now();
+  await page.setInputFiles("#file", shortFixture);
+  const offlineOk = await waitSaying(page, "the offline run", () => window.__cf?.state === "found", 600000);
+  const offline = offlineOk ? await page.evaluate(() => ({ words: window.__cf.words, error: window.__cf.error })) : null;
+  if (offlineOk && !(offline.words > 0)) fail(`with the network off it finished without hearing anything: ${JSON.stringify(offline)}`);
+  else if (offlineOk) ok(`read 40 s and heard ${offline.words} words with the network off, in ${Math.round((Date.now() - offlineT0) / 1000)} s`);
+  await ctx.setOffline(false);
 
   if (errs.length) fail(errs.join(" | "));
   await page.screenshot({ path: join(outDir, "found.png"), fullPage: true });
