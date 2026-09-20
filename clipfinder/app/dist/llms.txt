@@ -1,12 +1,12 @@
 # Clip finder by Småverk
 
-> AI that finds the moments worth posting in a long recording, on your device, in the page at https://clipfinder.smaverk.com. The recording is read on the device and is not uploaded. Free while it is new: recordings up to four hours, every moment on screen, and every export. There is no account and no card.
+> AI that finds the moments worth posting in a long recording, on your device, in the page at https://clipfinder.smaverk.com. The recording is read on the device and is not uploaded. Free for recordings up to 30 minutes, with every moment on screen; $29 once opens recordings up to four hours and every export.
 
 Clip finder is one of the tools by Småverk; https://smaverk.com lists them all.
 
 ## What it does
 - Input: an audio or video file of a podcast, a talk or an interview (mp3, m4a, mp4, mov, webm, wav), English speech.
-- Output: a list of moments, each with a start, a length, the words it opens on, and a plain sentence saying why it was picked. Also the cut clip as a file, and a timeline file in the Final Cut 7 XML, FCPXML and CMX3600 formats, which Premiere, DaVinci Resolve and Final Cut Pro import.
+- Output: a list of moments, each with a start, a length, the words it opens on, and a plain sentence saying why it was picked. Paid: the cut clip as a file, and a timeline file for Premiere, DaVinci Resolve or Final Cut Pro.
 - Everything runs in the page, on the device. There is no server that sees the recording, by design.
 
 ## How it picks
@@ -26,7 +26,7 @@ const moments = await page.evaluate(() => window.__cf.list);  // [{startS, endS,
 
 - `window.__cf` mirrors state: `state` (`sample` / `reading` / `found`), `list`, `moments`, `heardS`, `totalS`, `targetS`, `words`, `silences`, `ms`.
 - Clip length is chosen with the `.chip[data-target="60|180|300"]` buttons.
-- Every export is open: `[data-save="clip"]`, `[data-save="premiere"]`, `[data-save="edl"]`, `[data-save="finalcut"]`. Nothing asks for payment and no key is needed.
+- A paid key is applied by filling `#key` and clicking `#keygo`; it is kept in `localStorage` under `smaverk.key`, the same name in every Småverk tool. What a key opens is decided by `POST https://unlock.smaverk.com/entitlements` with `{key, rail}`, which answers `{status, tools, expires}` — `tools` lists every Småverk tool the key opens, so one key can open several. Coming back from a checkout with `?checkout_id=…` unlocks the page by itself; nothing is pasted.
 - Reading costs about half the length of the recording, and the moments appear while it reads.
 
 ## The other tools

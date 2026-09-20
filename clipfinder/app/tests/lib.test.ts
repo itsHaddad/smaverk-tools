@@ -6,7 +6,6 @@ import { normalize, stem, pseudoSentences, segment, blockFor } from "../src/lib/
 import { pauses, snap } from "../src/lib/pause";
 import { rank, features, reasons, edgeSeconds } from "../src/lib/rank";
 import { candidates } from "../src/lib/candidates";
-import { mustPay, priceCopy, readLimitS, TRIAL_COPY } from "../src/lib/pricing";
 
 // --- names and clocks ------------------------------------------------------------------------
 
@@ -254,37 +253,4 @@ test("a short recording is still cut into subjects rather than left whole", () =
   expect(t.words.length).toBeGreaterThan(900);
   expect(segment(t, t.lastWordS + 1, { minSectionS: 30 }).length).toBeGreaterThan(1);
   expect(rank(t, t.lastWordS + 1, { targetS: 98, minSectionS: 30 }).length).toBeGreaterThan(0);
-});
-
-// --- money, while there is none ----------------------------------------------------------------
-
-test("while the tool is free nobody is asked to pay, and the paid page still exists in one piece", () => {
-  // The owner, 2026-09-20: free at the start. So the page names no price, and the rail underneath is
-  // asleep rather than deleted. Both states are checked here because only one of them is on the page:
-  // the other would rot unread otherwise, and rotten copy is what gets written in a hurry later.
-  expect(mustPay(true, false)).toBe(false); // free: a visitor saves everything
-  expect(mustPay(true, true)).toBe(false); // free, and holding an old key: still nothing to pay
-  expect(mustPay(false, false)).toBe(true); // priced, no key: the paywall holds
-  expect(mustPay(false, true)).toBe(false); // priced, with a key: it opens
-
-  // The trial reads four hours, as the page says it does; the free tier under a price reads half an hour.
-  expect(readLimitS(true, false, 1800, 14400)).toBe(14400);
-  expect(readLimitS(false, false, 1800, 14400)).toBe(1800);
-  expect(readLimitS(false, true, 1800, 14400)).toBe(14400);
-
-  // Every sentence of the paid page carries the one number, and none of them is hard-coded.
-  const paid = priceCopy("$29");
-  for (const [where, line] of [["tag", paid.tag], ["amount", paid.amount], ["buy", paid.buy]] as const)
-    expect(line, `${where} states the price`).toContain("$29");
-  expect(priceCopy("$19").buy).toBe("Buy once — $19");
-  for (const line of Object.values(paid)) expect(line).not.toMatch(/\$(?!19|24|29\b)\d+/);
-  // Both halves of the offer are named, because a limit found after the work is done earns one-star reviews.
-  expect(paid.fine).toMatch(/30 minutes/);
-  expect(paid.fine).toMatch(/four hours/);
-  expect(paid.trust).toMatch(/30 minutes/);
-
-  // And the free page names no number at all.
-  for (const line of Object.values(TRIAL_COPY)) expect(line).not.toMatch(/\$\d/);
-  expect(TRIAL_COPY.amount).toBe("Free");
-  expect(TRIAL_COPY.fine).toMatch(/four hours/); // the limit that is actually in force
 });

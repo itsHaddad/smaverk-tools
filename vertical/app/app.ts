@@ -5,15 +5,17 @@ import { outputBase, fitName } from "./src/lib/naming";
 import { loadDetector, scanClip, delegate } from "./src/detect";
 import { fastSave, canFastSave, savedFps } from "./src/fastsave";
 import { attachSeek } from "./src/seek";
+import { Unlock, SAMPLE_KEY, type UnlockState } from "./src/lib/unlock";
 type State = "sample" | "loaded" | "tracking" | "ready" | "exporting" | "exported"; type Mode = "follow" | "hold";
 
 // Sample files are fetched under the page's version (app.js?v=…), so a replaced sample reaches visitors at once: Cloudflare's edge
 // kept serving a year-old "immutable" sample.mp4 after it was replaced (2026-09-18).
 const ASSET_V = (() => { try { return new URL(import.meta.url).search; } catch { return ""; } })();
-const RAIL = new URLSearchParams(location.search).get("rail") === "sandbox"
-  ? { api: "https://sandbox-api.polar.sh", org: "655c19e9-2e14-40b6-9adf-612ca8937b49", benefit: "b4fad7a5-2760-4b23-814e-20dee0d183ea", product: "053f7bf2-a6ac-4749-98f1-92d840bbdf2e", link: "https://sandbox-api.polar.sh/v1/checkout-links/polar_cl_n8mJO32zNi3Tsyf4Ir5tOubvaQKYkAcZr0LgO0HqGiI/redirect" }
-  : { api: "https://api.polar.sh", org: "d3095233-7f56-42d9-9cb5-cbc391af654c", benefit: "f12c8cad-b217-4e52-9dd6-df1fe6d474a8", product: "eff2bec5-b235-4664-90cf-2038397749c8", link: "https://buy.polar.sh/polar_cl_mVsARzcnp4LFpUW1BsP2eXqQrFc5fSDu99afw3oTurT" };
-const UNLOCK = "https://unlock.smaverk.com"; const KEY_STORE = "smaverk.vertical.key";
+const SANDBOX = new URLSearchParams(location.search).get("rail") === "sandbox";
+const RAIL = SANDBOX
+  ? { product: "053f7bf2-a6ac-4749-98f1-92d840bbdf2e", link: "https://sandbox-api.polar.sh/v1/checkout-links/polar_cl_n8mJO32zNi3Tsyf4Ir5tOubvaQKYkAcZr0LgO0HqGiI/redirect" }
+  : { product: "eff2bec5-b235-4664-90cf-2038397749c8", link: "https://buy.polar.sh/polar_cl_mVsARzcnp4LFpUW1BsP2eXqQrFc5fSDu99afw3oTurT" };
+const UNLOCK = "https://unlock.smaverk.com"; // the unlock worker: the only address this page knows about keys
 const DEBUG = new URLSearchParams(location.search).has("debug");
 const limit = () => (licensed ? 300 : 60);
 
@@ -218,44 +220,50 @@ function saveBlob(b: Blob, name: string) { const a = document.createElement("a")
 again.addEventListener("click", (e) => { e.preventDefault(); if (lastBlob) saveBlob(lastBlob, lastName); });
 share.addEventListener("click", async () => { if (!lastBlob) return; try { await navigator.share({ files: [new File([lastBlob], lastName, { type: lastBlob.type })], title: "Vertical clip" }); } catch {} });
 
-// ---------- paid version: key from Polar (this tool's own key; a Captions key does not unlock it) ----------
-async function validateKey(key: string): Promise<boolean> {
-  const r = await fetch(`${RAIL.api}/v1/customer-portal/license-keys/validate`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ key, organization_id: RAIL.org }) });
-  if (!r.ok) return false; const j = await r.json(); return j.status === "granted" && (RAIL.benefit.startsWith("__") || j.benefit_id === RAIL.benefit);
-}
-function setLicensed(on: boolean, msg?: string) {
-  licensed = on; dbg.licensed = on;
-  $("keystatus").textContent = msg ?? (on ? "Paid version on this device. No mark on your videos." : "Already paid? Paste your key here."); $("keystatus").className = "fine" + (on ? " ok" : "");
-  $("keyrow").hidden = on; $("buy").parentElement!.hidden = on; $("tag").hidden = on; $("pricefine").hidden = on; $("afterpay").hidden = on; $("paidpanel").hidden = !on;
-  let k = ""; try { k = localStorage.getItem(KEY_STORE) ?? ""; } catch {} $("paidkey").textContent = k ? k.slice(0, 4) + "…" + k.slice(-6) : "";
-  trust.textContent = on ? "Up to five minutes. Nothing leaves your device." : "Free up to 60 seconds. Nothing leaves your device.";
-}
-$("removekey").addEventListener("click", (e) => { e.preventDefault(); try { localStorage.removeItem(KEY_STORE); } catch {} setLicensed(false, "Key removed from this device. Paste it again any time."); });
-async function loadLicense() {
-  const u = new URL(location.href); const session = u.searchParams.get("customer_session_token"); const checkout = u.searchParams.get("checkout_id");
-  if (session || checkout) {
-    setLicensed(false, "Payment received. Fetching your key…"); let k = "";
-    try {
-      if (session) { const r = await fetch(`${RAIL.api}/v1/customer-portal/license-keys/?limit=10`, { headers: { authorization: `Bearer ${session}` } }); const j = r.ok ? await r.json() : null; k = (j?.items ?? []).find((x: any) => x.status === "granted" && x.key && (RAIL.benefit.startsWith("__") || x.benefit_id === RAIL.benefit))?.key ?? ""; }
-      if (!k && checkout) for (let i = 0; i < 6 && !k; i++) { if (i) await new Promise((r) => setTimeout(r, 2000)); const r = await fetch(`${UNLOCK}/key?checkout_id=${encodeURIComponent(checkout)}&benefit=${encodeURIComponent(RAIL.benefit)}${RAIL.api.includes("sandbox") ? "&rail=sandbox" : ""}`); const j = r.ok ? await r.json() : null; if (j?.status === "granted" && j.key) k = j.key; else if (j?.status && !["pending", "confirmed", "succeeded"].includes(j.status)) break; }
-    } catch {}
-    if (k) { try { localStorage.setItem(KEY_STORE, k); } catch {} setLicensed(true, "Thank you. The paid version is on this device now. Your key is in the email from Polar for your other devices."); } else setLicensed(false, "Payment received. Your key is in the email from Polar; paste it here to unlock this device.");
-    for (const p of ["customer_session_token", "paid", "checkout_id"]) u.searchParams.delete(p); history.replaceState(null, "", u.pathname + (u.search || "")); $("keystatus").scrollIntoView({ block: "center", behavior: "smooth" }); return;
-  }
-  let k = ""; try { k = localStorage.getItem(KEY_STORE) ?? ""; } catch {} if (!k) return; setLicensed(true); try { if (!(await validateKey(k))) { localStorage.removeItem(KEY_STORE); setLicensed(false); } } catch {}
-}
-$("keygo").addEventListener("click", async () => {
-  const k = $<HTMLInputElement>("key").value.trim(); if (!k) return; $("keystatus").textContent = "Checking…";
-  try { if (await validateKey(k)) { try { localStorage.setItem(KEY_STORE, k); } catch {} setLicensed(true); } else { $("keystatus").textContent = "That key did not work here. Check the email from Polar (a Captions key does not unlock Vertical), or write to hello@smaverk.com."; $("keystatus").className = "fine err"; } }
-  catch { $("keystatus").textContent = "Could not check the key right now. Try again in a minute."; $("keystatus").className = "fine err"; }
+// ---------- paid version: one key, checked by the unlock worker (src/lib/unlock.ts, the same file in all three tools) ----------
+const unlock = new Unlock({
+  tool: "vertical",
+  sandbox: SANDBOX,
+  paidLine: "No mark on your videos, and clips up to five minutes.",
+  render: (s: UnlockState) => paintLicense(s),
 });
-// The checkout opens in its own tab, so a clip being worked on stays here (cold user, 2026-09-19: the link opened the card form
-// in this tab and Back wiped the clip and the result). When that tab comes back with the key, this one picks it up.
-addEventListener("storage", (e) => { if (e.key !== KEY_STORE || !e.newValue || licensed) return; const saved = state === "exported"; setLicensed(true, "Thank you. The paid version is on this device now."); if (saved) { touched(); say("The paid version is on. Save the video again: the new copy has no mark.", "ok"); } });
+function paintLicense(s: UnlockState) {
+  licensed = s.on; dbg.licensed = s.on; dbg.unlockTools = s.tools;
+  $("keystatus").textContent = s.text; $("keystatus").className = "fine" + (s.tone ? " " + s.tone : "");
+  $("keyrow").hidden = s.on; $("buy").parentElement!.hidden = s.on; $("tag").hidden = s.on; $("pricefine").hidden = s.on; $("afterpay").hidden = s.on; $("paidpanel").hidden = !s.on;
+  // The key in full, so it can be carried to another device. Masking it protected nothing: it is the person's own
+  // key and it is in their email, and a masked key cannot be typed into a second device (cold user, 2026-09-20).
+  $("paidkey").textContent = s.key;
+  $("keylost").setAttribute("href", unlock.portal);
+  $("keylostline").hidden = s.on; // the paid panel shows the key itself, so this is for whoever is locked out
+  // A key that opens more than this tool says so, and the link carries it across in one click.
+  const others = unlock.elsewhere;
+  $("keyalso").hidden = others.length === 0;
+  if (others.length) $("keyalso").innerHTML = `This key also opens ${others.map((o) => `<a href="${o.href}">${o.name}</a>`).join(" and ")}.`;
+  trust.textContent = s.on ? "Up to five minutes. Nothing leaves your device." : "Free up to 60 seconds. Nothing leaves your device.";
+  // The checkout opens in its own tab, so a clip being worked on stays here (cold user, 2026-09-19). When the key
+  // arrives from that tab and a marked copy has already been saved, say so rather than leave a stale file believed good.
+  if (s.on && s.became === "another-tab" && state === "exported") { touched(); say("The paid version is on. Save the video again: the new copy has no mark.", "ok"); }
+  if (s.on && s.became === "checkout") $("keystatus").scrollIntoView({ block: "center", behavior: "smooth" });
+}
+// Removing the key wipes the only copy on this screen, so it asks first (cold user, 2026-09-21).
+$("removekey").addEventListener("click", (e) => { e.preventDefault(); if (confirm("Remove the key from this device? Copy it first if you have not: you will need it to unlock this device again.")) unlock.forget(); });
+$("keycopy").addEventListener("click", async (e) => {
+  e.preventDefault();
+  try { await navigator.clipboard.writeText(unlock.state.key); $("keycopy").textContent = "Copied"; }
+  catch { getSelection()?.selectAllChildren($("paidkey")); $("keycopy").textContent = "Select it and copy"; } // no clipboard permission: hand them the selection instead
+  setTimeout(() => ($("keycopy").textContent = "Copy"), 2500);
+});
+$("keygo").addEventListener("click", async () => { if (await unlock.paste($<HTMLInputElement>("key").value)) $<HTMLInputElement>("key").value = ""; });
+$("key").addEventListener("keydown", (e) => { if ((e as KeyboardEvent).key === "Enter") $("keygo").click(); });
+const loadLicense = () => unlock.start();
 (async () => { try { if (RAIL.product.startsWith("__")) return; const r = await fetch(`${UNLOCK}/count?product=${encodeURIComponent(RAIL.product)}`); const j = r.ok ? await r.json() : null; if (typeof j?.paid !== "number") return; const left = Math.max(0, 100 - j.paid); $("founding").textContent = left >= 100 ? "Founding price for the first 100 buyers, then $29." : left > 0 ? `Founding price for the first 100 buyers, then $29. ${left} left.` : "The founding price has ended: $29 once."; dbg.foundingLeft = left; } catch {} })();
 
 // ---------- for automations and agents ----------
-dbg.setLicensed = setLicensed; dbg.outputBase = outputBase;
+// For rigs that need the paid state without a rail: paints it, exactly as a real key would. It does not store a key,
+// so a reload goes back to whatever the device actually holds.
+dbg.setLicensed = (on: boolean) => paintLicense({ on, key: on ? SAMPLE_KEY.vertical : "", tools: on ? ["vertical"] : [], expires: null, text: on ? "Paid version on this device." : "Already paid? Paste your key here.", tone: on ? "ok" : "", became: "" });
+dbg.outputBase = outputBase;
 dbg.centreAt = (t: number) => centre(t); // where the window is at time t, the same answer the preview and the save use (the gate asks this)
 let probeTs = 0;
 (window as any).vertical = { two: (on: boolean) => { TWO = on; }, load: (f: File) => load(f), run, export: exportVideo, mode: pickMode, get track() { return track; }, get samples() { return samples; }, get state() { return state; },

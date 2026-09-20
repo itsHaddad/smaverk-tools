@@ -167,23 +167,20 @@ export function fcpXml(title: string, media: ExportMedia, moments: ExportMoment[
 
 export type Format = "edl" | "premiere" | "finalcut" | "csv";
 
-/** "1 moments as an edit list" was on screen for a cold user, 2026-09-21. One place counts, everywhere. */
-export const moments = (n: number) => `${n} moment${n === 1 ? "" : "s"}`;
-
 /** One place that knows what each format is called, what it produces and what it is named on disk. */
 export const FORMATS: Record<Format, { label: string; ext: string; type: string; says: (m: ExportMedia, n: number) => string; build: (title: string, m: ExportMedia, x: ExportMoment[]) => string }> = {
   premiere: {
     label: "Premiere · Resolve",
     ext: "xml",
     type: "application/xml",
-    says: (_m, n) => `${moments(n)} as a Final Cut 7 timeline, the format Premiere Pro and DaVinci Resolve import. Point it at your recording when it asks.`,
+    says: (_m, n) => `${n} moments as a Final Cut 7 timeline, the format Premiere Pro and DaVinci Resolve import. Point it at your recording when it asks.`,
     build: fcp7Xml,
   },
   finalcut: {
     label: "Final Cut",
     ext: "fcpxml",
     type: "application/xml",
-    says: (_m, n) => `${moments(n)} as an FCPXML timeline, the format Final Cut Pro imports. Point it at your recording when it asks.`,
+    says: (_m, n) => `${n} moments as an FCPXML timeline, the format Final Cut Pro imports. Point it at your recording when it asks.`,
     build: fcpXml,
   },
   edl: {
@@ -191,14 +188,14 @@ export const FORMATS: Record<Format, { label: string; ext: string; type: string;
     ext: "edl",
     type: "text/plain",
     // An edit list holds no frame rate, so the one thing the person must do is in the sentence they read.
-    says: (m, n) => `${moments(n)} as an edit list, which almost any editor reads. Set the timeline to ${m.fps} frames a second first, or the times move.`,
+    says: (m, n) => `${n} moments as an edit list, which almost any editor reads. Set the timeline to ${m.fps} frames a second first, or the times move.`,
     build: edl,
   },
   csv: {
     label: "Just the list",
     ext: "csv",
     type: "text/csv",
-    says: (_m, n) => `${moments(n)} with their times and reasons, for a spreadsheet or your notes.`,
+    says: (_m, n) => `${n} moments with their times and reasons, for a spreadsheet or your notes.`,
     build: (_t, m, x) => csvMarkers(m, x),
   },
 };
