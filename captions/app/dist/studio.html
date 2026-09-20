@@ -11,7 +11,7 @@
 <meta property="og:title" content="Småverk — small AI tools that run on your device">
 <meta property="og:description" content="Each tool does one job in your browser. Nothing uploaded. Pay once per tool.">
 <meta property="og:url" content="https://smaverk.com/"><meta property="og:type" content="website"><meta property="og:site_name" content="Småverk">
-<meta property="og:image" content="https://smaverk.com/studio-demo/vertical-poster.jpg?v=1789944526">
+<meta property="og:image" content="https://smaverk.com/studio-demo/vertical-poster.jpg?v=1789944765">
 <meta name="twitter:card" content="summary"><meta name="twitter:title" content="Småverk — small AI tools that run on your device"><meta name="twitter:description" content="Each tool does one job in your browser. Nothing uploaded. Pay once per tool.">
 <link rel="preload" href="fonts/bricolage-grotesque-latin.woff2" as="font" type="font/woff2" crossorigin>
 <style>@font-face{font-family:"Bricolage Grotesque";font-style:normal;font-weight:200 800;font-stretch:100%;font-display:swap;src:url(fonts/bricolage-grotesque-latin.woff2) format("woff2")}</style>
@@ -84,7 +84,7 @@ footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--line);color:v
   <section class="tools" aria-label="Tools">
     <article class="tool">
       <div class="demo" data-demo="captions">
-        <video src="sample.mp4?v=1789944526" poster="poster.webp?v=1789944526" muted loop playsinline preload="metadata" aria-label="A sample clip. Captions appear on it as each word is spoken."></video>
+        <video src="sample.mp4?v=1789944765" poster="poster.webp?v=1789944765" muted loop playsinline preload="metadata" aria-label="A sample clip. Captions appear on it as each word is spoken."></video>
         <p class="cap" aria-hidden="true"></p>
         <button class="dtap" type="button" aria-label="Play or pause the Captions demo"></button>
         <button class="sound" type="button" aria-pressed="false" aria-label="Sound is off. Turn it on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10v4h4l5 4V6L8 10H4z"/><path class="wave" d="M16.5 9a4 4 0 0 1 0 6M19 6.5a8 8 0 0 1 0 11"/><path class="mute" d="M17 9.5l4.5 5M21.5 9.5l-4.5 5"/></svg></button>
@@ -96,7 +96,7 @@ footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--line);color:v
     </article>
     <article class="tool">
       <div class="demo" data-demo="vertical">
-        <video src="studio-demo/vertical-sample.mp4?v=1789944526" poster="studio-demo/vertical-poster.jpg?v=1789944526" muted loop playsinline preload="none" aria-label="A landscape sample clip of a soccer coach talking as he moves across a field. A yellow window follows him, and the small picture shows the vertical result."></video>
+        <video src="studio-demo/vertical-sample.mp4?v=1789944765" poster="studio-demo/vertical-poster.jpg?v=1789944765" muted loop playsinline preload="none" aria-label="A landscape sample clip of a soccer coach talking as he moves across a field. A yellow window follows him, and the small picture shows the vertical result."></video>
         <i class="dim" data-side="l"></i><i class="dim" data-side="r"></i><i class="win"></i>
         <canvas class="inset" width="180" height="320" aria-hidden="true"></canvas>
         <button class="dtap" type="button" aria-label="Play or pause the Vertical demo"></button>
@@ -134,14 +134,14 @@ for (const box of document.querySelectorAll(".demo")) {
   const v = box.querySelector("video"), tap = box.querySelector(".dtap"); let paint = () => {};
   if (box.dataset.demo === "captions") {
     const cap = box.querySelector(".cap"); let lines = [];
-    fetch("sample-words.json?v=1789944526").then((r) => r.json()).then((w) => { const marked = w.some((x) => x.br); let cur = []; for (const x of w) { cur.push(x); const end = /[.!?]$/.test(x.text), comma = /,$/.test(x.text); if (x.br || end || (!marked && ((comma && cur.length >= 3) || cur.length >= 5))) { lines.push(cur); cur = []; } } if (cur.length) lines.push(cur); paint(); }).catch(() => {});
+    fetch("sample-words.json?v=1789944765").then((r) => r.json()).then((w) => { const marked = w.some((x) => x.br); let cur = []; for (const x of w) { cur.push(x); const end = /[.!?]$/.test(x.text), comma = /,$/.test(x.text); if (x.br || end || (!marked && ((comma && cur.length >= 3) || cur.length >= 5))) { lines.push(cur); cur = []; } } if (cur.length) lines.push(cur); paint(); }).catch(() => {});
     let shown = "";
     paint = () => { const t = v.currentTime; const line = lines.find((l) => t >= l[0].start - 0.05 && t <= l[l.length - 1].end + 0.35) ?? (t < (lines[0]?.[0].start ?? 0) ? lines[0] : null);
       const key = line ? line[0].start + ":" + line.findIndex((x) => t >= x.start && t < x.end + 0.05) : ""; if (key === shown) return; shown = key;
       cap.replaceChildren(...(line ?? []).flatMap((x, i) => { const on = t >= x.start && t < x.end + 0.05; const n = document.createElement(on ? "b" : "span"); n.textContent = x.text; return i ? [" ", n] : [n]; })); };
   } else {
     const win = box.querySelector(".win"), L = box.querySelector("[data-side=l]"), R = box.querySelector("[data-side=r]"), inset = box.querySelector(".inset"), g = inset.getContext("2d"); let track = [];
-    fetch("studio-demo/vertical-track.json?v=1789944526").then((r) => r.json()).then((t) => { track = t; paint(); }).catch(() => {});
+    fetch("studio-demo/vertical-track.json?v=1789944765").then((r) => r.json()).then((t) => { track = t; paint(); }).catch(() => {});
     paint = () => { if (!track.length) return; const t = v.currentTime; let i = track.findIndex((p) => p.t > t); if (i < 0) i = track.length - 1; const a = track[Math.max(0, i - 1)], b = track[i]; const cx = b.t > a.t ? lerp(a.cx, b.cx, Math.min(1, Math.max(0, (t - a.t) / (b.t - a.t)))) : a.cx;
       const W = v.videoWidth || 1280, H = v.videoHeight || 720, w = Math.min(1, (H * 9 / 16) / W), left = Math.min(1 - w, Math.max(0, cx - w / 2));
       win.style.left = left * 100 + "%"; win.style.width = w * 100 + "%"; L.style.left = "0"; L.style.width = left * 100 + "%"; R.style.left = (left + w) * 100 + "%"; R.style.right = "0";

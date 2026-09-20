@@ -343,9 +343,14 @@ test("Clip finder: it says AI, it says where it runs, and it says the same thing
   expect(html.match(/<meta name="description" content="([^"]*)"/)?.[1], "description").toMatch(/\bAI\b.*on your device/);
   expect(read(`${CF.dist}/llms.txt`), "llms.txt").toMatch(/^> AI /m);
   // The sentence under the main button is one sentence, written once, and the script hands back the same one.
+  // 2026-09-19: the page said one thing and the script, after a key was removed, wrote another. What matters is
+  // that they agree — not the shape of the expression that produces it, which used to be pinned and stopped the
+  // line being simplified when the free limit moved to #pricefine.
   const trust = html.match(/<p class="trust" id="trust">([^<]*)<\/p>/)?.[1];
   expect(trust, "trust line").toBeTruthy();
-  expect(code(read(CF.src[0]!)), "the script writes the page's sentence").toContain(`: "${trust}";`);
+  expect(code(read(CF.src[0]!)), "the script writes the page's sentence").toContain(`"${trust}"`);
+  // And it is not stated twice: the free and paid limits belong to #pricefine, which is the line that contrasts them.
+  expect(trust, "the trust line repeats a limit that #pricefine already states").not.toMatch(/30 minutes|four hours/);
 });
 
 test("Clip finder: the price and the limits agree wherever they are stated", () => {

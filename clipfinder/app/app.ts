@@ -607,7 +607,8 @@ function paintLicense(s: UnlockState) {
   $("tag").hidden = s.on;
   $("pricefine").hidden = s.on;
   $("paidpanel").hidden = !s.on;
-  $("trust").textContent = s.on ? "Up to four hours. English. Nothing leaves your device." : "Free up to 30 minutes. English. Nothing leaves your device.";
+  // The free and paid limits are stated by #pricefine two lines below; this line keeps what only it says.
+  $("trust").textContent = "English. Nothing leaves your device.";
   // The key in full, so it can be carried to another device. Masking it protected nothing: it is the person's
   // own key and it is in their email, and a masked key cannot be typed into a second device.
   $("paidkey").textContent = s.key;
