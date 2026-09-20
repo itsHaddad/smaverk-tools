@@ -124,19 +124,21 @@ for (const c of CLIPS) {
   const h = await p.evaluate(() => { const xs = window.__vert.track.map((q) => q.cx).sort((a, b) => a - b); return { mode: window.__vert.mode, x: window.__vert.holdX, mid: xs[xs.length >> 1], skipped: window.__vert.skippedScan }; });
   check(h.mode === "hold" && h.skipped === false && Math.abs(h.x - h.mid) < 0.02, `Hold still without a drag ends on the speaker (window ${h.x?.toFixed?.(2)}, speaker ${h.mid?.toFixed?.(2)})`); await snap("6-hold-no-drag"); }
 check(!errs.length, `page errors: ${errs.length ? errs.join(" || ") : "none"}`);
-await b.close(); server?.kill();
-console.log(`screenshots in ${out}`);
 // The unlock surface, measured in both states. The panel that holds the key is hidden at rest, so a rest-state
 // audit has never seen it; and #keyrow / #keylostline exist only while locked (design review, 2026-09-21).
-{
-  const locked = await unlockOverlaps(p);
-  check(!locked.bad.length, locked.bad.length ? `locked: two controls claim the same pixels — ${locked.bad.join("; ")}` : `locked: ${locked.count} unlock controls, none overlapping`);
-  await p.evaluate(() => window.__vert.setLicensed(true));
-  await p.waitForTimeout(200);
-  const paid = await unlockOverlaps(p);
-  check(!paid.bad.length, paid.bad.length ? `paid: two controls claim the same pixels — ${paid.bad.join("; ")}` : `paid: ${paid.count} unlock controls, none overlapping`);
-  await p.evaluate(() => window.__vert.setLicensed(false));
+try {
+    const locked = await unlockOverlaps(p);
+    check(!locked.bad.length, locked.bad.length ? `locked: two controls claim the same pixels — ${locked.bad.join("; ")}` : `locked: ${locked.count} unlock controls, none overlapping`);
+    await p.evaluate(() => window.__vert.setLicensed(true));
+    await p.waitForTimeout(200);
+    const paid = await unlockOverlaps(p);
+    check(!paid.bad.length, paid.bad.length ? `paid: two controls claim the same pixels — ${paid.bad.join("; ")}` : `paid: ${paid.count} unlock controls, none overlapping`);
+    await p.evaluate(() => window.__vert.setLicensed(false));
+} catch (e) {
+  check(false, `the unlock surface could not be measured: ${e.message.slice(0, 120)}`);
 }
 
+await b.close(); server?.kill();
+console.log(`screenshots in ${out}`);
 if (fails.length) { console.error(`UI FAIL (${fails.length})`); process.exit(1); }
 console.log("ui ok");
