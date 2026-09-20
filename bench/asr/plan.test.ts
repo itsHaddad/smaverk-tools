@@ -16,7 +16,7 @@ const plan = async (args: string) => {
 
 describe("plan", () => {
   test("covers a long recording end to end when given its length", async () => {
-    const { jobs } = await plan("--refs XyZ:226 --model tiny --slice-minutes 30 --budget-minutes 999");
+    const { jobs } = await plan("--refs XyZ=https://x.test/a.mp3@226 --model tiny --slice-minutes 30 --budget-minutes 999");
     expect(jobs.length).toBe(8);
     expect(jobs[0]!.from).toBe(0);
     expect(jobs[jobs.length - 1]!.to).toBe(226 * 60);
@@ -25,24 +25,36 @@ describe("plan", () => {
   });
 
   test("falls back to an assumed length for a bare id", async () => {
-    const { jobs } = await plan("--refs abc --model tiny --slice-minutes 30 --budget-minutes 999");
+    const { jobs } = await plan("--refs abc=https://x.test/a.mp3 --model tiny --slice-minutes 30 --budget-minutes 999");
     expect(jobs.every((j) => j.ref === "abc")).toBe(true);
     expect(jobs[jobs.length - 1]!.to).toBe(3600);
   });
 
   test("refuses a run that would cost more than its budget, rather than trimming it", async () => {
-    const r = await plan("--refs a:300,b:300 --model small --slice-minutes 30 --budget-minutes 60");
+    const r = await plan("--refs a=https://x.test/a.mp3@300,b=https://x.test/b.mp3@300 --model small --slice-minutes 30 --budget-minutes 60");
     expect(r.ok).toBe(false);
     expect(r.stderr).toMatch(/budget of 60/);
     expect(r.jobs).toHaveLength(0);
   });
 
   test("rejects an unknown model and a nonsense length instead of guessing", async () => {
-    expect((await plan("--refs a --model enormous --budget-minutes 999")).ok).toBe(false);
-    expect((await plan("--refs a:0 --model tiny --budget-minutes 999")).ok).toBe(false);
+    expect((await plan("--refs a=https://x.test/a.mp3 --model enormous --budget-minutes 999")).ok).toBe(false);
+    expect((await plan("--refs a=https://x.test/a.mp3@0 --model tiny --budget-minutes 999")).ok).toBe(false);
   });
 
   test("needs at least one reference", async () => {
     expect((await plan("--model tiny --budget-minutes 999")).ok).toBe(false);
+  });
+
+  test("refuses anything that is not an https URL, so no one reaches for a YouTube id again", async () => {
+    expect((await plan("--refs abc --model tiny --budget-minutes 999")).ok).toBe(false);
+    expect((await plan("--refs a=http://x.test/a.mp3 --model tiny --budget-minutes 999")).ok).toBe(false);
+    expect((await plan("--refs 'a b=https://x.test/a.mp3' --model tiny --budget-minutes 999")).ok).toBe(false);
+  });
+
+  test("carries the URL into every shard, since the job fetches it", async () => {
+    const { jobs } = await plan("--refs k=https://x.test/k.mp3@60 --model tiny --slice-minutes 30 --budget-minutes 999");
+    expect(jobs).toHaveLength(2);
+    expect(jobs.every((j: any) => j.url === "https://x.test/k.mp3")).toBe(true);
   });
 });

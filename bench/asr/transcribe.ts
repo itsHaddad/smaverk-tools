@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 // Transcribe one recording, or one slice of one, with a browser-sized speech model.
 //
-//   bun bench/asr/transcribe.ts --ref <youtube-id> --model tiny --threads 2 --from 0 --to 3600
+//   bun bench/asr/transcribe.ts --ref <name> --model tiny --threads 2 --from 0 --to 3600
 //
 // Published word-error rates come from short read speech. A tool that transcribes an hour-long talk in
 // a browser tab needs numbers from hour-long talks, so this measures real-time factor, peak memory and
@@ -64,7 +64,7 @@ if (import.meta.main) {
   const overlapS = Number(arg("overlap", "20"));
   const timestamps = arg("timestamps", "word")! as "word" | "segment";
   if (!ref || !MODELS[modelKey]) {
-    console.error(`usage: --ref <youtube-id> --model <${Object.keys(MODELS).join("|")}> [--threads 2] [--timestamps word|segment]`);
+    console.error(`usage: --ref <name> --model <${Object.keys(MODELS).join("|")}> [--threads 2] [--timestamps word|segment]`);
     process.exit(2);
   }
   if (timestamps === "word" && !WORD_TIMING.has(modelKey)) {

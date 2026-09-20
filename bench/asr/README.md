@@ -5,11 +5,17 @@ and the transcript itself. Built because published word-error numbers are measur
 speech, and a tool that transcribes an hour-long talk in a browser tab needs numbers from hour-long
 talks on ordinary hardware.
 
-It transcribes public audio, and that is all it does. Give it a list of references, a model and a time
-slice; it returns transcripts as artifacts. It scores nothing and decides nothing.
+It transcribes public audio, and that is all it does. Give it a list of `name=url` pairs, a model and a
+time slice; it returns transcripts as artifacts. It scores nothing and decides nothing.
+
+Audio is fetched over plain HTTPS from the publisher's own file. Fetching by YouTube id was tried and
+cannot work here: YouTube answers datacentre ranges with *"Sign in to confirm you're not a bot"*, so
+every shard failed. The answer to that is the publisher's own file, not a session cookie in a public
+repository, so no downloader ships in this directory.
 
 ```
-bun bench/asr/transcribe.ts --ref <youtube-id> --model tiny --from 0 --to 3600
+bench/asr/fetch-audio.sh 'ep1=https://example.com/episode.mp3'
+bun bench/asr/transcribe.ts --ref ep1 --model tiny --from 0 --to 3600
 bun bench/asr/embed.ts      --in transcript.json --model minilm
 ```
 

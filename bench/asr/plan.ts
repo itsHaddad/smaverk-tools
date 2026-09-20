@@ -25,18 +25,30 @@ const arg = (n: string, d: string) => {
   return i > 0 ? process.argv[i + 1]! : d;
 };
 
-// A reference is either `id` or `id:minutes`. The length matters: without it every recording is
-// assumed to be the same size, and a three-hour podcast planned as a one-hour one is SILENTLY
-// TRUNCATED to its first hour — transcripts that look fine and are missing two thirds of the show.
+// A reference is `name=url` and optionally `@minutes`, comma separated. The URL is the publisher's
+// own audio file: YouTube refuses datacentre ranges outright, so fetching by video id cannot work on
+// a runner and is not offered here at all.
+//
+// The length matters. Without it every recording is assumed to be the same size, and a three-hour
+// podcast planned as a one-hour one is SILENTLY TRUNCATED to its first hour — a transcript that looks
+// ordinary and is missing two thirds of the show.
 const refs = arg("refs", "")
   .split(",")
   .map((s) => s.trim())
   .filter(Boolean)
-  .map((s) => {
-    const [id, mins] = s.split(":");
-    return { id: id!.trim(), minutes: mins ? Number(mins) : null };
+  .map((spec) => {
+    const at = spec.lastIndexOf("@");
+    const head = at > 0 ? spec.slice(0, at) : spec;
+    const minutes = at > 0 ? Number(spec.slice(at + 1)) : null;
+    const eq = head.indexOf("=");
+    if (eq <= 0) throw new Error(`reference "${spec}" is not name=url[@minutes]`);
+    const name = head.slice(0, eq);
+    const url = head.slice(eq + 1);
+    if (!/^[A-Za-z0-9._-]+$/.test(name)) throw new Error(`name "${name}" becomes a filename; keep it to letters, digits, dot, dash, underscore`);
+    if (!url.startsWith("https://")) throw new Error(`reference "${name}" must give an https URL`);
+    if (minutes !== null && !(minutes > 0)) throw new Error(`reference "${name}" has a non-positive length`);
+    return { id: name, url, minutes };
   });
-if (refs.some((r) => r.minutes !== null && !(r.minutes! > 0))) throw new Error("a reference has a non-positive length");
 const model = arg("model", "tiny");
 const sliceMin = Math.max(1, Number(arg("slice-minutes", "30")));
 const budgetMin = Number(arg("budget-minutes", "240"));
@@ -48,11 +60,11 @@ if (!(model in SLOWDOWN)) throw new Error(`unknown model ${model}; known: ${Obje
 const ASSUMED_MIN = Number(arg("assumed-minutes", "60"));
 const perJobMin = sliceMin * TINY_REAL_TIME * SLOWDOWN[model]! + OVERHEAD_MIN;
 
-const include: { ref: string; from: number; to: number }[] = [];
-for (const { id, minutes } of refs) {
+const include: { ref: string; url: string; from: number; to: number }[] = [];
+for (const { id, url, minutes } of refs) {
   const lengthS = (minutes ?? ASSUMED_MIN) * 60;
   for (let from = 0; from < lengthS; from += sliceMin * 60)
-    include.push({ ref: id, from, to: Math.min(lengthS, from + sliceMin * 60) });
+    include.push({ ref: id, url, from, to: Math.min(lengthS, from + sliceMin * 60) });
 }
 
 const total = include.length * perJobMin;
