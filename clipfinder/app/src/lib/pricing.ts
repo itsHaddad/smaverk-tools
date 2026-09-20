@@ -34,7 +34,7 @@ export function priceCopy(price: string): PriceCopy {
     per: "once",
     buy: `Buy once — ${price}`,
     fine: "Free: 30 minutes, every moment shown. Paid: four hours, and every export.",
-    trust: "Free up to 30 minutes. English. Nothing leaves your device.",
+    trust: "Free up to 30 minutes. English. Your recording stays on your device.",
   };
 }
 
@@ -44,7 +44,7 @@ export const TRIAL_COPY: Omit<PriceCopy, "buy"> = {
   amount: "Free",
   per: "while it is new",
   fine: "Everything is open while this is new: recordings up to four hours, and every export.",
-  trust: "Free while it is new. English. Nothing leaves your device.",
+  trust: "Free while it is new. English. Your recording stays on your device.",
 };
 
 /**

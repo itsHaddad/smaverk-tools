@@ -336,7 +336,10 @@ function play(i: number) {
     audio.play().catch(() => say("This browser would not play the sound. Tap the moment again."));
   };
   if (audio.readyState >= 1) go();
-  else audio.addEventListener("loadedmetadata", go, { once: true });
+  else {
+    audio.addEventListener("loadedmetadata", go, { once: true });
+    audio.load(); // preload="none": without this the metadata event it waits for is one its own inaction prevents
+  }
 }
 
 audio.addEventListener("timeupdate", () => {
