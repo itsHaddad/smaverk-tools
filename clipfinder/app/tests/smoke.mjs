@@ -14,7 +14,13 @@ const fail = (m) => {
 };
 try {
   const b = await chromium.launch({ args: ["--no-sandbox"] });
-  const p = await b.newPage({ viewport: { width: 390, height: 844 } });
+  const ctx = await b.newContext({ viewport: { width: 390, height: 844 } });
+  // The analytics beacon posts to another host; from localhost the browser refuses the preflight and
+  // writes a console error about our own page that is not about our own page. The script itself loads
+  // untouched — it carries an integrity check — and only the report it sends is swallowed, which is what
+  // Qa.ts does and what keeps review rounds out of the visit numbers.
+  await ctx.route(/cloudflareinsights\.com/, (r) => (r.request().method() === "GET" ? r.continue() : r.fulfill({ status: 204, body: "" })));
+  const p = await ctx.newPage();
   const errs = [];
   p.on("pageerror", (e) => errs.push(e.message));
   p.on("console", (m) => { if (m.type() === "error") errs.push(`console: ${m.text().slice(0, 160)}`); });
@@ -63,7 +69,8 @@ try {
   if (st.map.h < 120 || st.map.w < 120) fail(`the recording map is ${st.map.w}x${st.map.h}, too small to count as the picture`);
   if (!st.reasons) fail("a moment came with no reason");
   if (!st.ordered) fail("a moment ends before it starts");
-  console.log(`  rest: ${st.words} words · ${st.moments} moments · main button ${st.below <= 0 ? "on" : `${st.below} px below`} the first screen`);
+  if (st.below > 0) fail(`the main button ends ${st.below} px below the first phone screen`);
+  console.log(`  rest: ${st.words} words · ${st.moments} moments · main button ${st.below <= 0 ? `${-st.below} px above` : `${st.below} px below`} the fold`);
 
   const html = await p.content();
   if (!/src="app\.js\?v=\d+"/.test(html)) fail("app.js is not versioned");
@@ -84,7 +91,9 @@ try {
   }
 
   // Dark mode is a state, not a nicety: it has to survive the same checks.
-  const d = await b.newPage({ viewport: { width: 390, height: 844 }, colorScheme: "dark" });
+  const dctx = await b.newContext({ viewport: { width: 390, height: 844 }, colorScheme: "dark" });
+  await dctx.route(/cloudflareinsights\.com/, (r) => (r.request().method() === "GET" ? r.continue() : r.fulfill({ status: 204, body: "" })));
+  const d = await dctx.newPage();
   const derrs = [];
   d.on("pageerror", (e) => derrs.push(e.message));
   await d.goto(`http://localhost:${port}/`, { waitUntil: "networkidle" });
