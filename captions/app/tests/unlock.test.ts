@@ -147,6 +147,15 @@ test("a checkout that never grants a key says so instead of failing silently", a
   expect(last().tone).toBe("err");
 });
 
+test("a link carrying the wrong tool's key says which tool it does open", async () => {
+  href = "https://captions.smaverk.com/?key=VRT-1234";
+  answers = [granted(["vertical"])];
+  const { u, last } = make("captions");
+  await u.start();
+  expect(last().on).toBe(false);
+  expect(last().text, "the specific reason must survive, not be replaced by a vaguer one").toContain("opens Vertical, not Captions");
+});
+
 test("a key handed over in a link unlocks the tool it was sent to", async () => {
   href = "https://captions.smaverk.com/?key=SMV-BUNDLE";
   answers = [granted(["captions", "vertical"])];

@@ -123,8 +123,9 @@ export class Unlock {
       // A link from another Småverk tool that this key also opens. It is the person's own key, and it leaves the
       // address bar immediately below.
       clean();
-      const ok = await this.apply(handed, "pasted");
-      if (!ok) this.set({ text: "That key does not open this tool.", tone: "err" });
+      // apply() writes the reason when it knows one — which tool the key DOES open, or that it has run out. Only
+      // say something vaguer when it had nothing to say.
+      if (!(await this.apply(handed, "pasted")) && this.s.tone !== "err") this.set({ text: "That key does not open this tool.", tone: "err" });
       return;
     }
 

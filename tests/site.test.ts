@@ -485,6 +485,8 @@ test("the key box is on the page, never behind a fold-out, and the key is readab
     expect(html, `${t.name}: which points at Polar's own portal`).toContain("polar.sh/smaverk/portal");
     // A bundle key says what else it opens.
     expect(html, `${t.name}: room to name the other tools a key opens`).toContain('id="keyalso"');
+    // The clip finder's state matrix failed on a 40 px Copy button, 2026-09-20. 44 px is the floor everywhere.
+    expect(html, `${t.name}: the Copy button meets the 44 px tap target`).toContain(".keyline .btn{width:auto;min-height:44px");
   }
 });
 
