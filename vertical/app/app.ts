@@ -5,7 +5,7 @@ import { outputBase, fitName } from "./src/lib/naming";
 import { loadDetector, scanClip, delegate } from "./src/detect";
 import { fastSave, canFastSave, savedFps } from "./src/fastsave";
 import { attachSeek } from "./src/seek";
-import { Unlock, type UnlockState } from "./src/lib/unlock";
+import { Unlock, SAMPLE_KEY, type UnlockState } from "./src/lib/unlock";
 type State = "sample" | "loaded" | "tracking" | "ready" | "exporting" | "exported"; type Mode = "follow" | "hold";
 
 // Sample files are fetched under the page's version (app.js?v=…), so a replaced sample reaches visitors at once: Cloudflare's edge
@@ -262,7 +262,7 @@ const loadLicense = () => unlock.start();
 // ---------- for automations and agents ----------
 // For rigs that need the paid state without a rail: paints it, exactly as a real key would. It does not store a key,
 // so a reload goes back to whatever the device actually holds.
-dbg.setLicensed = (on: boolean) => paintLicense({ on, key: on ? "TEST-KEY" : "", tools: on ? ["vertical"] : [], expires: null, text: on ? "Paid version on this device." : "Already paid? Paste your key here.", tone: on ? "ok" : "", became: "" });
+dbg.setLicensed = (on: boolean) => paintLicense({ on, key: on ? SAMPLE_KEY.vertical : "", tools: on ? ["vertical"] : [], expires: null, text: on ? "Paid version on this device." : "Already paid? Paste your key here.", tone: on ? "ok" : "", became: "" });
 dbg.outputBase = outputBase;
 dbg.centreAt = (t: number) => centre(t); // where the window is at time t, the same answer the preview and the save use (the gate asks this)
 let probeTs = 0;

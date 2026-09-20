@@ -6,7 +6,7 @@ import { outputBase, fitName } from "./src/lib/naming";
 import { toMono16k, estimateFactor } from "./src/lib/audio";
 import { fastSave, canFastSave, savedFps } from "./src/fastsave";
 import { attachSeek } from "./src/seek";
-import { Unlock, type UnlockState } from "./src/lib/unlock";
+import { Unlock, SAMPLE_KEY, type UnlockState } from "./src/lib/unlock";
 type Style = "bar" | "karaoke" | "big";
 type State = "sample" | "loaded" | "working" | "captioned" | "exporting" | "exported";
 
@@ -418,7 +418,7 @@ const loadLicense = () => unlock.start();
 // ---------- for automations ----------
 // For rigs that need the paid state without a rail: paints it, exactly as a real key would. It does not store a key,
 // so a reload goes back to whatever the device actually holds.
-dbg.setLicensed = (on: boolean) => paintLicense({ on, key: on ? "TEST-KEY" : "", tools: on ? ["captions"] : [], expires: null, text: on ? "Paid version on this device." : "Already paid? Paste your key here.", tone: on ? "ok" : "", became: "" });
+dbg.setLicensed = (on: boolean) => paintLicense({ on, key: on ? SAMPLE_KEY.captions : "", tools: on ? ["captions"] : [], expires: null, text: on ? "Paid version on this device." : "Already paid? Paste your key here.", tone: on ? "ok" : "", became: "" });
 (window as any).captions = {
   load: (f: File) => load(f), run, export: exportVideo, style: pickStyle,
   get words() { return words; }, get state() { return state; },

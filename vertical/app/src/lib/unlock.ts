@@ -30,6 +30,20 @@ const TOOL_HOST: Record<Tool, string> = { captions: "https://captions.smaverk.co
  *  issues a dated key today; this is what a subscription would land on. */
 const GRACE_DAYS = 7;
 
+/**
+ * A key of the shape and length Polar actually issues, for rigs that need the paid state without a rail.
+ *
+ * It lives here, in the file all three tools carry byte for byte, for the reason the whole module does: if one
+ * tool can be audited in the paid state and another cannot, that difference finds its way back in. **Length is
+ * the point.** The design review's overlapping tap targets only reproduced with a full-length key, because that
+ * is what wraps; an eight-character stub would have shown a tidy panel and certified a state nobody had seen.
+ */
+export const SAMPLE_KEY: Record<Tool, string> = {
+  captions: "SMV-60B88CE3-46C6-4FFC-83CE-AFDD6BA1A5BE",
+  vertical: "VRT-564BA4A7-F187-49F7-AF0E-B53A520F8173",
+  clipfinder: "SMVCF-7A1D9E02-4C88-4B3F-9E1A-D06F2B5C83",
+};
+
 export type UnlockState = {
   /** Is the paid version on for THIS tool. */
   on: boolean;

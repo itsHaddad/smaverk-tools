@@ -6,7 +6,7 @@
 
 import { FORMATS, type ExportMedia, type ExportMoment, type Format } from "./src/lib/exports";
 import { clock, spoken, displayName, outputName, timelineName } from "./src/lib/naming";
-import { Unlock, type UnlockState } from "./src/lib/unlock";
+import { Unlock, SAMPLE_KEY, type UnlockState } from "./src/lib/unlock";
 
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 const SANDBOX = new URL(location.href).searchParams.get("rail") === "sandbox";
@@ -655,7 +655,7 @@ $("key").addEventListener("keydown", (e) => {
 // key, so a reload goes back to whatever the device actually holds. Captions and Vertical have had this; the
 // clip finder did not, and the phone UI gate went red reaching for it (2026-09-21).
 dbg.setLicensed = (on: boolean) =>
-  paintLicense({ on, key: on ? "TEST-KEY" : "", tools: on ? ["clipfinder"] : [], expires: null, text: on ? "Paid version on this device." : "Already paid? Paste your key here.", tone: on ? "ok" : "", became: "" });
+  paintLicense({ on, key: on ? SAMPLE_KEY.clipfinder : "", tools: on ? ["clipfinder"] : [], expires: null, text: on ? "Paid version on this device." : "Already paid? Paste your key here.", tone: on ? "ok" : "", became: "" });
 
 void unlock.start();
 // ---------------------------------------------------------------------------------------------

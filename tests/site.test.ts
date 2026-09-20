@@ -452,6 +452,15 @@ test("unlocking cannot diverge: one unlock module, byte for byte, in every tool"
   for (const p of UNLOCK_SRC.slice(1)) expect(read(p), `${p} differs from ${UNLOCK_SRC[0]}`).toBe(first);
   // The mechanism lives there and nowhere else: no tool may grow its own key check again.
   expect(first, "the module asks the worker what a key opens").toContain("/entitlements");
+  // The audit fixture lives in the shared file too, at the length Polar issues: the design review's overlapping
+  // tap targets only reproduced with a full-length key, because that is what wraps.
+  // Scoped to the SAMPLE_KEY block: several other maps in this file are keyed by tool name too.
+  const sample = first.slice(first.indexOf("export const SAMPLE_KEY"));
+  for (const tool of TOOLS.map((t) => t.name)) {
+    const m = sample.slice(0, sample.indexOf("};")).match(new RegExp(`${tool}: "([^"]+)"`));
+    expect(m?.[1], `SAMPLE_KEY.${tool}`).toBeTruthy();
+    expect(m![1]!.length, `SAMPLE_KEY.${tool} is a stub, not a real-length key`).toBeGreaterThanOrEqual(40);
+  }
   expect(first, "the checkout return is handled there").toContain("checkout_id");
   expect(first, "the other tab's key is picked up there").toMatch(/addEventListener\("storage"/);
   for (const t of TOOLS) {
@@ -460,6 +469,10 @@ test("unlocking cannot diverge: one unlock module, byte for byte, in every tool"
     // A page may know the address of its own checkout; what it may no longer do is check a key itself.
     expect(app, `${t.name}: no page keeps its own key-check`).not.toContain("license-keys");
     expect(app, `${t.name}: no page asks Polar about a key`).not.toContain("customer-portal");
+    // Every tool can be driven into the paid state, or its paid panel cannot be audited — which is how that
+    // panel shipped unaudited in the first place. The clip finder lacked this and the phone UI gate found it.
+    expect(app, `${t.name}: no way to force the paid state for an audit`).toMatch(/dbg\.setLicensed = /);
+    expect(app, `${t.name}: the audit fixture is a real-length key, not a stub`).toContain(`SAMPLE_KEY.${t.name}`);
   }
 });
 

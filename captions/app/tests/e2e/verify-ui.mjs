@@ -120,19 +120,23 @@ for (const c of CLIPS) {
 check(!errs.length, `page errors: ${errs.length ? errs.join(" || ") : "none"}`);
 
 // The paid panel is the one surface no state above reaches: at rest the page is locked and #paidpanel is hidden,
-// so it had shipped without a single tap-target pass. Forced here with a real-length key, because key length is
-// what the layout has to survive (design review, 2026-09-21).
-try {
-  await p.evaluate(() => {
-    window.__cap.setLicensed(true);
-    const k = document.getElementById("paidkey");
-    if (k) k.textContent = "VRT-564BA4A7-F187-49F7-AF0E-B53A520F8173";
-  });
-  await p.waitForTimeout(250);
-  await snap("9-paid");
-  await p.evaluate(() => window.__cap.setLicensed(false));
-} catch (e) {
-  check(false, `the paid panel could not be measured: ${String(e.message).slice(0, 110)}`);
+// so it had shipped without a single tap-target pass. The key comes from SAMPLE_KEY in the shared unlock module,
+// at the length Polar actually issues — the overlapping tap targets only reproduced with a full-length key,
+// because that is what wraps, and a short stub would have shown a tidy panel and certified a state nobody saw.
+if (!(await p.evaluate(() => typeof window.__cap?.setLicensed === "function"))) {
+  // Say what is wrong, not "setLicensed is not a function" from inside an evaluate. An audit that cannot reach a
+  // state must fail loudly and name the reason: silently certifying a state it never saw is how the unlock panel
+  // shipped unaudited in the first place.
+  check(false, "this tool exposes no way to force the paid state (window.__cap.setLicensed), so the paid panel cannot be audited");
+} else {
+  try {
+    await p.evaluate(() => window.__cap.setLicensed(true));
+    await p.waitForTimeout(250);
+    await snap("9-paid");
+    await p.evaluate(() => window.__cap.setLicensed(false));
+  } catch (e) {
+    check(false, `the paid panel could not be measured: ${String(e.message).slice(0, 110)}`);
+  }
 }
 
 // What the guard saw, as data. A gate that fails with only screenshots costs whoever picks it up more than it

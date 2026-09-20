@@ -40,6 +40,31 @@ why. Everything the person's file touches runs in their browser.
 - Scripts are versioned per deploy (`app.js?v=`, `worker.js?v=`). Without the stamp, phones run stale code.
 - Production branch is `main`. `deploy.sh` is the only path.
 
+## How to write a test after a bug
+
+Two rules, both learned the expensive way on this branch.
+
+**Assert the behaviour, never the syntax that produces it.** A 2026-09-19 bug had the page saying one thing
+about the free limit while the script, after a key was removed, wrote another. The test written for it asserted
+that `app.ts` contained the sentence *as a ternary* — `: "<the page's sentence>";`. That pinned an
+implementation, not a promise: when the free limit moved to `#pricefine` and the sentence became a constant, a
+correct simplification failed a green test, and the test taught nobody anything in the meantime. What the bug
+was about is that the page and the script agree, so that is what is checked now, plus the thing that actually
+went wrong — that the line does not restate a limit another line already owns.
+
+**Check the relationship, not the parts.** `Qa.ts` reports every control's own size and a 44 px minimum, and it
+reported zero blockers while two links on consecutive lines each claimed a 44 px tap box, overlapped by
+123 x 22 px, and the later one won the hit test — so on a phone, aiming at the link that recovered a paid key
+destroyed it instead. No per-control check can see that, because every control was individually fine. The guard
+that catches it (`tests/e2e/verify-ui.mjs`, in all three tools) measures pairs of hit rectangles, in every state
+the matrix visits plus a forced paid state, and writes `out/ui/unlock-overlaps.json` so a failure says what it
+saw. On its first real run it found the same defect in the shared footer and in the stacked link lists — live,
+on tools people had already paid for, past three cold-user rounds and five design reviews.
+
+**And audit the states a customer can be in, not the state the page loads in.** The paid panel is `hidden` at
+rest, so every at-rest audit had skipped it entirely: the panel holding the key, the Copy button and the
+destructive control had shipped without one tap-target pass at any width in any theme.
+
 ## What decides the list, and what it cost to find out
 
 Three numbers, each measured on its own against 169 clips that the people who made those recordings
