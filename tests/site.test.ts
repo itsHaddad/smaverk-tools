@@ -467,6 +467,9 @@ test("a key already on the device survives our own downtime", () => {
   // person on a phone has to retype. The recovery link under the box is the tappable answer.
   for (const m of src.matchAll(/(?:this\.set\(\{[\s\S]{0,80}?|return no\()(["`])([^"`]{20,})\1/g))
     expect(m[2], "a status sentence hands out a URL to retype").not.toMatch(/https?:\/\//);
+  // The person who has just paid is told what they bought, in their own tool's words — "five minutes" for two of
+  // them and "four hours" for the third, so the sentence is composed from paidLine and never hard-coded.
+  expect(src, "the thank-you states what was bought").toContain("Thank you — nothing to paste. ${this.cfg.paidLine} Your key is above.");
   expect(code(src), "a stored key turns the paid version on before the check is made").toMatch(/this\.set\(\{ on: true, key: saved[\s\S]{0,400}?await this\.ask\(saved\)/);
   expect(code(src), "and an unreachable check leaves it on").toMatch(/if \(answer === "unreachable"\) return;/);
 });
@@ -488,6 +491,9 @@ test("the key box is on the page, never behind a fold-out, and the key is readab
     // #paidpanel, which is hidden from the one person who needs it — someone locked out on a second device.
     expect(html, `${t.name}: a way to get the key again`).toContain('id="keylost"');
     expect(html, `${t.name}: which points at Polar's own portal`).toContain("polar.sh/smaverk/portal");
+    // Polar's portal asks for the address the purchase was made with, so the page has to say which email, or
+    // someone who paid from a second address stalls there with nothing to go on.
+    expect(text(html).replace(/\s+/g, " "), `${t.name}: the recovery line names which email`).toContain("Lost your key? Get it again with the email you paid with.");
     const panel = html.slice(html.indexOf('id="paidpanel"'), html.indexOf("</div>", html.indexOf('id="paidpanel"')));
     expect(panel, `${t.name}: the recovery link is hidden inside the paid panel`).not.toContain('id="keylost"');
     expect(html.indexOf('id="keylost"'), `${t.name}: the recovery link sits with the key box`).toBeGreaterThan(html.indexOf('id="keystatus"'));

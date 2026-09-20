@@ -277,7 +277,7 @@ export class Unlock {
    * panel printed two lines above it. What someone who has just paid needs to know is that they are done.
    */
   private thanks(became: UnlockState["became"], expires: string | null): string {
-    if (became === "checkout") return "Thank you. Nothing else to do — your key is above.";
+    if (became === "checkout") return `Thank you — nothing to paste. ${this.cfg.paidLine} Your key is above.`;
     return this.onText(expires);
   }
 

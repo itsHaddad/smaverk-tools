@@ -3,7 +3,7 @@
 // audited with the Missions UI audit at each state. Screenshots in tests/e2e/out/ui/. Usage: bun tests/e2e/verify-ui.mjs [url] [--share]
 import { chromium } from "playwright";
 import { spawn, execFileSync } from "node:child_process";
-import { mkdirSync, existsSync } from "node:fs";
+import { mkdirSync, existsSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 const skillsDir = [process.env.PAI_DIR, process.env.PAI_DIR && process.env.PAI_DIR + "/..", process.env.HOME + "/.claude"].filter(Boolean).map((d) => d + "/skills/Missions/Tools/uiaudit.mjs").find((f) => existsSync(f));
 if (!skillsDir) { console.error("uiaudit.mjs not found"); process.exit(1); }
@@ -19,26 +19,49 @@ const CLIPS = [
 ];
 for (const c of CLIPS) { const f = dir + "/" + c.name; if (!existsSync(f)) execFileSync("ffmpeg", ["-v", "error", "-y", "-i", src, "-t", "8", ...(c.vf ? ["-vf", c.vf, "-c:v", "libx264", "-preset", "veryfast", "-crf", "28", "-c:a", "copy"] : ["-c", "copy"]), f]); }
 const COLUMNS = [".stage", "#action", ".chips", ".steps", ".result", "#status", ".caplabel", "#reset", "#trust"];
-// Two controls must never claim the same pixels. Design review, 2026-09-21: "Lost it?" and "Remove the key"
-// were inline links on consecutive 22 px lines, each given a 44 px tap box by the page's own rule; the boxes
-// overlapped by 123 x 22 px and the later one won the hit test, so aiming at the link that RECOVERS a key
-// removed it instead. Measuring each control's own size cannot see that — only overlap can. Inputs count: the
-// same rule expanded the recovery link 13 px up into the "Paste your key" field above it.
-async function unlockOverlaps(page) {
-  return await page.evaluate(() => {
-    const sel = "#paidpanel a, #paidpanel button, #paidpanel input, #keyrow a, #keyrow button, #keyrow input, #keylostline a, #keystatus a";
-    const shown = [...document.querySelectorAll(sel)].filter((el) => el.offsetParent);
-    const boxes = shown.map((el) => ({ id: el.id || el.textContent.trim().slice(0, 20), r: el.getBoundingClientRect() }));
-    const bad = [];
-    for (let i = 0; i < boxes.length; i++)
-      for (let j = i + 1; j < boxes.length; j++) {
-        const a = boxes[i].r, b = boxes[j].r;
-        const w = Math.min(a.right, b.right) - Math.max(a.left, b.left);
-        const h = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
-        if (w > 0.5 && h > 0.5) bad.push(`${boxes[i].id}+${boxes[j].id} share ${Math.round(w)}x${Math.round(h)} px`);
-      }
-    return { count: shown.length, bad };
-  });
+
+// Two controls must never claim the same pixels, in any state, at any width.
+//
+// Design review, 2026-09-21: "Lost it?" and "Remove the key from this device" were inline links on consecutive
+// 22 px lines, each given a 44 px tap box by the page's own rule. The boxes overlapped by 123 x 22 px and the
+// later one won the hit test, so aiming at the link that RECOVERS a key removed it instead. Measuring each
+// control's own size cannot see that — only overlap can.
+//
+// The first version of this check could not have caught its own sibling (N1: the bottom 3 px of the key input
+// belonged to the recovery link). It had no `input` in its selector, it ran only in the paid state where the
+// locked controls are hidden, and it lived in one tool of three. So: every interactive thing, every state the
+// matrix already visits, and the same function in all three tools.
+const HITTABLE = "a[href], button, input, select, textarea, [onclick], [role=button], summary";
+const overlaps = [];
+async function unlockCheck(page, state, check) {
+  let r;
+  try {
+    r = await page.evaluate((sel) => {
+      const shown = [...document.querySelectorAll(sel)].filter((el) => {
+        if (!el.offsetParent && getComputedStyle(el).position !== "fixed") return false;
+        const b = el.getBoundingClientRect();
+        return b.width > 0 && b.height > 0;
+      });
+      const boxes = shown.map((el) => ({ id: el.id || (el.textContent || el.value || el.placeholder || el.tagName).trim().slice(0, 24), r: el.getBoundingClientRect() }));
+      const bad = [];
+      for (let i = 0; i < boxes.length; i++)
+        for (let j = i + 1; j < boxes.length; j++) {
+          const a = boxes[i].r, b = boxes[j].r;
+          // A control legitimately inside another (a button in a label, a summary in details) is not a clash.
+          if ((a.left >= b.left && a.right <= b.right && a.top >= b.top && a.bottom <= b.bottom) || (b.left >= a.left && b.right <= a.right && b.top >= a.top && b.bottom <= a.bottom)) continue;
+          const w = Math.min(a.right, b.right) - Math.max(a.left, b.left);
+          const h = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+          if (w > 0.5 && h > 0.5)
+            bad.push({ a: boxes[i].id, b: boxes[j].id, w: Math.round(w), h: Math.round(h), px: Math.round(w * h), ar: [a.x, a.y, a.width, a.height].map(Math.round), br: [b.x, b.y, b.width, b.height].map(Math.round) });
+        }
+      return { count: shown.length, bad, width: innerWidth };
+    }, HITTABLE);
+  } catch (e) {
+    check(false, `${state}: the hit rectangles could not be measured (${String(e.message).slice(0, 90)})`);
+    return;
+  }
+  overlaps.push({ state, width: r.width, controls: r.count, bad: r.bad });
+  if (r.bad.length) check(false, `${state} @${r.width}px: ${r.bad.map((o) => `${o.a} and ${o.b} share ${o.w}x${o.h} px`).join("; ")}`);
 }
 
 const fails = []; const check = (ok, msg) => { console.log((ok ? "  ok   " : "  FAIL ") + msg); if (!ok) fails.push(msg); };
@@ -49,7 +72,7 @@ const p = await ctx.newPage();
 const errs = []; p.on("pageerror", (e) => errs.push("pageerror: " + e.message.slice(0, 160)));
 p.on("console", (m) => { if (m.type() === "error" && !/cloudflareinsights|Failed to load resource|TensorFlow Lite|XNNPACK/.test(m.text())) errs.push("console: " + m.text().slice(0, 160)); });
 let baseFont = null;
-const snap = async (tag) => { const f = await auditPage(p, COLUMNS); baseFont ??= f.font; await p.screenshot({ path: `${out}/${tag}.png` }); judge(f, tag, check, { baseFont, ignoreWidths: [".stage"] });
+const snap = async (tag) => { await unlockCheck(p, tag, check); const f = await auditPage(p, COLUMNS); baseFont ??= f.font; await p.screenshot({ path: `${out}/${tag}.png` }); judge(f, tag, check, { baseFont, ignoreWidths: [".stage"] });
   // Design reviews 2 and 3 (B2): the sound control covered the speaker and the result inset. Controls stay off the picture.
   const over = await p.evaluate(() => { const st = document.getElementById("stage").getBoundingClientRect(); const hit = (e) => { const r = e.getBoundingClientRect(); return r.width > 0 && r.left < st.right && r.right > st.left && r.top < st.bottom && r.bottom > st.top; };
     const so = document.getElementById("sound"), sr = so.getBoundingClientRect(), win = window.__vert.win; const wl = win ? st.left + win.x * st.width : 0, wr = win ? wl + win.w * st.width : 0;
@@ -124,18 +147,29 @@ for (const c of CLIPS) {
   const h = await p.evaluate(() => { const xs = window.__vert.track.map((q) => q.cx).sort((a, b) => a - b); return { mode: window.__vert.mode, x: window.__vert.holdX, mid: xs[xs.length >> 1], skipped: window.__vert.skippedScan }; });
   check(h.mode === "hold" && h.skipped === false && Math.abs(h.x - h.mid) < 0.02, `Hold still without a drag ends on the speaker (window ${h.x?.toFixed?.(2)}, speaker ${h.mid?.toFixed?.(2)})`); await snap("6-hold-no-drag"); }
 check(!errs.length, `page errors: ${errs.length ? errs.join(" || ") : "none"}`);
-// The unlock surface, measured in both states. The panel that holds the key is hidden at rest, so a rest-state
-// audit has never seen it; and #keyrow / #keylostline exist only while locked (design review, 2026-09-21).
+
+// The paid panel is the one surface no state above reaches: at rest the page is locked and #paidpanel is hidden,
+// so it had shipped without a single tap-target pass. Forced here with a real-length key, because key length is
+// what the layout has to survive (design review, 2026-09-21).
 try {
-    const locked = await unlockOverlaps(p);
-    check(!locked.bad.length, locked.bad.length ? `locked: two controls claim the same pixels — ${locked.bad.join("; ")}` : `locked: ${locked.count} unlock controls, none overlapping`);
-    await p.evaluate(() => window.__vert.setLicensed(true));
-    await p.waitForTimeout(200);
-    const paid = await unlockOverlaps(p);
-    check(!paid.bad.length, paid.bad.length ? `paid: two controls claim the same pixels — ${paid.bad.join("; ")}` : `paid: ${paid.count} unlock controls, none overlapping`);
-    await p.evaluate(() => window.__vert.setLicensed(false));
+  await p.evaluate(() => {
+    window.__vert.setLicensed(true);
+    const k = document.getElementById("paidkey");
+    if (k) k.textContent = "VRT-564BA4A7-F187-49F7-AF0E-B53A520F8173";
+  });
+  await p.waitForTimeout(250);
+  await snap("9-paid");
+  await p.evaluate(() => window.__vert.setLicensed(false));
 } catch (e) {
-  check(false, `the unlock surface could not be measured: ${e.message.slice(0, 120)}`);
+  check(false, `the paid panel could not be measured: ${String(e.message).slice(0, 110)}`);
+}
+
+// What the guard saw, as data. A gate that fails with only screenshots costs whoever picks it up more than it
+// saves, so every state, width, control count and offending pair is written down (the lead, 2026-09-21).
+writeFileSync(`${out}/unlock-overlaps.json`, JSON.stringify({ tool: "vertical", states: overlaps }, null, 2));
+{
+  const clashes = overlaps.filter((o) => o.bad.length);
+  check(!clashes.length, clashes.length ? `${clashes.length} state(s) with overlapping controls — see unlock-overlaps.json` : `no overlapping controls in ${overlaps.length} states`);
 }
 
 await b.close(); server?.kill();
