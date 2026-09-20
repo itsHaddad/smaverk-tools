@@ -21,6 +21,20 @@ export const TOKENS_PER_PSEUDO = 20;
  */
 export const BLOCK_PSEUDOS = 12;
 
+/**
+ * The window a particular transcript can actually afford.
+ *
+ * Tiling needs at least two full windows to compare, so a fixed twelve silently gives up on anything
+ * under about twenty-four pseudo-sentences and hands back one section covering the whole recording —
+ * which then fails the length test and produces nothing at all. That is what a six-and-a-half-minute
+ * recording did in the gate: 987 words, 51 silences, zero moments.
+ *
+ * A sixth of the transcript, never more than twelve and never fewer than four. Every recording in the
+ * measured corpus is 45 minutes or longer and has 150 pseudo-sentences or more, so all of them stay at
+ * twelve and every number in `clipfinder/text/` still stands.
+ */
+export const blockFor = (pseudos: number) => Math.max(4, Math.min(BLOCK_PSEUDOS, Math.round(pseudos / 6)));
+
 // Closed-class words carry no subject. Trimmed to what actually shows up at the top of spoken-English
 // frequency lists; a longer list changes nothing measurable and invites argument.
 const STOP = new Set(
@@ -151,13 +165,14 @@ export function segment(t: Transcript, durationS: number, opts: SegmentOptions =
 
 /** The same cut, plus how deep the dip was at each section's opening boundary. */
 export function segmentDetailed(t: Transcript, durationS: number, opts: SegmentOptions = {}): { sections: Section[]; boundaryDepth: number[] } {
-  const { tokensPerPseudo = TOKENS_PER_PSEUDO, blockPseudos = BLOCK_PSEUDOS, smoothRadius = 1, cutoffSd = 0.5, minSectionS = 45 } = opts;
+  const { tokensPerPseudo = TOKENS_PER_PSEUDO, smoothRadius = 1, cutoffSd = 0.5, minSectionS = 45 } = opts;
   const whole = (): { sections: Section[]; boundaryDepth: number[] } => ({
     sections: [{ startS: 0, endS: durationS, startWord: 0, endWord: Math.max(0, t.words.length - 1) }],
     boundaryDepth: [0],
   });
   if (!t.words.length) return whole();
   const pseudos = pseudoSentences(t.words, tokensPerPseudo);
+  const blockPseudos = opts.blockPseudos ?? blockFor(pseudos.length);
   if (pseudos.length < 2 * blockPseudos) return whole();
   const depths = depthScores(smooth(gapScores(pseudos, blockPseudos), smoothRadius));
   const mean = depths.reduce((n, v) => n + v, 0) / depths.length;

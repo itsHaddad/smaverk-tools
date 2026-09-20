@@ -2,7 +2,7 @@ import { test, expect } from "bun:test";
 import { clock, spoken, displayName, outputName, timelineName } from "../src/lib/naming";
 import { acceptWindowWords, shouldRerank, targetLengthS } from "../src/lib/stream";
 import { transcriptOf, wordIndexAt, textBetween, type Word } from "../src/lib/words";
-import { normalize, stem, pseudoSentences, segment } from "../src/lib/segment";
+import { normalize, stem, pseudoSentences, segment, blockFor } from "../src/lib/segment";
 import { pauses, snap } from "../src/lib/pause";
 import { rank, features, reasons, edgeSeconds } from "../src/lib/rank";
 import { candidates } from "../src/lib/candidates";
@@ -238,4 +238,19 @@ test("a moment cannot open on the theme music or close on the sign-off", () => {
     expect(m.startS).toBeGreaterThanOrEqual(edge);
     expect(m.endS).toBeLessThanOrEqual(durationS - edge);
   }
+});
+
+test("a short recording is still cut into subjects rather than left whole", () => {
+  // The gate found this: 6 minutes 30, 987 words, and zero moments, because tiling needs two full
+  // windows to compare and a fixed window of twelve is wider than the whole transcript.
+  expect(blockFor(200)).toBe(12); // every recording in the measured corpus
+  expect(blockFor(24)).toBe(4); // the six-minute fixture
+  expect(blockFor(6)).toBe(4); // and the floor holds
+  const a = "rocket engine thrust fuel nozzle chamber pressure ";
+  const b = "garden soil compost tomato seedling water sunlight ";
+  // About a thousand words over six and a half minutes, which is what the gate fed it.
+  const t = transcriptOf(say((a.repeat(70) + b.repeat(70)).trim(), 0, 0.4));
+  expect(t.words.length).toBeGreaterThan(900);
+  expect(segment(t, t.lastWordS + 1, { minSectionS: 30 }).length).toBeGreaterThan(1);
+  expect(rank(t, t.lastWordS + 1, { targetS: 98, minSectionS: 30 }).length).toBeGreaterThan(0);
 });

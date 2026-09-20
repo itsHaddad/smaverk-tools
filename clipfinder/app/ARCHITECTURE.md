@@ -85,8 +85,10 @@ bun tools/sample.ts      # rebuild the sample on the page
 
 ## Known limits
 
-- Reading costs about half the length of the recording on a 2017 laptop at one thread. A phone has not
-  been measured. Moments appear from about four minutes of read sound and then every three minutes.
+- Reading, measured: **0.127× real time** in the browser on a two-core cloud runner (390 s of sound read
+  in 50 s, 987 words), and 0.40× on a 2017 laptop through Node at one thread. A phone has not been
+  measured and will be slower. Moments appear once there is enough read to hold a clip of the chosen
+  length, and then every three minutes of read sound.
 - English. The Moonshine models for other languages are not licensed for commercial use.
 - A recording under about four minutes has nothing to cut up and the page says so.
 - The timeline files are read back correctly by **OpenTimelineIO 0.18.1**, the Academy Software

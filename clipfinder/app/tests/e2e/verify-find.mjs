@@ -121,7 +121,11 @@ try {
   ok(`read ${Math.round(run.heardS)} s in ${Math.round(readS)} s (${(readS / FIXTURE_S).toFixed(2)}x real time), ${run.words} words, ${run.silences} silences, ${run.moments} moments`);
 
   // 2. The list is real.
-  if (!run.moments) fail("no moments in a six-minute recording that has speech throughout");
+  if (!run.moments) {
+    // Everything below needs a list. Without one, three more waits time out and say nothing new.
+    fail(`no moments in a six-minute recording that has speech throughout — status "${await page.textContent("#status").catch(() => "")}"`);
+    throw new Error("nothing to check: the run produced no moments");
+  }
   for (const [i, m] of (run.list ?? []).entries()) {
     if (!(m.startS >= 0 && m.endS <= FIXTURE_S + 1)) fail(`moment ${i + 1} runs ${m.startS}–${m.endS}, outside the recording`);
     if (!(m.endS - m.startS >= 20)) fail(`moment ${i + 1} is ${Math.round(m.endS - m.startS)} s long`);
