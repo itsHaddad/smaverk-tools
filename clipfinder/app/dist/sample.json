@@ -1,0 +1,138 @@
+{
+ "title": "Artemis II: The Crew, 65 min",
+ "credit": "NASA, Houston We Have a Podcast, 27 March 2026 — public domain",
+ "url": "https://www.nasa.gov/podcasts/houston-we-have-a-podcast/",
+ "durationS": 3878.1,
+ "audio": "sample.m4a?v=1",
+ "readTimesRealTime": 0.403,
+ "words": 12414,
+ "silences": 239,
+ "sets": {
+  "60": [
+   {
+    "startS": 2716.9,
+    "endS": 2821.7,
+    "why": [
+     "Sets something up and comes back to it"
+    ],
+    "opening": "be small golf ball held at arm's length if…",
+    "clipStartS": 0,
+    "clipEndS": 12
+   },
+   {
+    "startS": 2063.6,
+    "endS": 2153.9,
+    "why": [
+     "Sets something up and comes back to it"
+    ],
+    "opening": "little bit. I am really curious, how are you…",
+    "clipStartS": 12,
+    "clipEndS": 24
+   },
+   {
+    "startS": 2847.5,
+    "endS": 2932.8,
+    "why": [
+     "Sets something up and comes back to it"
+    ],
+    "opening": "little bits from them that are making me hopefully…",
+    "clipStartS": 24,
+    "clipEndS": 36
+   },
+   {
+    "startS": 1381.5,
+    "endS": 1467.1,
+    "why": [
+     "Stays on one subject"
+    ],
+    "opening": "happened and since you've been training and preparing? I…",
+    "clipStartS": 36,
+    "clipEndS": 48
+   }
+  ],
+  "180": [
+   {
+    "startS": 2398.2,
+    "endS": 2716.9,
+    "why": [
+     "Sets something up and comes back to it"
+    ],
+    "opening": "four years in college and spends a semester abroad.…",
+    "clipStartS": 48,
+    "clipEndS": 60
+   },
+   {
+    "startS": 1897.5,
+    "endS": 2153.9,
+    "why": [
+     "Sets something up and comes back to it"
+    ],
+    "opening": "spacecraft integrity which you've named dropped a few times…",
+    "clipStartS": 60,
+    "clipEndS": 72
+   },
+   {
+    "startS": 3094.5,
+    "endS": 3353.5,
+    "why": [
+     "Opens with a problem and answers it later"
+    ],
+    "opening": "we're all federal workers or military and i think…",
+    "clipStartS": 72,
+    "clipEndS": 84
+   },
+   {
+    "startS": 132.9,
+    "endS": 389.8,
+    "why": [
+     "Sets something up and comes back to it"
+    ],
+    "opening": "roots with each other going back to the selection…",
+    "clipStartS": 84,
+    "clipEndS": 96
+   }
+  ],
+  "300": [
+   {
+    "startS": 996.4,
+    "endS": 1381.5,
+    "why": [
+     "Opens with a problem and answers it later"
+    ],
+    "opening": "put some some thought into getting help from professional…",
+    "clipStartS": 96,
+    "clipEndS": 108
+   },
+   {
+    "startS": 1381.5,
+    "endS": 1897.5,
+    "why": [
+     "Sets something up and comes back to it"
+    ],
+    "opening": "happened and since you've been training and preparing? I…",
+    "clipStartS": 36,
+    "clipEndS": 48
+   },
+   {
+    "startS": 132.9,
+    "endS": 672,
+    "why": [
+     "Sets something up and comes back to it"
+    ],
+    "opening": "roots with each other going back to the selection…",
+    "clipStartS": 84,
+    "clipEndS": 96
+   },
+   {
+    "startS": 2063.6,
+    "endS": 2526.1,
+    "why": [
+     "Sets something up and comes back to it"
+    ],
+    "opening": "little bit. I am really curious, how are you…",
+    "clipStartS": 12,
+    "clipEndS": 24
+   }
+  ]
+ }
+}

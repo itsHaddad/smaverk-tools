@@ -1,0 +1,31 @@
+{
+  "name": "clipfinder",
+  "module": "app.ts",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest",
+    "playwright": "1.63.0",
+    "wrangler": "^4.134.0"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@huggingface/transformers": "^4.3.0",
+    "mediabunny": "^1.57.0"
+  },
+  "trustedDependencies": [
+    "onnxruntime-node",
+    "protobufjs"
+  ],
+  "scripts": {
+    "build": "./build.sh",
+    "test": "bun test",
+    "smoke": "bun tests/smoke.mjs",
+    "test:find": "bun tests/e2e/verify-find.mjs",
+    "test:ui": "bun tests/e2e/verify-ui.mjs",
+    "serve": "bun serve.ts 8811",
+    "deploy": "./deploy.sh"
+  }
+}

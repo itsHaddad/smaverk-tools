@@ -1,0 +1,20 @@
+/*
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Embedder-Policy: credentialless
+  X-Content-Type-Options: nosniff
+/
+  Cache-Control: no-cache
+/index.html
+  Cache-Control: no-cache
+/app.js
+  Cache-Control: no-cache
+/worker.js
+  Cache-Control: no-cache
+/sample.json
+  Cache-Control: no-cache
+/llms.txt
+  Cache-Control: no-cache
+/sample.m4a
+  Cache-Control: public, max-age=86400
+/fonts/bricolage-grotesque-latin.woff2
+  Cache-Control: public, max-age=86400

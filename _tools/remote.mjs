@@ -4,7 +4,8 @@
 //   import { chromium } from "playwright"; import { openBrowser } from "../../../_tools/remote.mjs";
 //   const browser = await openBrowser(chromium, { headless: false, args: ["--enable-unsafe-swiftshader"] });
 // Files given to setInputFiles travel over the connection, so local fixtures work. The remote browser cannot see
-// localhost on the laptop: point it at the live pages; local builds are tested by the gates workflow instead.
+// localhost on the laptop — but `serveLocal` in servedist.mjs answers the product's own address out of a local
+// dist over this same connection, so a page can be reviewed before it has any address anyone else can type.
 export async function openBrowser(browserType, launch = {}) {
   const ws = process.env.PW_WS;
   if (!ws) return browserType.launch(launch);

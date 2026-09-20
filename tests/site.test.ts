@@ -314,3 +314,117 @@ test("the terms protect the studio: bounded refunds, a liability cap, no open-en
   // the one refund promise on the product pages is the bounded one, word for word
   for (const s of Object.values(SITES)) for (const f of readdirSync(join(ROOT, s.dist)).filter((f) => f.endsWith(".html") && !/^(google|privacy|terms)/.test(f))) { const t = text(read(`${s.dist}/${f}`)); for (const m of t.matchAll(/refund[^.]{0,60}/gi)) expect(`${f}: ${m[0].trim()}`).toMatch(/: Refund within 14 days/); }
 });
+
+// Clip finder is not in SITES yet. It is not on the studio page and has no search pages, and the tests above
+// assume both — plus a Saved box, a video sample and a seek bar it does not have. It gets the same checks here,
+// in the shape it actually has. When it joins the studio page, these fold back into SITES and this block goes.
+const CF = { dist: "clipfinder/app/dist", src: ["clipfinder/app/app.ts", "clipfinder/app/worker.ts"], price: "$29", host: "clipfinder.smaverk.com" };
+const cfPages = () => readdirSync(join(ROOT, CF.dist)).filter((f) => /\.(html|txt)$/.test(f) && !/^google/.test(f)).map((f) => `${CF.dist}/${f}`);
+
+test("Clip finder: no permanence wording, one word for where it runs, and nothing about how it is built", () => {
+  const METHOD = /\b(whisper|moonshine|webgpu|wasm|webassembly|webcodecs|hugging ?face|jsdelivr|onnx|transformers(\.js)?|tensorflow|mediabunny|ffmpeg|speech model|speech recognition|language model|neural|machine learning|texttiling|embedding|h\.?264|opus)\b/i;
+  const hits: string[] = [];
+  for (const p of cfPages()) {
+    const t = text(read(p));
+    for (const m of t.matchAll(/[^.]{0,40}\b(never|forever|ever)\b[^.]{0,30}/gi)) hits.push(`${p}: permanence — …${m[0].trim()}…`);
+    for (const m of read(p).matchAll(/(leaves?|stays? on|on) your (phone|computer|laptop)\b/gi)) hits.push(`${p}: ${m[0]}`);
+    for (const line of t.split(/\n|(?<=[.!?])\s/)) { const m = line.match(METHOD); if (m) hits.push(`${p}: "${m[0]}" in …${line.trim().slice(0, 80)}`); }
+  }
+  for (const f of CF.src) {
+    for (const m of code(read(f)).matchAll(/["'`][^"'`\n]*\b(never|forever|ever)\b[^"'`\n]*["'`]/gi)) hits.push(`${f}: permanence — ${m[0].slice(0, 90)}`);
+    for (const m of code(read(f)).matchAll(/["'`]([^"'`\n]* [^"'`\n]* [^"'`\n]*)["'`]/g)) { const hit = m[1]!.match(METHOD); if (hit) hits.push(`${f}: "${hit[0]}" in ${m[1]!.slice(0, 80)}`); }
+  }
+  expect(hits).toEqual([]);
+});
+
+test("Clip finder: it says AI, it says where it runs, and it says the same thing in every place it says it", () => {
+  const html = read(`${CF.dist}/index.html`);
+  expect(html.match(/<title>([^<]*)<\/title>/)?.[1], "title").toMatch(/\bAI\b.*on your device/);
+  expect(html.match(/<p class="sub">([^<]*)<\/p>/)?.[1], "line under the headline").toMatch(/^AI [^.]*on your device\./);
+  expect(html.match(/<meta name="description" content="([^"]*)"/)?.[1], "description").toMatch(/\bAI\b.*on your device/);
+  expect(read(`${CF.dist}/llms.txt`), "llms.txt").toMatch(/^> AI /m);
+  // The sentence under the main button is one sentence, written once, and the script hands back the same one.
+  const trust = html.match(/<p class="trust" id="trust">([^<]*)<\/p>/)?.[1];
+  expect(trust, "trust line").toBeTruthy();
+  expect(code(read(CF.src[0]!)), "the script writes the page's sentence").toContain(`: "${trust}";`);
+});
+
+test("Clip finder: the price and the limits agree wherever they are stated", () => {
+  const found = new Set<string>();
+  for (const f of ["index.html", "llms.txt"]) for (const m of text(read(`${CF.dist}/${f}`)).replace(/\$\d+ a month/g, " ").matchAll(/\$\d+/g)) found.add(m[0]);
+  for (const m of code(read(CF.src[0]!)).matchAll(/["'`][^"'`\n]*(\$\d+)[^"'`\n]*["'`]/g)) found.add(m[1]!);
+  expect([...found]).toEqual([CF.price]);
+  // Hidden limits earn one-star reviews, so both are on the page, in llms.txt, and in the script that enforces them.
+  for (const f of ["index.html", "llms.txt"]) { const t = text(read(`${CF.dist}/${f}`)); expect(t, `${f}: the free limit`).toMatch(/30 minutes/); expect(t, `${f}: the paid limit`).toMatch(/four hours/); }
+  const app = read(CF.src[0]!);
+  expect(app, "the free limit in the script").toMatch(/FREE_S = 30 \* 60/);
+  expect(app, "the paid limit in the script").toMatch(/PAID_S = 4 \* 3600/);
+  // The price is in the header, on the first screen, and its target exists.
+  expect(read(`${CF.dist}/index.html`).match(/<div class="top">[\s\S]*?<\/div>/)?.[0], "header price tag").toMatch(new RegExp(`<a class="tag" id="tag" href="#price">[^<]*<b>\\${CF.price} once</b></a>`));
+  expect(read(`${CF.dist}/index.html`), "the tag's target").toContain('<div class="price" id="price">');
+  expect(read(`${CF.dist}/index.html`).match(/<a [^>]*id="buy"[^>]*>/g)!.every((a) => /target="_blank" rel="noopener"/.test(a)), "the buy link opens its own tab").toBe(true);
+  expect(code(read(CF.src[0]!)), "the first tab picks up the key").toMatch(/addEventListener\("storage"/);
+});
+
+test("Clip finder: it promises only what it measures", () => {
+  // The whole product rests on not overclaiming: it finds moments, it does not predict what an audience does.
+  const page = text(read(`${CF.dist}/index.html`));
+  const both = page + read(`${CF.dist}/llms.txt`);
+  const found: string[] = [];
+  // Nothing anywhere may promise an audience's behaviour.
+  for (const claim of [/\bviral/i, /go viral/i, /best moments/i, /will perform/i, /\bengagement\b/i, /\bguarantee/i]) { const m = both.match(claim); if (m) found.push(`page or llms.txt: "${m[0]}"`); }
+  // And the page itself never shows a number standing in for a judgment. llms.txt may say what scored what
+  // against random, because that is the measurement talking to a reader who asked for it.
+  for (const claim of [/\bscore\b/i, /\brating\b/i, /\branked \d/i, /\b\d+ *\/ *10\b/]) { const m = page.match(claim); if (m) found.push(`page: "${m[0]}"`); }
+  expect(found).toEqual([]);
+  // And it says so out loud, in the page and to anything reading llms.txt.
+  expect(both).toMatch(/does not (guess|predict)/i);
+  expect(read(`${CF.dist}/llms.txt`)).toMatch(/It does not predict what an audience will do with a clip/);
+});
+
+test("Clip finder: only files whose names change with their content are cached as immutable", () => {
+  let path = "";
+  for (const l of read(`${CF.dist}/_headers`).split("\n")) {
+    if (/^\S/.test(l)) path = l.trim();
+    else if (/immutable/.test(l)) expect(`${CF.dist}: ${path}`).toBe(`${CF.dist}: (nothing here is content-addressed)`);
+  }
+});
+
+test("Clip finder: the links, the hosts and the credit", () => {
+  for (const p of cfPages()) for (const m of read(p).matchAll(/href="([^"]*\b(privacy|terms)\b[^"]*)"/g)) expect(`${p}: ${m[1]}`).toMatch(/^.*: https:\/\/smaverk\.com\/(privacy|terms)$/);
+  // Nothing on the page comes from another company except the analytics beacon.
+  const bad: string[] = [];
+  for (const m of read(`${CF.dist}/index.html`).matchAll(/<(?:script|link|img|video|source|iframe|audio)\b[^>]*\b(?:src|href)=["'](https?:\/\/[^"']+)["'][^>]*>/g)) {
+    if (/rel="canonical"|rel="alternate"/.test(m[0]!)) continue;
+    if (!/^https:\/\/(static\.cloudflareinsights\.com|([a-z]+\.)?smaverk\.com)\//.test(m[1]!)) bad.push(m[1]!);
+  }
+  expect(bad).toEqual([]);
+  // Every outside address the scripts know is one the privacy page already accounts for.
+  const KNOWN = ["api.polar.sh", "sandbox-api.polar.sh", "buy.polar.sh", "unlock.smaverk.com", "captions.smaverk.com", "vertical.smaverk.com", "clipfinder.smaverk.com", "smaverk.com"];
+  const unknown: string[] = [];
+  for (const f of CF.src) for (const m of code(read(f)).matchAll(/https:\/\/([a-zA-Z0-9.-]+)/g)) if (!KNOWN.includes(m[1]!)) unknown.push(`${f}: ${m[1]}`);
+  expect(unknown).toEqual([]);
+  // The sample is somebody else's recording: it is credited on the page and its source is written down.
+  const sources = read("clipfinder/app/SOURCES.md");
+  const url = sources.match(/https:\/\/www\.nasa\.gov\/[\w/-]+/)?.[0];
+  expect(url, "SOURCES.md names where the sample came from").toBeTruthy();
+  expect(read(`${CF.dist}/index.html`), "the page credits the sample").toContain(url!);
+  const sample = JSON.parse(read(`${CF.dist}/sample.json`));
+  expect(sample.credit, "the sample carries its credit").toBeTruthy();
+  expect(sample.url, "the sample carries its source").toBe(url);
+});
+
+test("Clip finder wears the studio's clothes: every style rule Captions also has is identical", () => {
+  const ALLOWED = new Set([".demo", ".chips", ".chip", ".chip canvas", ".chip span", ".result", ".caplabel", ".caplabel b", "details p", "input,textarea"]); // its own shapes: a list of moments instead of a video stage
+  const rules = (file: string) => {
+    const css = [...read(file).matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].map((m) => m[1]).join("\n").replace(/@media[^{]+\{([\s\S]*?\})\s*\}/g, " ");
+    const out = new Map<string, string>();
+    for (const r of css.matchAll(/([^{}@]+)\{([^{}]*)\}/g)) for (const sel of r[1]!.split(",")) out.set(sel.trim(), r[2]!.trim().replace(/;$/, ""));
+    return out;
+  };
+  const a = rules("captions/app/dist/index.html"); const b = rules(`${CF.dist}/index.html`);
+  const drift: string[] = []; let shared = 0;
+  for (const [sel, body] of a) if (b.has(sel)) { shared++; if (b.get(sel) !== body && !ALLOWED.has(sel)) drift.push(sel); }
+  expect(shared, "the two pages share a look").toBeGreaterThan(50);
+  expect(drift).toEqual([]);
+});

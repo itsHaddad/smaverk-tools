@@ -1,0 +1,95 @@
+# Speech recogniser bench. Dispatch only — it never runs on push, so it cannot slow the gates down.
+#
+# It transcribes public audio and uploads the transcripts. It scores nothing; whoever dispatched it
+# fetches the artifacts and does that elsewhere.
+#
+# Runner minutes are the thing to be careful with here. Transcription runs at roughly half of real
+# time, so an hour of audio is half an hour of runner time and a careless matrix is a day of it. Three
+# guards, because a previous bench burned about ten hours and produced nothing:
+#
+#   - `budget_minutes` is checked BEFORE any job starts, against the slices actually requested, and the
+#     run refuses rather than trims.
+#   - every job has `timeout-minutes` set well above its own estimate, so a slow job still reaches its
+#     upload step instead of being killed holding the only copy of its work.
+#   - the transcript is uploaded per shard, so a failure late in the matrix does not cost the shards
+#     that already finished.
+name: bench-asr
+
+on:
+  workflow_dispatch:
+    inputs:
+      refs:
+        description: 'Comma-separated YouTube ids'
+        required: true
+      model:
+        description: 'tiny | tiny.en | base | small | moonshine-tiny | moonshine-base'
+        default: 'tiny'
+      slice_minutes:
+        description: 'Audio minutes per job. Shorter shards fail cheaper.'
+        default: '30'
+      timestamps:
+        description: 'word | segment. Segment is ~21% faster and enough for segmentation.'
+        default: 'segment'
+      budget_minutes:
+        description: 'Refuse to start if the estimated runner minutes exceed this.'
+        default: '240'
+
+permissions:
+  contents: read
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - id: plan
+        run: |
+          bun bench/asr/plan.ts \
+            --refs "${{ inputs.refs }}" --model "${{ inputs.model }}" \
+            --slice-minutes "${{ inputs.slice_minutes }}" --budget-minutes "${{ inputs.budget_minutes }}" \
+            >> "$GITHUB_OUTPUT"
+
+  transcribe:
+    needs: plan
+    runs-on: ubuntu-latest
+    # Generous against the estimate on purpose: a job killed at its limit uploads nothing, and the
+    # work is only worth having if it reaches the artifact store.
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      max-parallel: 10
+      matrix: ${{ fromJson(needs.plan.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - name: Tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg
+          pipx install yt-dlp || pip install --quiet yt-dlp
+      - name: Dependencies
+        working-directory: bench/asr
+        run: bun add @huggingface/transformers@4.3.0 onnxruntime-node@1.30.0
+      - name: Audio
+        env:
+          BENCH_AUDIO: ${{ runner.temp }}/audio
+        run: bench/asr/fetch-audio.sh ${{ matrix.ref }}
+      - name: Transcribe
+        env:
+          BENCH_AUDIO: ${{ runner.temp }}/audio
+          BENCH_OUT: ${{ runner.temp }}/transcripts
+        run: |
+          bun bench/asr/transcribe.ts \
+            --ref "${{ matrix.ref }}" --model "${{ inputs.model }}" --threads 2 \
+            --timestamps "${{ inputs.timestamps }}" \
+            --from "${{ matrix.from }}" --to "${{ matrix.to }}" | tee -a "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: transcript-${{ matrix.ref }}-${{ inputs.model }}-${{ matrix.from }}
+          path: ${{ runner.temp }}/transcripts
+          retention-days: 7
+          if-no-files-found: warn
