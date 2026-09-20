@@ -54,6 +54,28 @@ if (!existsSync(shortFile)) execFileSync("ffmpeg", ["-v", "error", "-y", "-t", "
 // Every control in the working column is the full content width. The map is allowed its own (it is a picture).
 const COLUMNS = ["#action", ".chips", ".moments", ".steps", "#status", ".caplabel", "#trust", "#exportbox"];
 
+// Two controls must never claim the same pixels. Design review, 2026-09-21: "Lost it?" and "Remove the key"
+// were inline links on consecutive 22 px lines, each given a 44 px tap box by the page's own rule; the boxes
+// overlapped by 123 x 22 px and the later one won the hit test, so aiming at the link that RECOVERS a key
+// removed it instead. Measuring each control's own size cannot see that — only overlap can. Inputs count: the
+// same rule expanded the recovery link 13 px up into the "Paste your key" field above it.
+async function unlockOverlaps(page) {
+  return await page.evaluate(() => {
+    const sel = "#paidpanel a, #paidpanel button, #paidpanel input, #keyrow a, #keyrow button, #keyrow input, #keylostline a, #keystatus a";
+    const shown = [...document.querySelectorAll(sel)].filter((el) => el.offsetParent);
+    const boxes = shown.map((el) => ({ id: el.id || el.textContent.trim().slice(0, 20), r: el.getBoundingClientRect() }));
+    const bad = [];
+    for (let i = 0; i < boxes.length; i++)
+      for (let j = i + 1; j < boxes.length; j++) {
+        const a = boxes[i].r, b = boxes[j].r;
+        const w = Math.min(a.right, b.right) - Math.max(a.left, b.left);
+        const h = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+        if (w > 0.5 && h > 0.5) bad.push(`${boxes[i].id}+${boxes[j].id} share ${Math.round(w)}x${Math.round(h)} px`);
+      }
+    return { count: shown.length, bad };
+  });
+}
+
 const fails = [];
 const check = (ok, msg) => {
   console.log((ok ? "  ok   " : "  FAIL ") + msg);
@@ -175,32 +197,25 @@ try {
   }
   await snap("5b-trimmed");
 
+  {
+    // Locked first: #keyrow and #keylostline only exist in this state, so a paid-only probe measures them in no
+    // state at all (design review N2, 2026-09-21).
+    const o = await unlockOverlaps(p);
+    if (o.bad.length) check(false, `locked: two controls claim the same pixels — ${o.bad.join("; ")}`);
+    else check(true, `locked: ${o.count} unlock controls, none overlapping`);
+  }
+
   // What a key opens is decided by the unlock worker, which is off this page: stubbed here, real everywhere else.
   await p.route(/unlock\.smaverk\.com\/entitlements/, (r) => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ status: "granted", tools: ["clipfinder"], expires: null }) }));
   await p.fill("#key", "SMVCF-TEST-0000-0000");
   await p.click("#keygo");
   await p.waitForFunction(() => window.__cf?.licensed === true, null, { timeout: 15000 });
 
-  // The paid panel is the one surface the rest-state audit can never see: at rest this page is locked and
-  // #paidpanel is hidden, so its key, its Copy button and its destructive "Remove the key" button had shipped
-  // without a single tap-target pass. Design review, 2026-09-21: two inline links stacked on 22 px lines each
-  // claimed a 44 px box, they overlapped, and the later one won the hit test — so aiming at "Get your key
-  // again" removed the key instead. Measuring each control on its own cannot see that; only overlap can.
-  const clash = await p.evaluate(() => {
-    const controls = [...document.querySelectorAll("#paidpanel a, #paidpanel button, #keyrow a, #keyrow button, #keylostline a")].filter((el) => el.offsetParent);
-    const boxes = controls.map((el) => ({ id: el.id || el.textContent.trim().slice(0, 24), r: el.getBoundingClientRect() }));
-    const bad = [];
-    for (let i = 0; i < boxes.length; i++)
-      for (let j = i + 1; j < boxes.length; j++) {
-        const a = boxes[i].r, b = boxes[j].r;
-        const w = Math.min(a.right, b.right) - Math.max(a.left, b.left);
-        const h = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
-        if (w > 0 && h > 0) bad.push(`${boxes[i].id} and ${boxes[j].id} share ${Math.round(w)}x${Math.round(h)} px`);
-      }
-    return { count: controls.length, bad };
-  });
-  if (clash.bad.length) check(false, `paid panel: two controls claim the same pixels — ${clash.bad.join("; ")}`);
-  else check(true, `paid panel: ${clash.count} controls, none overlapping`);
+  {
+    const o = await unlockOverlaps(p);
+    if (o.bad.length) check(false, `paid: two controls claim the same pixels — ${o.bad.join("; ")}`);
+    else check(true, `paid: ${o.count} unlock controls, none overlapping`);
+  }
 
   const [dl] = await Promise.all([p.waitForEvent("download", { timeout: 30000 }), p.click('[data-save="edl"]')]);
   await dl.saveAs(join(out, dl.suggestedFilename()));

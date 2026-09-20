@@ -19,6 +19,28 @@ const CLIPS = [
 ];
 for (const c of CLIPS) { const f = dir + "/" + c.name; if (!existsSync(f)) execFileSync("ffmpeg", ["-v", "error", "-y", "-i", src, "-t", "8", ...(c.vf ? ["-vf", c.vf, "-c:v", "libx264", "-preset", "veryfast", "-crf", "28", "-c:a", "copy"] : ["-c", "copy"]), f]); }
 const COLUMNS = [".stage", "#action", ".chips", ".steps", ".result", "#status", ".caplabel", "#reset", "#trust"];
+// Two controls must never claim the same pixels. Design review, 2026-09-21: "Lost it?" and "Remove the key"
+// were inline links on consecutive 22 px lines, each given a 44 px tap box by the page's own rule; the boxes
+// overlapped by 123 x 22 px and the later one won the hit test, so aiming at the link that RECOVERS a key
+// removed it instead. Measuring each control's own size cannot see that — only overlap can. Inputs count: the
+// same rule expanded the recovery link 13 px up into the "Paste your key" field above it.
+async function unlockOverlaps(page) {
+  return await page.evaluate(() => {
+    const sel = "#paidpanel a, #paidpanel button, #paidpanel input, #keyrow a, #keyrow button, #keyrow input, #keylostline a, #keystatus a";
+    const shown = [...document.querySelectorAll(sel)].filter((el) => el.offsetParent);
+    const boxes = shown.map((el) => ({ id: el.id || el.textContent.trim().slice(0, 20), r: el.getBoundingClientRect() }));
+    const bad = [];
+    for (let i = 0; i < boxes.length; i++)
+      for (let j = i + 1; j < boxes.length; j++) {
+        const a = boxes[i].r, b = boxes[j].r;
+        const w = Math.min(a.right, b.right) - Math.max(a.left, b.left);
+        const h = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+        if (w > 0.5 && h > 0.5) bad.push(`${boxes[i].id}+${boxes[j].id} share ${Math.round(w)}x${Math.round(h)} px`);
+      }
+    return { count: shown.length, bad };
+  });
+}
+
 const fails = []; const check = (ok, msg) => { console.log((ok ? "  ok   " : "  FAIL ") + msg); if (!ok) fails.push(msg); };
 const b = await chromium.launch({ headless: true, args: ["--no-sandbox", "--autoplay-policy=no-user-gesture-required"] });
 const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true, acceptDownloads: true, userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 26_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Mobile/15E148 Safari/604.1" });
@@ -104,5 +126,17 @@ for (const c of CLIPS) {
 check(!errs.length, `page errors: ${errs.length ? errs.join(" || ") : "none"}`);
 await b.close(); server?.kill();
 console.log(`screenshots in ${out}`);
+// The unlock surface, measured in both states. The panel that holds the key is hidden at rest, so a rest-state
+// audit has never seen it; and #keyrow / #keylostline exist only while locked (design review, 2026-09-21).
+{
+  const locked = await unlockOverlaps(p);
+  check(!locked.bad.length, locked.bad.length ? `locked: two controls claim the same pixels — ${locked.bad.join("; ")}` : `locked: ${locked.count} unlock controls, none overlapping`);
+  await p.evaluate(() => window.__vert.setLicensed(true));
+  await p.waitForTimeout(200);
+  const paid = await unlockOverlaps(p);
+  check(!paid.bad.length, paid.bad.length ? `paid: two controls claim the same pixels — ${paid.bad.join("; ")}` : `paid: ${paid.count} unlock controls, none overlapping`);
+  await p.evaluate(() => window.__vert.setLicensed(false));
+}
+
 if (fails.length) { console.error(`UI FAIL (${fails.length})`); process.exit(1); }
 console.log("ui ok");
