@@ -373,6 +373,9 @@ function onWorker(m: any) {
     drawMap();
   } else if (m.type === "reading") {
     heardS = m.heardS;
+    dbg.timesRealTime = m.timesRealTime;
+    dbg.words = m.words;
+    mark(); // so anything watching can see progress, not just the absence of a result
     const pct = Math.min(100, Math.round((m.heardS / Math.max(m.limitS || totalS || 1, 1)) * 100));
     step(2, "active", `${pct}%`);
     $("s2b").style.width = `${pct}%`;
@@ -387,6 +390,8 @@ function onWorker(m: any) {
   } else if (m.type === "error") {
     showSteps(false);
     state = "found";
+    dbg.error = m.message;
+    mark();
     say(m.message, "err");
   }
 }

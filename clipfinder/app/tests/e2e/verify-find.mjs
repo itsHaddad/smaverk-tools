@@ -20,6 +20,7 @@ import { chromium } from "playwright";
 import { spawn } from "node:child_process";
 import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 const port = 8817;
@@ -32,6 +33,11 @@ if (!existsSync(fixture)) {
   process.exit(1);
 }
 mkdirSync(outDir, { recursive: true });
+// Forty seconds of the same recording, for the offline round. The claim being tested there is that the
+// whole pipeline runs with no network once the tool is on the device — not that it finds something, which
+// the full run above has already shown. Reading six minutes twice costs seven runner-minutes for nothing.
+const shortFixture = join(tmpdir(), "clipfinder-offline.mp3");
+if (!existsSync(shortFixture)) execFileSync("ffmpeg", ["-v", "error", "-y", "-t", "40", "-i", fixture, "-c", "copy", shortFixture]);
 
 const server = spawn("bun", [join(root, "serve.ts"), String(port)], { stdio: "ignore" });
 await new Promise((r) => setTimeout(r, 800));
@@ -43,6 +49,39 @@ const fail = (m) => {
 const ok = (m) => console.log(`  ok  ${m}`);
 
 const FIXTURE_S = 390;
+
+/**
+ * Wait for something, saying out loud what the page is doing while it waits.
+ *
+ * The first run of this gate sat for fifteen minutes and then reported that nothing had happened, which
+ * is not a finding, it is a gate with its eyes shut. Every thirty seconds it now prints what the page
+ * thinks it is doing, and a timeout ends with the page's own state rather than a stack trace.
+ */
+async function waitSaying(page, what, fn, timeoutMs) {
+  const t0 = Date.now();
+  let last = "";
+  const tick = setInterval(async () => {
+    try {
+      const st = await page.evaluate(() => ({ ...window.__cf, list: undefined }));
+      const line = `state=${st.state} ready=${st.ready} download=${st.downloadPct ?? "-"}% heard=${Math.round(st.heardS ?? 0)}s words=${st.words ?? 0} moments=${st.moments} x=${st.timesRealTime ? st.timesRealTime.toFixed(2) : "-"}${st.error ? ` ERROR=${st.error}` : ""}`;
+      if (line !== last) console.log(`      ${String(Math.round((Date.now() - t0) / 1000)).padStart(4)}s  ${line}`);
+      last = line;
+    } catch {
+      /* the page is busy; the next tick will say something */
+    }
+  }, 30000);
+  try {
+    await page.waitForFunction(fn, null, { timeout: timeoutMs, polling: 1000 });
+    return true;
+  } catch {
+    const st = await page.evaluate(() => ({ ...window.__cf, list: undefined })).catch(() => null);
+    const status = await page.textContent("#status").catch(() => "");
+    fail(`${what} did not happen in ${Math.round(timeoutMs / 1000)} s — page says ${JSON.stringify(st)} / status "${status}"`);
+    return false;
+  } finally {
+    clearInterval(tick);
+  }
+}
 let browser;
 try {
   browser = await chromium.launch({ args: ["--no-sandbox"] });
@@ -70,16 +109,13 @@ try {
   await page.setInputFiles("#file", fixture);
 
   // 1. Moments while it is still reading.
-  const streamed = await page
-    .waitForFunction(() => window.__cf?.state === "reading" && window.__cf.moments > 0, null, { timeout: 900000 })
-    .then(() => true)
-    .catch(() => false);
+  const streamed = await waitSaying(page, "moments while still reading", () => window.__cf?.state === "reading" && window.__cf.moments > 0, 1500000);
   const atFirst = await page.evaluate(() => ({ heardS: window.__cf.heardS, total: window.__cf.totalS, moments: window.__cf.moments }));
-  if (!streamed) fail("no moments appeared before the reading finished");
+  if (!streamed) { /* waitSaying already said what the page was doing */ }
   else if (atFirst.heardS >= FIXTURE_S - 5) fail(`the first moments arrived at ${Math.round(atFirst.heardS)} s, which is the end`);
   else ok(`first moments at ${Math.round(atFirst.heardS)} s of ${FIXTURE_S} s, ${Math.round((Date.now() - t0) / 1000)} s after the file was picked`);
 
-  await page.waitForFunction(() => window.__cf?.state === "found", null, { timeout: 900000 });
+  if (!(await waitSaying(page, "the reading to finish", () => window.__cf?.state === "found", 900000))) throw new Error("the run never finished");
   const run = await page.evaluate(() => ({ ...window.__cf, list: window.__cf.list }));
   const readS = (Date.now() - t0) / 1000;
   ok(`read ${Math.round(run.heardS)} s in ${Math.round(readS)} s (${(readS / FIXTURE_S).toFixed(2)}x real time), ${run.words} words, ${run.silences} silences, ${run.moments} moments`);
@@ -114,13 +150,11 @@ try {
   await page.click("#reset");
   await ctx.setOffline(true);
   const offlineT0 = Date.now();
-  await page.setInputFiles("#file", fixture);
-  const offlineOk = await page
-    .waitForFunction(() => window.__cf?.state === "found" && window.__cf.moments > 0, null, { timeout: 900000 })
-    .then(() => true)
-    .catch(() => false);
-  if (!offlineOk) fail(`with the network off it did not finish: ${JSON.stringify(await page.evaluate(() => window.__cf))}`);
-  else ok(`found ${await page.evaluate(() => window.__cf.moments)} moments with the network off, in ${Math.round((Date.now() - offlineT0) / 1000)} s`);
+  await page.setInputFiles("#file", shortFixture);
+  const offlineOk = await waitSaying(page, "the offline run", () => window.__cf?.state === "found", 600000);
+  const offline = offlineOk ? await page.evaluate(() => ({ words: window.__cf.words, error: window.__cf.error })) : null;
+  if (offlineOk && !(offline.words > 0)) fail(`with the network off it finished without hearing anything: ${JSON.stringify(offline)}`);
+  else if (offlineOk) ok(`read 40 s and heard ${offline.words} words with the network off, in ${Math.round((Date.now() - offlineT0) / 1000)} s`);
   await ctx.setOffline(false);
 
   // 5a. The paywall, before it is opened.
