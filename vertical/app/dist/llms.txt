@@ -22,6 +22,8 @@ window.vertical.mode("hold");                                         // or keep
 const [dl] = await Promise.all([page.waitForEvent("download"), page.click("#action")]);  // "Save video"
 await dl.saveAs("talk-vertical.mp4");
 ```
+- A paid key is applied by filling `#key` and clicking `#keygo`; it is kept in `localStorage` under `smaverk.key`, the same name in every Småverk tool. What a key opens is decided by `POST https://unlock.smaverk.com/entitlements` with `{key, rail}`, which answers `{status, tools, expires}` — `tools` lists every Småverk tool the key opens, so one key can open several. Coming back from a checkout with `?checkout_id=…` unlocks the page by itself; nothing is pasted.
+
 After a save, `window.__vert` holds `exportMs` and `found` (the share of the clip in which the speaker was found). After the search, it also holds `bothFound` (the share of the clip with two people in it) and `switches` (the times, in seconds, at which the window changed who it follows).
 
 ## Pages

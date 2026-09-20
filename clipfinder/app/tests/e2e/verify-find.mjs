@@ -144,7 +144,8 @@ try {
   // huggingface.co redirects the weights to its own file hosts, which have several names (cdn-lfs…,
   // us.aws.cdn.hf.co, and whichever region answers next). The privacy page accounts for them as a
   // category — "public file hosts" — which is the only form that survives them being renamed.
-  const ALLOWED_HOSTS = /^(huggingface\.co|[\w.-]*\.hf\.co|cdn\.jsdelivr\.net|static\.cloudflareinsights\.com|cloudflareinsights\.com|[\w.-]*\.polar\.sh|polar\.sh)$/;
+  // unlock.smaverk.com is the one host the key check talks to; the page no longer calls Polar itself.
+  const ALLOWED_HOSTS = /^(huggingface\.co|[\w.-]*\.hf\.co|cdn\.jsdelivr\.net|static\.cloudflareinsights\.com|cloudflareinsights\.com|unlock\.smaverk\.com|[\w.-]*\.polar\.sh|polar\.sh)$/;
   const BODY_LIMIT = 8 * 1024;
   const strangers = sent.filter((s) => !ALLOWED_HOSTS.test(s.host));
   const heavy = sent.filter((s) => s.bytes > BODY_LIMIT);
@@ -159,13 +160,16 @@ try {
   if ((await before) !== "blocked") fail("an export was saved without paying");
   else ok("an export asks to be paid for first");
 
-  // 5. With a key, the exports. The key check is a third-party call, so it is stubbed; everything the
-  // page then does is real.
-  await page.route(/polar\.sh\/v1\/customer-portal\/license-keys\/validate/, (r) =>
-    r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ status: "granted" }) }),
+  // 5. With a key, the exports. What a key opens is decided by the unlock worker, which is off this page, so
+  // it is stubbed; everything the page then does is real.
+  await page.route(/unlock\.smaverk\.com\/entitlements/, (r) =>
+    r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ status: "granted", tools: ["clipfinder"], expires: null }) }),
   );
-  // The paywall above opened the fold-out the key box lives in; this is the check that it did.
-  if (!(await page.evaluate(() => document.getElementById("afterpay").open))) fail("being told the price did not open the box the key goes in");
+  // The key box is on the page, not inside a fold-out: being told the price and then having to hunt for where
+  // the key goes is the finding that reached a paying customer (cold user, 2026-09-19).
+  if (await page.evaluate(() => !document.getElementById("keyrow") || document.getElementById("keyrow").closest("details")))
+    fail("the key box is missing, or back inside a fold-out");
+  if (await page.evaluate(() => document.getElementById("keyrow").hidden)) fail("the key box is hidden while the tool is locked");
   await page.fill("#key", "SMVCF-TEST-0000-0000");
   await page.click("#keygo");
   await page.waitForFunction(() => window.__cf?.licensed === true, null, { timeout: 15000 });

@@ -171,7 +171,6 @@ test("the price is on the first screen and in the Saved box, per tool", () => {
     expect(html.match(/<a [^>]*id="r?buy"[^>]*>/g)!.every((a) => /target="_blank" rel="noopener"/.test(a)), `${name}: buy links open their own tab`).toBe(true);
     // Design review 6, 2026-09-19: on every desktop the 440 px column broke the price in two ("$24" / "once") and its tap area lay over "Save again".
     expect(html, `${name}: the price in the Saved box stays in one piece`).toContain("#rbuy{white-space:nowrap}");
-    expect(code(read(s.src[0]!)), `${name}: the first tab picks up the key`).toMatch(/addEventListener\("storage"/);
   }
 });
 
@@ -354,6 +353,9 @@ test("Clip finder: the price and the limits agree wherever they are stated", () 
   for (const f of ["index.html", "llms.txt"]) for (const m of text(read(`${CF.dist}/${f}`)).replace(/\$\d+ a month/g, " ").matchAll(/\$\d+/g)) found.add(m[0]);
   for (const m of code(read(CF.src[0]!)).matchAll(/["'`][^"'`\n]*(\$\d+)[^"'`\n]*["'`]/g)) found.add(m[1]!);
   expect([...found]).toEqual([CF.price]);
+  // The price is the owner's number, so it lives in one named constant rather than scattered as a string.
+  expect(read(CF.src[0]!), "the price is a single named constant in the script").toContain(`export const PRICE = "${CF.price}"`);
+  expect(code(read(CF.src[0]!)).match(/\$\d+/g) ?? [], "no second price anywhere in the script").toEqual([CF.price]);
   // Hidden limits earn one-star reviews, so both are on the page, in llms.txt, and in the script that enforces them.
   for (const f of ["index.html", "llms.txt"]) { const t = text(read(`${CF.dist}/${f}`)); expect(t, `${f}: the free limit`).toMatch(/30 minutes/); expect(t, `${f}: the paid limit`).toMatch(/four hours/); }
   const app = read(CF.src[0]!);
@@ -363,7 +365,6 @@ test("Clip finder: the price and the limits agree wherever they are stated", () 
   expect(read(`${CF.dist}/index.html`).match(/<div class="top">[\s\S]*?<\/div>/)?.[0], "header price tag").toMatch(new RegExp(`<a class="tag" id="tag" href="#price">[^<]*<b>\\${CF.price} once</b></a>`));
   expect(read(`${CF.dist}/index.html`), "the tag's target").toContain('<div class="price" id="price">');
   expect(read(`${CF.dist}/index.html`).match(/<a [^>]*id="buy"[^>]*>/g)!.every((a) => /target="_blank" rel="noopener"/.test(a)), "the buy link opens its own tab").toBe(true);
-  expect(code(read(CF.src[0]!)), "the first tab picks up the key").toMatch(/addEventListener\("storage"/);
 });
 
 test("Clip finder: it promises only what it measures", () => {
@@ -427,4 +428,81 @@ test("Clip finder wears the studio's clothes: every style rule Captions also has
   for (const [sel, body] of a) if (b.has(sel)) { shared++; if (b.get(sel) !== body && !ALLOWED.has(sel)) drift.push(sel); }
   expect(shared, "the two pages share a look").toBeGreaterThan(50);
   expect(drift).toEqual([]);
+});
+
+// ---------------------------------------------------------------------------------------------------------
+// Unlocking. Three tools each inventing their own is how one of them ended up hiding its key box inside a shut
+// fold-out, and another locked a paying customer out whenever the network was off. One file decides it now.
+// ---------------------------------------------------------------------------------------------------------
+
+const TOOLS = [
+  { name: "captions", dist: "captions/app/dist", app: "captions/app/app.ts" },
+  { name: "vertical", dist: "vertical/app/dist", app: "vertical/app/app.ts" },
+  { name: "clipfinder", dist: "clipfinder/app/dist", app: "clipfinder/app/app.ts" },
+] as const;
+const UNLOCK_SRC = TOOLS.map((t) => `${t.app.replace(/app\.ts$/, "")}src/lib/unlock.ts`);
+
+test("unlocking cannot diverge: one unlock module, byte for byte, in every tool", () => {
+  const first = read(UNLOCK_SRC[0]!);
+  for (const p of UNLOCK_SRC.slice(1)) expect(read(p), `${p} differs from ${UNLOCK_SRC[0]}`).toBe(first);
+  // The mechanism lives there and nowhere else: no tool may grow its own key check again.
+  expect(first, "the module asks the worker what a key opens").toContain("/entitlements");
+  expect(first, "the checkout return is handled there").toContain("checkout_id");
+  expect(first, "the other tab's key is picked up there").toMatch(/addEventListener\("storage"/);
+  for (const t of TOOLS) {
+    const app = code(read(t.app));
+    expect(app, `${t.name}: uses the shared module`).toMatch(/from "\.\/src\/lib\/unlock"/);
+    // A page may know the address of its own checkout; what it may no longer do is check a key itself.
+    expect(app, `${t.name}: no page keeps its own key-check`).not.toContain("license-keys");
+    expect(app, `${t.name}: no page asks Polar about a key`).not.toContain("customer-portal");
+  }
+});
+
+test("a key already on the device survives our own downtime", () => {
+  // The tools work offline once loaded, and the clip finder invites people to prove it by switching the network
+  // off. A paid key must not evaporate when the check cannot be made (it did, in the clip finder, until 2026-09-20).
+  const src = read(UNLOCK_SRC[0]!);
+  expect(src, "an unreachable worker is not an answer").toContain('"unreachable"');
+  expect(code(src), "a stored key turns the paid version on before the check is made").toMatch(/this\.set\(\{ on: true, key: saved[\s\S]{0,400}?await this\.ask\(saved\)/);
+  expect(code(src), "and an unreachable check leaves it on").toMatch(/if \(answer === "unreachable"\) return;/);
+});
+
+test("the key box is on the page, never behind a fold-out, and the key is readable once paid", () => {
+  for (const t of TOOLS) {
+    const html = read(`${t.dist}/index.html`);
+    // Cold user, 2026-09-19: told the price, then made to hunt for where the key goes. It reached a paying customer.
+    const upToKeyrow = html.slice(0, html.indexOf('id="keyrow"'));
+    const openDetails = (upToKeyrow.match(/<details/g) ?? []).length - (upToKeyrow.match(/<\/details>/g) ?? []).length;
+    expect(openDetails, `${t.name}: the key box is inside a fold-out`).toBe(0);
+    expect(html, `${t.name}: the key box exists`).toContain('id="keyrow"');
+    expect(html, `${t.name}: somewhere to say how it went`).toContain('id="keystatus"');
+    // The key, in full, with a way to copy it: a masked key cannot be carried to a second device.
+    expect(html, `${t.name}: the key is shown`).toContain('id="paidkey"');
+    expect(html, `${t.name}: and can be copied`).toContain('id="keycopy"');
+    expect(code(read(t.app)), `${t.name}: the key is printed whole, not masked`).toContain('$("paidkey").textContent = s.key');
+    // Lost it: a way back that is not "search your email".
+    expect(html, `${t.name}: a way to get the key again`).toContain('id="keylost"');
+    expect(html, `${t.name}: which points at Polar's own portal`).toContain("polar.sh/smaverk/portal");
+    // A bundle key says what else it opens.
+    expect(html, `${t.name}: room to name the other tools a key opens`).toContain('id="keyalso"');
+  }
+});
+
+test("every page tells the same story about unlocking", () => {
+  // What every tool promises about unlocking, in the same words. The answer for a second device lives in the
+  // paid panel, which only a buyer sees, so it costs nothing against the page's word budget.
+  const SAME = ["You come straight back, already unlocked. Nothing to paste."];
+  for (const t of TOOLS) {
+    const html = read(`${t.dist}/index.html`);
+    for (const s of SAME) expect(text(html).replace(/\s+/g, " "), `${t.name}: "${s.slice(0, 40)}…"`).toContain(s);
+    // The storage name is the same everywhere, and llms.txt says so.
+    expect(read(`${t.dist}/llms.txt`), `${t.name}: llms.txt names the storage`).toContain("`smaverk.key`");
+    expect(read(`${t.dist}/llms.txt`), `${t.name}: llms.txt names the entitlement call`).toContain("unlock.smaverk.com/entitlements");
+  }
+  // A device count nobody enforces is a promise we break. No page states one (no activation is ever consumed).
+  for (const p of [...pages(), ...cfPages(), STUDIO, ...LEGAL]) {
+    expect(text(read(p)), `${p}: an unenforced device count`).not.toMatch(/\b(one|two|three|four|five|\d+)\s+devices\b/i);
+  }
+  // Terms and privacy cover every tool that is sold, the clip finder included.
+  for (const p of LEGAL) for (const tool of ["Captions", "Vertical", "Clip finder"]) expect(read(p), `${p}: covers ${tool}`).toContain(tool);
 });

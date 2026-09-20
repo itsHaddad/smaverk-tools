@@ -26,7 +26,7 @@ const moments = await page.evaluate(() => window.__cf.list);  // [{startS, endS,
 
 - `window.__cf` mirrors state: `state` (`sample` / `reading` / `found`), `list`, `moments`, `heardS`, `totalS`, `targetS`, `words`, `silences`, `ms`.
 - Clip length is chosen with the `.chip[data-target="60|180|300"]` buttons.
-- A paid key is applied by filling `#key` and clicking `#keygo`; it is kept in `localStorage` under `smaverk.clipfinder.key`.
+- A paid key is applied by filling `#key` and clicking `#keygo`; it is kept in `localStorage` under `smaverk.key`, the same name in every Småverk tool. What a key opens is decided by `POST https://unlock.smaverk.com/entitlements` with `{key, rail}`, which answers `{status, tools, expires}` — `tools` lists every Småverk tool the key opens, so one key can open several. Coming back from a checkout with `?checkout_id=…` unlocks the page by itself; nothing is pasted.
 - Reading costs about half the length of the recording, and the moments appear while it reads.
 
 ## The other tools

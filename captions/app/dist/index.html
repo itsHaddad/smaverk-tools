@@ -8,7 +8,7 @@
 <meta name="color-scheme" content="light dark">
 <meta property="og:title" content="Captions on your clip in under a minute. Nothing leaves your device.">
 <meta property="og:description" content="AI captions, made on your device. No upload, no account.">
-<meta property="og:image" content="https://captions.smaverk.com/poster.webp?v=1789832300">
+<meta property="og:image" content="https://captions.smaverk.com/poster.webp?v=1789940795">
 <link rel="preload" href="fonts/bricolage-grotesque-latin.woff2" as="font" type="font/woff2" crossorigin>
 <style>@font-face{font-family:"Bricolage Grotesque";font-style:normal;font-weight:200 800;font-stretch:100%;font-display:swap;src:url(fonts/bricolage-grotesque-latin.woff2) format("woff2")}</style>
 <link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="icon" type="image/png" sizes="64x64" href="/icon-64.png">
@@ -16,9 +16,9 @@
 <link rel="canonical" href="https://captions.smaverk.com/">
 <meta name="google-site-verification" content="_eN1ywvXp9R-hebN0pJSivwAN8J8DuuaNGwfr_QqmnU">
 <meta property="og:url" content="https://captions.smaverk.com/"><meta property="og:type" content="website"><meta property="og:site_name" content="Småverk">
-<meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Captions on your clip in under a minute. Nothing leaves your device."><meta name="twitter:description" content="AI captions, made on your device. No upload, no account. $19 once."><meta name="twitter:image" content="https://captions.smaverk.com/poster.webp?v=1789832300">
-<link rel="preload" as="image" href="poster.webp?v=1789832300" fetchpriority="high">
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Where does my video go?","acceptedAnswer":{"@type":"Answer","text":"Nowhere. Everything runs inside the page, on your device. Your video stays on your device and there is no account."}},{"@type":"Question","name":"What does it cost?","acceptedAnswer":{"@type":"Answer","text":"Free for clips up to 60 seconds, with a small smaverk.com mark in the corner. $19 once removes the mark on up to three devices and allows clips up to five minutes."}}]}</script>
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Captions on your clip in under a minute. Nothing leaves your device."><meta name="twitter:description" content="AI captions, made on your device. No upload, no account. $19 once."><meta name="twitter:image" content="https://captions.smaverk.com/poster.webp?v=1789940795">
+<link rel="preload" as="image" href="poster.webp?v=1789940795" fetchpriority="high">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Where does my video go?","acceptedAnswer":{"@type":"Answer","text":"Nowhere. Everything runs inside the page, on your device. Your video stays on your device and there is no account."}},{"@type":"Question","name":"What does it cost?","acceptedAnswer":{"@type":"Answer","text":"Free for clips up to 60 seconds, with a small smaverk.com mark in the corner. $19 once removes the mark on your own devices and allows clips up to five minutes."}}]}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Captions by Småverk","applicationCategory":"MultimediaApplication","operatingSystem":"Any (web browser)","description":"AI captions for short videos, made on your device. Nothing is uploaded.","offers":{"@type":"Offer","price":"19","priceCurrency":"USD","description":"One-time purchase"},"url":"https://captions.smaverk.com"}</script>
 <style>
 :root{color-scheme:light dark;
@@ -137,7 +137,7 @@ ul{padding-left:20px;margin:0 0 12px}li{margin-bottom:6px}
 .fine{font-size:15px;color:var(--muted)}
 .key{display:flex;gap:10px;flex-wrap:wrap;margin:8px 0}
 .key input{flex:1 1 220px;min-height:48px;border:1.5px solid var(--line);border-radius:12px;padding:0 14px;font:16px var(--body);background:var(--surface);color:var(--ink)}
-.key .btn{width:auto;min-height:48px}
+.key .btn{width:auto;min-height:48px}.keyshow{font:600 15px ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--line);color:var(--ink);border-radius:8px;padding:4px 8px;user-select:all;overflow-wrap:anywhere}.keyline{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:8px 0}.keyline .btn{width:auto;min-height:40px;padding:0 14px;font-size:15px}
 .ok{color:var(--good);font-weight:600}
 .foot{color:var(--muted);font-size:15px;margin-top:36px;display:flex;gap:4px 18px;flex-wrap:wrap;align-items:center}
 .foot a{color:var(--muted);display:inline-flex;align-items:center;min-height:44px}
@@ -155,7 +155,7 @@ details p{margin:0 0 14px}
     <section class="demo" aria-label="Try it">
       <div class="caplabel"><b id="clipname">Sample clip</b><span id="hint">Tap a style. Drag the captions to move.</span><button class="btn quiet small" id="editwords" hidden>Fix a word</button></div>
       <div class="stage" id="stage">
-        <img class="poster" id="poster" src="poster.webp?v=1789832300" alt="" width="540" height="960" decoding="async">
+        <img class="poster" id="poster" src="poster.webp?v=1789940795" alt="" width="540" height="960" decoding="async">
         <video id="video" playsinline muted loop preload="metadata" crossorigin="anonymous"></video>
         <canvas id="canvas"></canvas>
         <button class="tap" id="tap" aria-label="Play or pause"></button>
@@ -197,17 +197,10 @@ details p{margin:0 0 14px}
         <div><div class="amt">$19<small>once</small></div><div class="fine">No mark, and clips up to five minutes.</div><div class="fine" id="paytrust">Your clip stays on your device. Refund within 14 days.</div><div class="fine" id="founding">Founding price for the first 100 buyers.</div></div>
         <a class="btn hi" id="buy" href="https://polar.sh/smaverk" target="_blank" rel="noopener" aria-label="Buy once — $19 (opens the checkout in a new tab)">Buy once — $19</a>
       </div>
-      <p class="fine" id="pricefine">Free: 60 seconds, with a small mark. Paid: five minutes, no mark, three devices.</p>
+      <p class="fine" id="pricefine">Free: 60 seconds, with a small mark. Paid: five minutes, no mark, your own devices.</p>
 
-      <div id="paidpanel" hidden><h2>Paid version on this device</h2><p class="fine">Your key <b id="paidkey"></b> is saved in this browser. Clips up to five minutes, no mark. For another device, use the key from the email Polar sent you. <a href="#" id="removekey">Remove the key from this device</a></p></div>
-      <div id="afterpay">
-      <h2>What happens after you pay</h2>
-      <ul>
-        <li>Pay on Polar: card, Apple Pay or Google Pay. Taxes included.</li>
-        <li>Your key comes by email. Paste it once.</li>
-        <li>Refund within 14 days, no questions.</li>
-      </ul>
-      </div>
+      <div id="paidpanel" hidden><h2>Paid version on this device</h2><p class="fine">Your key, in full. Paste it on your own other devices to unlock them too.</p><p class="keyline"><b id="paidkey" class="keyshow"></b><button class="btn primary" id="keycopy" type="button">Copy</button></p><p class="fine">Clips up to five minutes, with no mark.</p><p class="fine" id="keyalso" hidden></p><p class="fine">Lost it? <a id="keylost" href="https://polar.sh/smaverk/portal" target="_blank" rel="noopener">Get your key again</a> with the email you paid with. <a href="#" id="removekey">Remove the key from this device</a></p></div>
+      <div id="afterpay"><h2>What happens after you pay</h2><ul><li>Pay on Polar: card, Apple Pay or Google Pay. Taxes included.</li><li>You come straight back, already unlocked. Nothing to paste.</li><li>Refund within 14 days, no questions.</li></ul></div>
       <div class="key" id="keyrow"><input id="key" placeholder="Paste your key" autocomplete="off" spellcheck="false" aria-label="Your key"><button class="btn primary" id="keygo">Unlock</button></div>
       <p class="fine" id="keystatus">Already paid? Paste your key here.</p>
 
@@ -227,7 +220,7 @@ details p{margin:0 0 14px}
     </section>
   </div>
 </div>
-<script type="module" src="app.js?v=1789832300"></script>
+<script type="module" src="app.js?v=1789940795"></script>
 <script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "91285919879f4672a4342550a4b0b07c"}'></script>
 </body>
 </html>

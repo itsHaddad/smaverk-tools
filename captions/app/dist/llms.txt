@@ -23,7 +23,7 @@ await dl.saveAs("clip-captions.mp4");
 
 - `?style=bar|karaoke|big` preselects the caption style. `window.captions.style("big")` changes it.
 - `window.__cap` mirrors state: `state`, `words`, `ms`, `exportBytes`, `error`.
-- A paid key can be applied by filling `#key` and clicking `#keygo`; it is stored in `localStorage` under `smaverk.captions.key`.
+- A paid key is applied by filling `#key` and clicking `#keygo`; it is kept in `localStorage` under `smaverk.key`, the same name in every Småverk tool. What a key opens is decided by `POST https://unlock.smaverk.com/entitlements` with `{key, rail}`, which answers `{status, tools, expires}` — `tools` lists every Småverk tool the key opens, so one key can open several. Coming back from a checkout with `?checkout_id=…` unlocks the page by itself; nothing is pasted.
 
 ## Pages
 - https://captions.smaverk.com/capcut-captions-alternative — For people who met CapCut Pro when saving auto captions: the same job here, $19 once.

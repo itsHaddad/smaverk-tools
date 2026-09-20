@@ -71,6 +71,20 @@ where the caption track puts them at the middle, 1.68 s at the ninetieth. A topi
 resolved to about seven seconds anyway, and the boundary is then moved to a silence measured from the
 sound itself, which is a better answer than the word gaps the research tree used.
 
+## What a visitor downloads
+
+Measured in the browser on the green gate run, not estimated:
+
+| | |
+|---|---|
+| The page before anyone touches it | **796 KB** — html, app.js, the font, and the 65-minute sample's list and sound |
+| The tool, on first intent only | **35 MB** (Moonshine base, q8), plus the runtime it fetches from a public file host |
+
+Nothing of the 35 MB is fetched until the person opens the picker or touches the band; the smoke gate fails
+if anything heavy moves before that. For contrast, the one open-source rival with a working pipeline needs
+a 1.4 GB model. That contrast is only ours while the number stays small, so it is written here and the
+gate reports it on every run.
+
 ## Commands
 
 ```

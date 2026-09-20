@@ -173,14 +173,14 @@ export const FORMATS: Record<Format, { label: string; ext: string; type: string;
     label: "Premiere · Resolve",
     ext: "xml",
     type: "application/xml",
-    says: (_m, n) => `${n} moments on a timeline. Open it in Premiere Pro or DaVinci Resolve and point it at your recording.`,
+    says: (_m, n) => `${n} moments as a Final Cut 7 timeline, the format Premiere Pro and DaVinci Resolve import. Point it at your recording when it asks.`,
     build: fcp7Xml,
   },
   finalcut: {
     label: "Final Cut",
     ext: "fcpxml",
     type: "application/xml",
-    says: (_m, n) => `${n} moments on a timeline. Open it in Final Cut Pro and point it at your recording.`,
+    says: (_m, n) => `${n} moments as an FCPXML timeline, the format Final Cut Pro imports. Point it at your recording when it asks.`,
     build: fcpXml,
   },
   edl: {
