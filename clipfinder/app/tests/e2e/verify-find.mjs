@@ -137,7 +137,10 @@ try {
   // beacon posts page timings and the key check posts a key. What must be true is that every host is one
   // the privacy page accounts for, and that nothing leaving is anywhere near the size of a recording —
   // the fixture is 2.3 MB and the smallest thing worth stealing out of it is far above this bar.
-  const ALLOWED_HOSTS = /^(huggingface\.co|cdn\.jsdelivr\.net|cdn-lfs[\w.-]*\.hf\.co|static\.cloudflareinsights\.com|cloudflareinsights\.com|[\w.-]*\.polar\.sh|polar\.sh)$/;
+  // huggingface.co redirects the weights to its own file hosts, which have several names (cdn-lfs…,
+  // us.aws.cdn.hf.co, and whichever region answers next). The privacy page accounts for them as a
+  // category — "public file hosts" — which is the only form that survives them being renamed.
+  const ALLOWED_HOSTS = /^(huggingface\.co|[\w.-]*\.hf\.co|cdn\.jsdelivr\.net|static\.cloudflareinsights\.com|cloudflareinsights\.com|[\w.-]*\.polar\.sh|polar\.sh)$/;
   const BODY_LIMIT = 8 * 1024;
   const strangers = sent.filter((s) => !ALLOWED_HOSTS.test(s.host));
   const heavy = sent.filter((s) => s.bytes > BODY_LIMIT);

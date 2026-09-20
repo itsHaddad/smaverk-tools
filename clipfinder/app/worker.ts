@@ -169,10 +169,11 @@ async function hear(samples: Float32Array, startS: number, overlapS: number, spa
 type RunMessage = { file: Blob; wantedS: number; maxSeconds: number; count: number };
 
 async function run({ file, wantedS, maxSeconds, count }: RunMessage) {
-  if (!asr) {
-    postMessage({ type: "error", message: "The tool is not ready yet. Give it a moment and try again." });
-    return;
-  }
+  // Picking a file is what asks for the tool, so the page sends `load` and `run` together and this one
+  // arrives while the download is still going. Telling the person to try again in a moment is not an
+  // answer to a thing they already did: wait for the load instead, joining the one already in flight.
+  if (!asr) await load();
+  if (!asr) return; // load() already said why, in words
   const mine = ++generation;
   const stale = () => mine !== generation;
   let reading: Awaited<ReturnType<typeof open>> | null = null;
