@@ -651,6 +651,12 @@ $("key").addEventListener("keydown", (e) => {
   if ((e as KeyboardEvent).key === "Enter") $("keygo").click();
 });
 
+// For rigs that need the paid state without a rail: paints it, exactly as a real key would. It does not store a
+// key, so a reload goes back to whatever the device actually holds. Captions and Vertical have had this; the
+// clip finder did not, and the phone UI gate went red reaching for it (2026-09-21).
+dbg.setLicensed = (on: boolean) =>
+  paintLicense({ on, key: on ? "TEST-KEY" : "", tools: on ? ["clipfinder"] : [], expires: null, text: on ? "Paid version on this device." : "Already paid? Paste your key here.", tone: on ? "ok" : "", became: "" });
+
 void unlock.start();
 // ---------------------------------------------------------------------------------------------
 // Start
