@@ -142,8 +142,10 @@ try {
   // the privacy page accounts for, and that nothing leaving is anywhere near the size of a recording —
   // the fixture is 2.3 MB and the smallest thing worth stealing out of it is far above this bar.
   // huggingface.co redirects the weights to its own file hosts, which have several names (cdn-lfs…,
-  // us.aws.cdn.hf.co, and whichever region answers next). The privacy page accounts for them as a
-  // category — "public file hosts" — which is the only form that survives them being renamed.
+  // us.aws.cdn.hf.co, and whichever region answers next). The privacy page names them rather than describing a
+  // category, which is the principal's decision of 2026-09-18 (do not tell the world how the tools are built) and
+  // the only form that survives them being renamed. The page now also says that Vertical serves every file itself
+  // while these two do not yet, and that closing that gap is work we have not done.
   // unlock.smaverk.com is the one host the key check talks to; the page no longer calls Polar itself.
   const ALLOWED_HOSTS = /^(huggingface\.co|[\w.-]*\.hf\.co|cdn\.jsdelivr\.net|static\.cloudflareinsights\.com|cloudflareinsights\.com|unlock\.smaverk\.com|[\w.-]*\.polar\.sh|polar\.sh)$/;
   const BODY_LIMIT = 8 * 1024;
