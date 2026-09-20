@@ -596,6 +596,7 @@ function setLicensed(on: boolean, msg?: string) {
   $("pricefine").hidden = on;
   $("paidpanel").hidden = !on;
   $("trust").textContent = on ? "Up to four hours. English. Nothing leaves your device." : "Free up to 30 minutes. English. Nothing leaves your device.";
+  mark();
   let k = "";
   try {
     k = localStorage.getItem(KEY_STORE) ?? "";
