@@ -235,6 +235,7 @@ function paintLicense(s: UnlockState) {
   // key and it is in their email, and a masked key cannot be typed into a second device (cold user, 2026-09-20).
   $("paidkey").textContent = s.key;
   $("keylost").setAttribute("href", unlock.portal);
+  $("keylostline").hidden = s.on; // the paid panel shows the key itself, so this is for whoever is locked out
   // A key that opens more than this tool says so, and the link carries it across in one click.
   const others = unlock.elsewhere;
   $("keyalso").hidden = others.length === 0;
@@ -245,7 +246,8 @@ function paintLicense(s: UnlockState) {
   if (s.on && s.became === "another-tab" && state === "exported") { touched(); say("The paid version is on. Save the video again: the new copy has no mark.", "ok"); }
   if (s.on && s.became === "checkout") $("keystatus").scrollIntoView({ block: "center", behavior: "smooth" });
 }
-$("removekey").addEventListener("click", (e) => { e.preventDefault(); unlock.forget(); });
+// Removing the key wipes the only copy on this screen, so it asks first (cold user, 2026-09-21).
+$("removekey").addEventListener("click", (e) => { e.preventDefault(); if (confirm("Remove the key from this device? Copy it first if you have not: you will need it to unlock this device again.")) unlock.forget(); });
 $("keycopy").addEventListener("click", async (e) => {
   e.preventDefault();
   try { await navigator.clipboard.writeText(unlock.state.key); $("keycopy").textContent = "Copied"; }

@@ -272,8 +272,12 @@ export class Unlock {
     return `Paid version on this device. ${this.cfg.paidLine}${soon}`;
   }
 
+  /**
+   * Cold user, 2026-09-21: the old thank-you ran to five lines of green on a phone and repeated what the paid
+   * panel printed two lines above it. What someone who has just paid needs to know is that they are done.
+   */
   private thanks(became: UnlockState["became"], expires: string | null): string {
-    if (became === "checkout") return `Thank you. The paid version is on, and nothing else is needed. ${this.cfg.paidLine} Your key is below and in the email from Polar.`;
+    if (became === "checkout") return "Thank you. Nothing else to do; your key is below.";
     return this.onText(expires);
   }
 

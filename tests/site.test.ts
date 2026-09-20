@@ -480,9 +480,16 @@ test("the key box is on the page, never behind a fold-out, and the key is readab
     expect(html, `${t.name}: the key is shown`).toContain('id="paidkey"');
     expect(html, `${t.name}: and can be copied`).toContain('id="keycopy"');
     expect(code(read(t.app)), `${t.name}: the key is printed whole, not masked`).toContain('$("paidkey").textContent = s.key');
-    // Lost it: a way back that is not "search your email".
+    // Lost it: a way back that is not "search your email". Cold user, 2026-09-21: this link used to live inside
+    // #paidpanel, which is hidden from the one person who needs it — someone locked out on a second device.
     expect(html, `${t.name}: a way to get the key again`).toContain('id="keylost"');
     expect(html, `${t.name}: which points at Polar's own portal`).toContain("polar.sh/smaverk/portal");
+    const panel = html.slice(html.indexOf('id="paidpanel"'), html.indexOf("</div>", html.indexOf('id="paidpanel"')));
+    expect(panel, `${t.name}: the recovery link is hidden inside the paid panel`).not.toContain('id="keylost"');
+    expect(html.indexOf('id="keylost"'), `${t.name}: the recovery link sits with the key box`).toBeGreaterThan(html.indexOf('id="keystatus"'));
+    expect(code(read(t.app)), `${t.name}: and it hides once they are paid`).toContain('$("keylostline").hidden = s.on');
+    // Removing the key wipes the only copy on screen, so it asks first.
+    expect(code(read(t.app)), `${t.name}: removing the key asks first`).toMatch(/removekey[\s\S]{0,200}confirm\(/);
     // A bundle key says what else it opens.
     expect(html, `${t.name}: room to name the other tools a key opens`).toContain('id="keyalso"');
     // The clip finder's state matrix failed on a 40 px Copy button, 2026-09-20. 44 px is the floor everywhere.
