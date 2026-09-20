@@ -9,15 +9,16 @@
 <link rel="canonical" href="https://smaverk.com/">
 <meta name="google-site-verification" content="_eN1ywvXp9R-hebN0pJSivwAN8J8DuuaNGwfr_QqmnU">
 <meta property="og:title" content="Småverk — small AI tools that run on your device">
-<meta property="og:description" content="Each tool does one job in your browser. Nothing uploaded. Pay once per tool.">
+<meta property="og:description" content="Each tool does one job in your browser. Nothing uploaded. Pay once for a tool, or nothing while it is new.">
 <meta property="og:url" content="https://smaverk.com/"><meta property="og:type" content="website"><meta property="og:site_name" content="Småverk">
-<meta property="og:image" content="https://smaverk.com/studio-demo/vertical-poster.jpg?v=1789946197">
-<meta name="twitter:card" content="summary"><meta name="twitter:title" content="Småverk — small AI tools that run on your device"><meta name="twitter:description" content="Each tool does one job in your browser. Nothing uploaded. Pay once per tool.">
+<meta property="og:image" content="https://smaverk.com/studio-demo/vertical-poster.jpg?v=1789832300">
+<meta name="twitter:card" content="summary"><meta name="twitter:title" content="Småverk — small AI tools that run on your device"><meta name="twitter:description" content="Each tool does one job in your browser. Nothing uploaded. Pay once for a tool, or nothing while it is new.">
 <link rel="preload" href="fonts/bricolage-grotesque-latin.woff2" as="font" type="font/woff2" crossorigin>
 <style>@font-face{font-family:"Bricolage Grotesque";font-style:normal;font-weight:200 800;font-stretch:100%;font-display:swap;src:url(fonts/bricolage-grotesque-latin.woff2) format("woff2")}</style>
 <link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="icon" type="image/png" sizes="64x64" href="/icon-64.png">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%277%27 fill=%27%23FFD84D%27/%3E%3Crect x=%277%27 y=%2720%27 width=%2718%27 height=%275%27 rx=%272.5%27 fill=%27%2316141D%27/%3E%3C/svg%3E">
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"Småverk","url":"https://smaverk.com","email":"hello@smaverk.com","description":"Small browser tools that run on the user's device. Nothing uploaded. Pay once per tool."}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"Småverk","url":"https://smaverk.com","email":"hello@smaverk.com","description":"Small browser tools that run on the user's device. Nothing uploaded. Pay once for a tool, or nothing while it is new."}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"ItemList","name":"Tools by Småverk","itemListElement":[{"@type":"ListItem","position":1,"item":{"@type":"SoftwareApplication","name":"Captions by Småverk","url":"https://captions.smaverk.com","applicationCategory":"MultimediaApplication","operatingSystem":"Any (web browser)","offers":{"@type":"Offer","price":"19","priceCurrency":"USD","description":"One-time purchase"}}},{"@type":"ListItem","position":2,"item":{"@type":"SoftwareApplication","name":"Vertical by Småverk","url":"https://vertical.smaverk.com","applicationCategory":"MultimediaApplication","operatingSystem":"Any (web browser)","offers":{"@type":"Offer","price":"24","priceCurrency":"USD","description":"One-time purchase"}}},{"@type":"ListItem","position":3,"item":{"@type":"SoftwareApplication","name":"Clip finder by Småverk","url":"https://clipfinder.smaverk.com","applicationCategory":"MultimediaApplication","operatingSystem":"Any (web browser)","offers":{"@type":"Offer","price":"0","priceCurrency":"USD","description":"Free while it is new"}}}]}</script>
 <style>
 :root{color-scheme:light dark;
   --ground:light-dark(#F3F2F7,#0E0D12);--surface:light-dark(#FFFFFF,#18161F);--ink:light-dark(#16141D,#F2F0F7);--muted:light-dark(#67637A,#9D99AE);
@@ -63,6 +64,16 @@ p{margin:0 0 12px;text-wrap:pretty;overflow-wrap:anywhere}
 .demo .dtap::after{content:"";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.92) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M7 4.5v15l12-7.5z' fill='%2316141D'/%3E%3C/svg%3E") no-repeat center/24px 24px;opacity:0;transition:opacity .15s;pointer-events:none}
 .demo.is-paused .dtap::after{opacity:1}
 @media (prefers-reduced-motion:reduce){.demo .dtap::after,.demo .inset{transition:none}}
+/* Clip finder's card: no video, because its answer is a list of times. The band is the recording, the lit
+   blocks are what it found, and the words underneath are what that moment opens on. */
+.demo[data-demo="clipfinder"]{aspect-ratio:16/9;background:var(--surface);display:grid;align-content:center;gap:0}
+.cf{padding:14px 16px;min-width:0}
+.cf-h{display:block;font:700 15px/1.2 var(--display);color:var(--ink);margin-bottom:8px}
+.cf-band{display:block;width:100%;height:auto;aspect-ratio:600/96}
+.cf-at{display:flex;gap:8px;align-items:baseline;margin:10px 0 2px;font:700 15px/1 var(--display);color:var(--ink)}
+.cf-len{font:400 14px var(--body);color:var(--muted)}
+.cf-op{margin:0;font-size:15px;color:var(--ink);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.cf-why{margin:4px 0 0;font-size:14px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tool .price{color:var(--ink);font-size:15px}
 .btn{appearance:none;border:0;border-radius:12px;min-height:52px;padding:0 20px;font:700 16px var(--display);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;background:var(--btn);color:var(--btn-ink);margin-top:4px}
 .btn.quiet{background:transparent;color:var(--ink);border:1.5px solid var(--line);min-height:48px;font-weight:600}
@@ -79,12 +90,12 @@ footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--line);color:v
 <main class="wrap">
   <div class="brand"><i></i>Småverk</div>
   <h1>Small AI tools that run on <mark>your</mark> device.</h1>
-  <p class="sub">One job each, in your browser. Nothing leaves your device. Pay once per tool.</p>
+  <p class="sub">One job each, in your browser. Nothing leaves your device. No account.</p>
 
   <section class="tools" aria-label="Tools">
     <article class="tool">
       <div class="demo" data-demo="captions">
-        <video src="sample.mp4?v=1789946197" poster="poster.webp?v=1789946197" muted loop playsinline preload="metadata" aria-label="A sample clip. Captions appear on it as each word is spoken."></video>
+        <video src="sample.mp4?v=1789832300" poster="poster.webp?v=1789832300" muted loop playsinline preload="metadata" aria-label="A sample clip. Captions appear on it as each word is spoken."></video>
         <p class="cap" aria-hidden="true"></p>
         <button class="dtap" type="button" aria-label="Play or pause the Captions demo"></button>
         <button class="sound" type="button" aria-pressed="false" aria-label="Sound is off. Turn it on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10v4h4l5 4V6L8 10H4z"/><path class="wave" d="M16.5 9a4 4 0 0 1 0 6M19 6.5a8 8 0 0 1 0 11"/><path class="mute" d="M17 9.5l4.5 5M21.5 9.5l-4.5 5"/></svg></button>
@@ -96,7 +107,7 @@ footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--line);color:v
     </article>
     <article class="tool">
       <div class="demo" data-demo="vertical">
-        <video src="studio-demo/vertical-sample.mp4?v=1789946197" poster="studio-demo/vertical-poster.jpg?v=1789946197" muted loop playsinline preload="none" aria-label="A landscape sample clip of a soccer coach talking as he moves across a field. A yellow window follows him, and the small picture shows the vertical result."></video>
+        <video src="studio-demo/vertical-sample.mp4?v=1789832300" poster="studio-demo/vertical-poster.jpg?v=1789832300" muted loop playsinline preload="none" aria-label="A landscape sample clip of a soccer coach talking as he moves across a field. A yellow window follows him, and the small picture shows the vertical result."></video>
         <i class="dim" data-side="l"></i><i class="dim" data-side="r"></i><i class="win"></i>
         <canvas class="inset" width="180" height="320" aria-hidden="true"></canvas>
         <button class="dtap" type="button" aria-label="Play or pause the Vertical demo"></button>
@@ -107,14 +118,31 @@ footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--line);color:v
       <p class="price">Free: clips up to 60 seconds, with a small smaverk.com mark. $24 once: clips up to five minutes, no mark.</p>
       <a class="btn" href="https://vertical.smaverk.com/?src=studio">Open Vertical</a>
     </article>
+    <article class="tool">
+      <!-- This tool's output is a list of times, not a picture, so the card draws what it draws: the whole
+           recording as one band with the moments lit, and the words each one opens on. The data is the
+           tool's own sample output, copied by the command in tests/site.test.ts. -->
+      <div class="demo" data-demo="clipfinder">
+        <div class="cf">
+          <b class="cf-h">A 65-minute interview</b>
+          <canvas class="cf-band" width="600" height="96" aria-label="A 65-minute recording drawn as one long band, with four found moments lit up inside it."></canvas>
+          <p class="cf-at"><span class="cf-time"></span><span class="cf-len"></span></p>
+          <p class="cf-op"></p>
+          <p class="cf-why"></p>
+        </div>
+      </div>
+      <h3>Clip finder</h3>
+      <p>The moments worth posting in a long podcast, talk or interview — each with its time, its length and why it was picked.</p>
+      <p class="price">Free while it is new: recordings up to four hours, and every export.</p>
+      <a class="btn" href="https://clipfinder.smaverk.com/?src=studio">Open Clip finder</a>
+    </article>
   </section>
 
   <h2>How they work</h2>
   <ul class="how">
     <li><b>Runs in this page.</b> The tool loads once, then works offline.</li>
     <li><b>Nothing uploaded.</b> Your video stays on your device. No account.</li>
-    <li><b>Pay once per tool.</b> Paid through Polar, a checkout company. Taxes included. <span class="nb">Refund within 14 days.</span></li>
-    <li><b>Nothing to set up.</b> You come back already unlocked. Your key is on screen and in your email.</li>
+    <li><b>Pay once for a tool, or nothing while it is new.</b> Paid through Polar, a checkout company. Taxes included. <span class="nb">Refund within 14 days.</span></li>
   </ul>
 
   <footer>
@@ -124,6 +152,7 @@ footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--line);color:v
     <a href="https://smaverk.com/terms">Terms</a>
     <a href="https://www.youtube.com/watch?v=96eBO8N3qn4" rel="noopener">Captions sample: Peter Kramm, CC BY</a>
     <a href="https://www.youtube.com/watch?v=GoE-e8u-P1g" rel="noopener">Vertical sample: Coach Javi, CC BY</a>
+    <a href="https://www.nasa.gov/podcasts/houston-we-have-a-podcast/" rel="noopener">Clip finder sample: NASA, public domain</a>
   </footer>
 </main>
 <script type="module">
@@ -132,16 +161,17 @@ const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const lerp = (a, b, k) => a + (b - a) * k;
 for (const box of document.querySelectorAll(".demo")) {
   const v = box.querySelector("video"), tap = box.querySelector(".dtap"); let paint = () => {};
+  if (!v) continue; // the clip finder's card has no video: its answer is a list of times, and it draws itself below
   if (box.dataset.demo === "captions") {
     const cap = box.querySelector(".cap"); let lines = [];
-    fetch("sample-words.json?v=1789946197").then((r) => r.json()).then((w) => { const marked = w.some((x) => x.br); let cur = []; for (const x of w) { cur.push(x); const end = /[.!?]$/.test(x.text), comma = /,$/.test(x.text); if (x.br || end || (!marked && ((comma && cur.length >= 3) || cur.length >= 5))) { lines.push(cur); cur = []; } } if (cur.length) lines.push(cur); paint(); }).catch(() => {});
+    fetch("sample-words.json?v=1789832300").then((r) => r.json()).then((w) => { const marked = w.some((x) => x.br); let cur = []; for (const x of w) { cur.push(x); const end = /[.!?]$/.test(x.text), comma = /,$/.test(x.text); if (x.br || end || (!marked && ((comma && cur.length >= 3) || cur.length >= 5))) { lines.push(cur); cur = []; } } if (cur.length) lines.push(cur); paint(); }).catch(() => {});
     let shown = "";
     paint = () => { const t = v.currentTime; const line = lines.find((l) => t >= l[0].start - 0.05 && t <= l[l.length - 1].end + 0.35) ?? (t < (lines[0]?.[0].start ?? 0) ? lines[0] : null);
       const key = line ? line[0].start + ":" + line.findIndex((x) => t >= x.start && t < x.end + 0.05) : ""; if (key === shown) return; shown = key;
       cap.replaceChildren(...(line ?? []).flatMap((x, i) => { const on = t >= x.start && t < x.end + 0.05; const n = document.createElement(on ? "b" : "span"); n.textContent = x.text; return i ? [" ", n] : [n]; })); };
   } else {
     const win = box.querySelector(".win"), L = box.querySelector("[data-side=l]"), R = box.querySelector("[data-side=r]"), inset = box.querySelector(".inset"), g = inset.getContext("2d"); let track = [];
-    fetch("studio-demo/vertical-track.json?v=1789946197").then((r) => r.json()).then((t) => { track = t; paint(); }).catch(() => {});
+    fetch("studio-demo/vertical-track.json?v=1789832300").then((r) => r.json()).then((t) => { track = t; paint(); }).catch(() => {});
     paint = () => { if (!track.length) return; const t = v.currentTime; let i = track.findIndex((p) => p.t > t); if (i < 0) i = track.length - 1; const a = track[Math.max(0, i - 1)], b = track[i]; const cx = b.t > a.t ? lerp(a.cx, b.cx, Math.min(1, Math.max(0, (t - a.t) / (b.t - a.t)))) : a.cx;
       const W = v.videoWidth || 1280, H = v.videoHeight || 720, w = Math.min(1, (H * 9 / 16) / W), left = Math.min(1 - w, Math.max(0, cx - w / 2));
       win.style.left = left * 100 + "%"; win.style.width = w * 100 + "%"; L.style.left = "0"; L.style.width = left * 100 + "%"; R.style.left = (left + w) * 100 + "%"; R.style.right = "0";
@@ -155,6 +185,50 @@ for (const box of document.querySelectorAll(".demo")) {
   const snd = box.querySelector(".sound"); if (snd) snd.addEventListener("click", () => { v.muted = !v.muted; snd.setAttribute("aria-pressed", String(!v.muted)); snd.setAttribute("aria-label", v.muted ? "Sound is off. Turn it on" : "Sound is on. Turn it off"); if (!v.muted && v.paused) v.play().catch(() => {}); });
   // Plays only while it is on screen, and not at all for visitors who asked for less motion (tap to play).
   new IntersectionObserver(([e]) => { if (e.isIntersecting && !still) v.play().catch(() => {}); else if (!e.isIntersecting) { v.pause(); if (snd && !v.muted) snd.click(); } }, { threshold: 0.8 }).observe(box);
+}
+
+// Clip finder: one band for the whole recording, the found moments lit inside it, and the words each one
+// opens on — the tool's own sample output, so the card cannot show anything the tool did not produce.
+{
+  const box = document.querySelector('[data-demo="clipfinder"]');
+  const c = box?.querySelector(".cf-band"), g = c?.getContext("2d");
+  // A custom property is handed back unresolved and a canvas silently drops a colour it cannot parse, so
+  // `light-dark(a,b)` has to be split here or the band paints black on black.
+  const dark = matchMedia("(prefers-color-scheme: dark)");
+  const tok = (name) => { const v = getComputedStyle(document.body).getPropertyValue(name).trim(); if (!v.startsWith("light-dark(")) return v; const inner = v.slice(v.indexOf("(") + 1, v.lastIndexOf(")")); const i = inner.indexOf(","); return (dark.matches ? inner.slice(i + 1) : inner.slice(0, i)).trim(); };
+  const clock = (s) => `${Math.floor(s / 60)}:${String(Math.round(s) % 60).padStart(2, "0")}`;
+  const spoken = (s) => (s >= 60 ? `${Math.round(s / 60)} min` : `${Math.round(s)} s`);
+  if (g) {
+    let moments = [], durationS = 1, at = 0;
+    const draw = () => {
+      const r = Math.min(devicePixelRatio || 1, 2), w = Math.round(c.clientWidth * r), h = Math.round(c.clientHeight * r);
+      if (c.width !== w || c.height !== h) { c.width = w; c.height = h; }
+      const x = (s) => (w * Math.min(Math.max(s, 0), durationS)) / durationS, band = h * 0.5, top = (h - band) / 2;
+      g.clearRect(0, 0, w, h);
+      g.fillStyle = tok("--line"); g.beginPath(); g.roundRect(0, top, w, band, 5 * r); g.fill();
+      for (const [i, m] of moments.entries()) {
+        const a = x(m.startS), b = Math.max(a + 3 * r, x(m.endS));
+        g.fillStyle = i === at ? tok("--hi") : tok("--ink"); g.globalAlpha = i === at ? 1 : 0.45;
+        g.beginPath(); g.roundRect(a, top - 4 * r, b - a, band + 8 * r, 4 * r); g.fill(); g.globalAlpha = 1;
+      }
+    };
+    const show = () => {
+      const m = moments[at]; if (!m) return;
+      box.querySelector(".cf-time").textContent = clock(m.startS);
+      box.querySelector(".cf-len").textContent = spoken(m.endS - m.startS);
+      box.querySelector(".cf-op").textContent = `“${m.opening}”`;
+      box.querySelector(".cf-why").textContent = m.why;
+      draw();
+    };
+    fetch("studio-demo/clipfinder-moments.json?v=1789832300").then((r) => r.json()).then((d) => {
+      moments = d.moments ?? []; durationS = d.durationS || 1;
+      box.querySelector(".cf-h").textContent = `${d.title} · ${moments.length} moments found`;
+      show();
+      // One moment at a time, unless the visitor asked for less motion — then the first one stays put.
+      if (!still && moments.length > 1) setInterval(() => { at = (at + 1) % moments.length; show(); }, 2600);
+    }).catch(() => { box.querySelector(".cf-h").textContent = "A long recording, with the moments worth posting marked."; });
+    addEventListener("resize", draw); dark.addEventListener("change", () => { draw(); });
+  }
 }
 </script>
 <script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "91285919879f4672a4342550a4b0b07c"}'></script>
