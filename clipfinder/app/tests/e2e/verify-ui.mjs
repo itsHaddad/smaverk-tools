@@ -180,6 +180,28 @@ try {
   await p.fill("#key", "SMVCF-TEST-0000-0000");
   await p.click("#keygo");
   await p.waitForFunction(() => window.__cf?.licensed === true, null, { timeout: 15000 });
+
+  // The paid panel is the one surface the rest-state audit can never see: at rest this page is locked and
+  // #paidpanel is hidden, so its key, its Copy button and its destructive "Remove the key" button had shipped
+  // without a single tap-target pass. Design review, 2026-09-21: two inline links stacked on 22 px lines each
+  // claimed a 44 px box, they overlapped, and the later one won the hit test — so aiming at "Get your key
+  // again" removed the key instead. Measuring each control on its own cannot see that; only overlap can.
+  const clash = await p.evaluate(() => {
+    const controls = [...document.querySelectorAll("#paidpanel a, #paidpanel button, #keyrow a, #keyrow button, #keylostline a")].filter((el) => el.offsetParent);
+    const boxes = controls.map((el) => ({ id: el.id || el.textContent.trim().slice(0, 24), r: el.getBoundingClientRect() }));
+    const bad = [];
+    for (let i = 0; i < boxes.length; i++)
+      for (let j = i + 1; j < boxes.length; j++) {
+        const a = boxes[i].r, b = boxes[j].r;
+        const w = Math.min(a.right, b.right) - Math.max(a.left, b.left);
+        const h = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+        if (w > 0 && h > 0) bad.push(`${boxes[i].id} and ${boxes[j].id} share ${Math.round(w)}x${Math.round(h)} px`);
+      }
+    return { count: controls.length, bad };
+  });
+  if (clash.bad.length) check(false, `paid panel: two controls claim the same pixels — ${clash.bad.join("; ")}`);
+  else check(true, `paid panel: ${clash.count} controls, none overlapping`);
+
   const [dl] = await Promise.all([p.waitForEvent("download", { timeout: 30000 }), p.click('[data-save="edl"]')]);
   await dl.saveAs(join(out, dl.suggestedFilename()));
   await p.waitForTimeout(400);

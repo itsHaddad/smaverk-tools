@@ -463,6 +463,10 @@ test("a key already on the device survives our own downtime", () => {
   // off. A paid key must not evaporate when the check cannot be made (it did, in the clip finder, until 2026-09-20).
   const src = read(UNLOCK_SRC[0]!);
   expect(src, "an unreachable worker is not an answer").toContain('"unreachable"');
+  // Design review, 2026-09-21: the status line is written with textContent, so a URL in it is plain text a
+  // person on a phone has to retype. The recovery link under the box is the tappable answer.
+  for (const m of src.matchAll(/(?:this\.set\(\{[\s\S]{0,80}?|return no\()(["`])([^"`]{20,})\1/g))
+    expect(m[2], "a status sentence hands out a URL to retype").not.toMatch(/https?:\/\//);
   expect(code(src), "a stored key turns the paid version on before the check is made").toMatch(/this\.set\(\{ on: true, key: saved[\s\S]{0,400}?await this\.ask\(saved\)/);
   expect(code(src), "and an unreachable check leaves it on").toMatch(/if \(answer === "unreachable"\) return;/);
 });
@@ -490,6 +494,12 @@ test("the key box is on the page, never behind a fold-out, and the key is readab
     expect(code(read(t.app)), `${t.name}: and it hides once they are paid`).toContain('$("keylostline").hidden = s.on');
     // Removing the key wipes the only copy on screen, so it asks first.
     expect(code(read(t.app)), `${t.name}: removing the key asks first`).toMatch(/removekey[\s\S]{0,200}confirm\(/);
+    // Design review, 2026-09-21: as an inline link on a 22 px line it shared its 44 px tap box with the link
+    // beside it, and won the hit test — so aiming at recovery destroyed the key. It gets its own row.
+    expect(html, `${t.name}: removing the key is a button on its own row, not an inline link`).toMatch(/<p class="keyline"><button class="btn quiet" id="removekey"/);
+    // The status sentence says "your key is above", so it has to render after the panel that holds the key.
+    expect(html.indexOf('id="keystatus"'), `${t.name}: the status sentence sits below the paid panel`).toBeGreaterThan(html.indexOf('id="paidpanel"'));
+    expect(html.indexOf('id="keystatus"'), `${t.name}: and above the box it labels`).toBeLessThan(html.indexOf('id="keyrow"'));
     // A bundle key says what else it opens.
     expect(html, `${t.name}: room to name the other tools a key opens`).toContain('id="keyalso"');
     // The clip finder's state matrix failed on a 40 px Copy button, 2026-09-20. 44 px is the floor everywhere.

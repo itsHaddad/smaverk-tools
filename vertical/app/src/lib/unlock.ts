@@ -113,7 +113,7 @@ export class Unlock {
       if (key) await this.apply(key, "checkout");
       else
         this.set({
-          text: `Payment received, but the key has not come through yet. It is in the email from Polar — paste it below, or open ${this.portal} with the email you paid with.`,
+          text: "Payment received, but the key has not come through yet. It is in the email from Polar — paste it below, or use the link under the box to get it again.",
           tone: "err",
         });
       return;
@@ -151,7 +151,7 @@ export class Unlock {
     const ok = await this.apply(key, "pasted");
     if (ok) return true;
     // apply() has already written the reason when it knows one; this covers the case where it does not.
-    if (this.s.tone !== "err") this.set({ text: `That key did not work here. Check the email from Polar, or open ${this.portal} with the email you paid with.`, tone: "err" });
+    if (this.s.tone !== "err") this.set({ text: "That key did not work here. Check the email from Polar, or use the link under the box to get it again.", tone: "err" });
     return false;
   }
 
@@ -185,7 +185,7 @@ export class Unlock {
     };
     const answer = await this.ask(key);
     if (answer === "unreachable") return no("Could not check the key right now. Try again in a minute.");
-    if (answer.status !== "granted") return no(`That key did not work here. Check the email from Polar, or open ${this.portal} with the email you paid with.`);
+    if (answer.status !== "granted") return no("That key did not work here. Check the email from Polar, or use the link under the box to get it again.");
     if (this.lapsed(answer.expires)) return no("That key has run out. Renew it and it works again; everything already saved stays yours.");
     if (!answer.tools.includes(this.cfg.tool)) {
       const opens = answer.tools.map((t) => TOOL_NAME[t]).join(" and ");
@@ -269,7 +269,7 @@ export class Unlock {
 
   private onText(expires: string | null = this.s.expires): string {
     const soon = expires && Date.parse(expires) < Date.now() ? ` It ran out on ${expires.slice(0, 10)}; it keeps working for ${GRACE_DAYS} days after that.` : "";
-    return `Paid version on this device. ${this.cfg.paidLine}${soon}`;
+    return `${this.cfg.paidLine}${soon}`;
   }
 
   /**
@@ -277,7 +277,7 @@ export class Unlock {
    * panel printed two lines above it. What someone who has just paid needs to know is that they are done.
    */
   private thanks(became: UnlockState["became"], expires: string | null): string {
-    if (became === "checkout") return "Thank you. Nothing else to do; your key is below.";
+    if (became === "checkout") return "Thank you. Nothing else to do — your key is above.";
     return this.onText(expires);
   }
 
