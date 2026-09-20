@@ -74,10 +74,7 @@ export function renderPage(index: string, page: Page): string {
 
   // everything under the key box, down to the footer: this page's own words. The price box, the pay steps and the key
   // box above it stay as they are on the home page.
-  // The anchor is the LAST line of that block — the "lost your key" line, which sits under the box. It used to be
-  // the status line, and when the status line moved above the box (design review, 2026-09-21) this cut silently
-  // took the key box off every generated page. tests/pages.test.ts is what caught it.
-  const keyEnd = html.indexOf("</p>", html.indexOf(`<p class="fine" id="keylostline">`));
+  const keyEnd = html.indexOf("</p>", html.indexOf(`<p class="fine" id="keystatus">`));
   const foot = html.indexOf(`<p class="foot">`);
   if (keyEnd < 0 || foot < 0 || foot < keyEnd) throw new Error("pages.ts: the key box or the footer moved in dist/index.html");
   const I = "\n      ";
