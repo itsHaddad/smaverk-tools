@@ -228,11 +228,6 @@ async function run({ file, wantedS, maxSeconds, count }: RunMessage) {
       ms: Math.round(performance.now() - t0),
       silences: finder.silences.length,
       short: heardS < minRankableS,
-      // The page needs this to say why a moment is shorter than the chip asked for. Only the `moments`
-      // message carried it, so app.ts read undefined at the end of every run and the sentence — written,
-      // correct, and already on disk — never rendered. Three reviews reported the same false statement on
-      // screen before anyone noticed the value was missing rather than the copy (2026-09-21).
-      targetS,
     });
   } catch (e) {
     // A run that has been replaced fails loudly into nothing: its errors are about a file nobody is

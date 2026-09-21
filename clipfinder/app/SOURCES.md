@@ -10,24 +10,13 @@ NASA material is generally not copyrighted (17 U.S.C. §105, and NASA's own medi
 can be used commercially. The page names NASA as the source next to the sample. Nobody speaking in it is
 claimed to use or endorse anything, which is the one thing NASA's guidelines do ask.
 
-The whole episode was read by this tool, with the same three steps the page runs — the same thirty-second
-windows, the same recogniser, the same silences, the same ranking (`tools/sample.ts`).
+The whole episode was read by this tool, on this machine, with the same three steps the page runs — the
+same thirty-second windows, the same recogniser, the same silences, the same ranking (`tools/sample.ts`).
 `sample.json` holds what came out, at each of the three clip lengths the page offers. `sample.m4a` is
 twelve seconds cut from the opening of each moment, one after another, so a visitor can hear whether a
 moment starts cleanly without downloading an hour of sound.
 
-The episode itself, from the podcast's feed:
-https://traffic.megaphone.fm/NATIONALAERONAUTICSANDSPACEADMINISTRATION8653428112.mp3
-
-**Rebuild it whenever the ranker changes**, or the page shows output its own tool would no longer return.
-Reading an hour costs about 0.4x real time, so it runs on a runner, not the laptop — dispatch
-`clipfinder-sample` in the public repo and commit the two files it uploads:
-
-```
-gh workflow run clipfinder-sample.yml -R itsHaddad/smaverk-tools
-```
-
-It defaults to the episode above. The same thing by hand, if you have the recording and the half hour:
+To rebuild it:
 
 ```
 bun tools/sample.ts --mp3 <episode.mp3> \

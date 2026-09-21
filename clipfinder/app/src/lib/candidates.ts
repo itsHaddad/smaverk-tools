@@ -54,26 +54,6 @@ export type CandidateOptions = SegmentOptions & {
    * tracks. The recogniser this page ships reports no word times, so the page always passes this.
    */
   silences?: Pause[];
-  /**
-   * Let a run end at a pause INSIDE a section, within this many seconds of the target, when no
-   * whole-section run fits under the cap. Zero discards the run instead, which is what shipped first.
-   *
-   * A candidate being whole sections is why a SHORT recording could come back with nothing at all. At
-   * the one-minute setting the median section is 118 s against a cap of 108 s, so 55.2% of sections
-   * cannot produce a candidate on their own; a long recording has enough of them that some fit, a
-   * short one may have none. Measured by truncating all 28 ground-truth recordings
-   * (`clipfinder/text/bench/moments.md`): at ten minutes the one-minute setting returned nothing for
-   * **6 of 28** recordings, at fifteen minutes 4 of 28, at twenty 1 of 28 — and **0 of 28 at every
-   * length with this on**. A cold user's 17:31 talk sat exactly in that band and got the empty result.
-   *
-   * It is not a trade: on the fourteen recordings that matter the margin against darts is +8.1 with it
-   * and +8.0 without, per-show +9.7/+11.4/−0.3 against +9.7/+11.0/−0.3, and it brings one more creator
-   * clip within reach of the shortlist rather than losing any.
-   *
-   * The subject still has to START at a topic boundary — that is the bet this whole funnel rests on.
-   * Nothing ever said it had to run to the end of one.
-   */
-  endInsideS?: number;
 };
 
 /**
@@ -118,7 +98,7 @@ export function candidates(
   durationS: number,
   opts: CandidateOptions,
 ): { sections: Section[]; candidates: Candidate[]; boundaryDepth: number[] } {
-  const { targetS, overshoot = 1.8, granularity = 0.5, snapToPauseS = 0, edgeS = 0, endInsideS = 0, silences, ...segOpts } = opts;
+  const { targetS, overshoot = 1.8, granularity = 0.5, snapToPauseS = 0, edgeS = 0, silences, ...segOpts } = opts;
   const minSectionS = segOpts.minSectionS ?? Math.min(45, targetS / 6);
   const tuned =
     granularity === null
@@ -127,38 +107,22 @@ export function candidates(
   const { sections: cut, boundaryDepth } = segmentDetailed(t, durationS, tuned);
   const sections = snapToPauseS > 0 ? snapSections(cut, t, snapToPauseS, silences) : cut;
   const out: Candidate[] = [];
-  const ps = endInsideS > 0 ? (silences ?? pauses(t.words)) : [];
-  const floor = targetS * 0.5;
-  const cap = targetS * overshoot;
   for (let i = 0; i < sections.length; i++) {
-    const startS = sections[i]!.startS;
     let j = i;
     let end = sections[i]!.endS;
-    while (end - startS < targetS && j + 1 < sections.length) {
+    while (end - sections[i]!.startS < targetS && j + 1 < sections.length) {
       j++;
       end = sections[j]!.endS;
     }
-    let len = end - startS;
-    let endWord = sections[j]!.endWord;
-    if (len > cap) {
-      // No whole-section run fits under the cap. Either drop it, or stop at a pause inside the
-      // section this run ends in, so a short recording still gets an answer.
-      if (endInsideS <= 0) continue;
-      const { at, snapped } = snap(startS + targetS, ps, endInsideS);
-      const cutAt = snapped ? at : startS + targetS;
-      if (cutAt - startS < floor) continue;
-      end = cutAt;
-      len = end - startS;
-      endWord = Math.max(sections[i]!.startWord, wordIndexAt(t.words, cutAt));
-      while (j > i && sections[j]!.startS >= end) j--;
-    }
-    if (len < floor) continue;
-    if (edgeS > 0 && (startS < edgeS || end > durationS - edgeS)) continue;
+    const len = end - sections[i]!.startS;
+    if (len > targetS * overshoot) continue;
+    if (len < targetS * 0.5) continue;
+    if (edgeS > 0 && (sections[i]!.startS < edgeS || end > durationS - edgeS)) continue;
     out.push({
-      startS,
+      startS: sections[i]!.startS,
       endS: end,
       startWord: sections[i]!.startWord,
-      endWord,
+      endWord: sections[j]!.endWord,
       sections: j - i + 1,
       fromSection: i,
     });
