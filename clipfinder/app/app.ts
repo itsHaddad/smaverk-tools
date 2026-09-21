@@ -520,7 +520,7 @@ $("file").addEventListener("change", async (e) => {
   // What it says here has to be true while nothing is on screen. The cold user, 2026-09-21: "Moments
   // appear while it reads. They do not" — the column sat empty for two minutes under that sentence.
   // It says when the first one can arrive instead of promising them along the way.
-  $("hint").textContent = `The first moments come once it has heard enough for a ${spoken(targetS)} clip.`;
+  $("hint").textContent = "The first moments come once it has heard enough to hold one."; // not the chip length: a short recording is read to a shorter target and this line would name the wrong one
   $("exportbox").hidden = true;
   $("result").classList.remove("on");
   // A way out from the moment the file is picked, not only when it finishes. Reading an hour takes
