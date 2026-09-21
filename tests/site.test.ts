@@ -596,4 +596,13 @@ test("the studio lists every tool that is live, with its price state", () => {
   expect(t, "the clip finder's claim is about the recording").toContain("Your recording stays on your device");
   // Anything a machine reads must know about it too.
   expect(read(`${SITES.captions.dist}/llms.txt`), "llms.txt names the clip finder").toContain("clipfinder.smaverk.com");
+  // A limit the tool page states belongs on the card that sends people there. The cold-user round (2026-09-21) found
+  // the clip finder card silent about English while its own page says so twice — a Swedish podcaster, which is who
+  // "Småverk, Sweden" recruits, would spend a quarter of an hour of his laptop on a 1h40m file before finding out.
+  for (const card of studio.split("<article").slice(1)) {
+    const name = card.match(/<h3>([^<]+)<\/h3>/)?.[1]; if (!name) continue;
+    const app = ({ Captions: "captions", "Clip finder": "clipfinder" } as Record<string, string>)[name]; if (!app) continue;
+    if (!text(read(`${app}/app/dist/index.html`)).match(/\bEnglish\b/)) continue;
+    expect(text(card), `the ${name} card carries the English limit its tool page states`).toMatch(/\bEnglish\b/);
+  }
 });

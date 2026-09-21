@@ -36,8 +36,27 @@ h1 mark{background:linear-gradient(transparent 55%,var(--hi) 55%);color:inherit;
 .sub{color:var(--muted);font-size:18px;margin:0 0 32px;text-wrap:pretty;max-width:36em}
 h2{font:700 22px/1.2 var(--display);letter-spacing:-.01em;margin:40px 0 12px}
 p{margin:0 0 12px;text-wrap:pretty;overflow-wrap:anywhere}
+/* Three tools, three columns — never two, which orphans the third card at every width from the breakpoint up, and the
+   orphan was the card with no demo, whose card is its whole presentation. The row is the one part of the page wider than
+   the 880px wrap: a demo caption holds one line at about a 328px card, three of those need 1012px, and the alternatives
+   were a caption sized off its container (about 11px at a 246px demo — 6.5px demo text is one of the seven findings that
+   blocked the clip finder's own demo card, so that is a legibility fault fixed with a legibility fault) or dropping the
+   burned-in caption, which is the one thing the Captions demo exists to show.
+   Stacked, the cards are capped at the width they have in the row, so crossing the breakpoint is not a step: the demo is
+   324px wide below it and 292px above, where a 880px-wide stacked card against a 292px one would have been 3.3x across a
+   single pixel. Below 560px the cap does not bind and the phone layout is untouched. */
+/* Two columns, and the odd card takes the whole row — deliberately, not left over. Three children in a two-column grid is
+   an orphan: half a row of empty page beside the one card with no demo, whose card is its whole presentation. A card GIVEN
+   the row is the opposite of that. `:last-child:nth-child(odd)` says exactly that and no more, so a fourth tool makes a 2x2
+   with nothing spanning and this rule stays true without being touched.
+   A 360px column capped and centred was tried here first and was worse: at 1024 it left one card floating with 260px of
+   empty page beside a headline it shared no edge with, under a sentence that says "Three tools". */
 .tools{display:grid;gap:14px}
-@media(min-width:720px){.tools{grid-template-columns:1fr 1fr}}
+@media(min-width:720px){.tools{grid-template-columns:1fr 1fr}.tools>.tool:last-child:nth-child(odd){grid-column:1/-1}}
+/* There is no three-column rule, and that is the finding rather than a compromise. Three columns need a row wider than the
+   880px measure, which gives the page a second left edge — and it buys a SMALLER demo: 292px in a 1012px row against 433px
+   here at 1280. Measured on the shipping bytes: the Captions caption holds one line at a 253px demo in two columns and
+   wrapped at 292px in the three-column row, so the wider row was paying page-width for a worse caption. */
 .tool{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;display:flex;flex-direction:column;gap:10px;min-width:0}
 .tool .btn{margin-top:auto;width:100%}
 .tool h3{font:800 24px/1.1 var(--display);letter-spacing:-.02em;margin:0;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
@@ -109,7 +128,7 @@ footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--line);color:v
     </article>
     <article class="tool nodemo">
       <h3>Clip finder</h3>
-      <p>A long recording in, the moments worth posting out. AI marks the parts that stand on their own and says why it picked each one. Your recording stays on your device.</p>
+      <p>A long recording in, the moments worth posting out. AI marks the parts that stand on their own and says why it picked each one. English. Your recording stays on your device.</p>
       <p class="price">Free while it is new: recordings up to four hours, every moment on screen, and every export.</p>
       <a class="btn" href="https://clipfinder.smaverk.com/?src=studio">Open Clip finder</a>
     </article>
@@ -119,7 +138,7 @@ footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--line);color:v
   <ul class="how">
     <li><b>Runs in this page.</b> The tool loads once, then works offline.</li>
     <li><b>Nothing uploaded.</b> Your video stays on your device. No account.</li>
-    <li><b>Pay once per tool.</b> Paid through Polar, a checkout company. Taxes included. <span class="nb">Refund within 14 days.</span> Clip finder is free while it is new.</li>
+    <li><b>Pay once per tool.</b> Paid through Polar, a checkout company. Taxes included. <span class="nb">Refund within 14 days.</span></li>
     <li><b>Nothing to set up.</b> You come back to it already unlocked. Your key is on screen and in your email.</li>
   </ul>
 
