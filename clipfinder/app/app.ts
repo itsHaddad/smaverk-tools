@@ -6,6 +6,7 @@
 
 import { FORMATS, type ExportMedia, type ExportMoment, type Format } from "./src/lib/exports";
 import { clock, spoken, displayName, outputName, timelineName } from "./src/lib/naming";
+import { tidyOpening } from "./src/lib/rank";
 import { mustPay, priceCopy, readLimitS, TRIAL_COPY } from "./src/lib/pricing";
 import { pickScheme } from "./src/lib/theme";
 import { nothingFoundLine } from "./src/lib/advice";
@@ -88,6 +89,8 @@ type Sample = {
 let sample: Sample | null = null;
 let state: "sample" | "loading" | "reading" | "found" = "sample";
 let targetS = 300;
+/** What the buttons asked for, kept apart from what the recording allowed. See the note in finish(). */
+let askedS = 300;
 /** The lengths the page offers, read off the buttons themselves so a sentence about them cannot drift. */
 const CLIP_LENGTHS = [...document.querySelectorAll<HTMLButtonElement>(".chip")].map((c) => Number(c.dataset.target)).filter((n) => n > 0);
 let moments: Shown[] = [];
@@ -361,7 +364,8 @@ function showSample() {
   if (!sample) return;
   const set = sample.sets[String(targetS)] ?? Object.values(sample.sets)[0] ?? [];
   totalS = sample.durationS;
-  moments = set.map((m) => ({ startS: m.startS, endS: m.endS, why: m.why, opening: m.opening, playFromS: m.clipStartS, playToS: m.clipEndS }));
+  // The sample was written down by an earlier run, so its quotes go through the same tidy the live ones do.
+  moments = set.map((m) => ({ startS: m.startS, endS: m.endS, why: m.why, opening: tidyOpening(m.opening), playFromS: m.clipStartS, playToS: m.clipEndS }));
   current = -1;
   $("clipname").textContent = `Sample: ${sample.title}`;
   $("clipname").title = `${sample.title} — ${sample.credit}`;
@@ -472,7 +476,12 @@ function finish(m: any) {
     // The truncation notice was shown when the file was opened and then written over by this line, so a
     // free visitor reached the end believing the whole recording had been read.
     const cut = m.truncated ? ` Only the first ${spoken(m.heardS)} of ${spoken(m.durationS)} was read${limit() === PAID_S ? "" : "; the paid version reads four hours"}.` : "";
-    say(`Read ${clock(m.heardS)} in ${clock(Math.round(m.ms / 1000))}. Strongest first.${cut}`, "ok");
+    // A short recording cannot hold a clip of the length asked for — the reading caps the target at a
+    // quarter of the recording — and the line under the buttons says moments come back at that length or
+    // longer. So when the recording is what decided, the page says so instead of quietly breaking its own
+    // sentence (design review, 2026-09-21: a 5 min chip returning 124 s under exactly that line).
+    const shorter = m.targetS && m.targetS < askedS - 1 ? ` This recording is ${spoken(m.durationS ?? totalS)} long, so the moments are about ${spoken(m.targetS)}.` : "";
+    say(`Read ${clock(m.heardS)} in ${clock(Math.round(m.ms / 1000))}. Strongest first.${shorter}${cut}`, "ok");
     $("exportbox").hidden = false;
     if (current < 0) select(0);
   }
@@ -550,6 +559,7 @@ for (const chip of document.querySelectorAll<HTMLButtonElement>(".chip")) {
     for (const other of document.querySelectorAll(".chip")) other.setAttribute("aria-pressed", "false");
     chip.setAttribute("aria-pressed", "true");
     targetS = Number(chip.dataset.target);
+    askedS = targetS;
     drawChips();
     if (state === "sample") showSample();
     else if ((state === "found" || state === "reading") && file) {

@@ -191,8 +191,25 @@ export function openingLine(t: Transcript, c: Candidate, words = 9): string {
     .map((w) => w.text)
     .join(" ")
     .trim();
-  return text ? `${text}…` : textBetween(t.words, c.startS, c.startS + 12);
+  return text ? tidyOpening(text) : textBetween(t.words, c.startS, c.startS + 12);
 }
+
+/**
+ * The quote on a card, tidied for reading only — the boundary does not move and no score changes.
+ *
+ * A moment can open mid-sentence: moving the start to a sentence was measured at −2.6 points and did not
+ * ship (bench/moments.md). So the card opens with an ellipsis, which reads as a deliberate excerpt rather
+ * than a broken sentence, and a word the recogniser heard twice in a row is printed once. The design
+ * review, 2026-09-21: "put some some thought" was the first line in the shop window and read as a bug in
+ * the page. What is cut, saved and exported is untouched by this.
+ */
+export const display = (text: string) => text.replace(/\b(\w+) \1\b/gi, "$1");
+
+/** The same tidy, applied to a quote that was written down earlier: the sample on the page is stored text. */
+export const tidyOpening = (text: string) => {
+  const t = display(text).replace(/^…\s*/, "").replace(/\s*…$/, "").trim();
+  return t ? `…${t}…` : t;
+};
 
 /**
  * Why this one is in the list, in words the person can check against the recording and disagree with.
@@ -210,6 +227,8 @@ export function reasons(c: Candidate, f: Features): string[] {
   else if (f.setupPayoff > 0) out.push("Sets something up and comes back to it");
   // Only when there is nothing else true to say. Adding it underneath a real reason is padding, and a
   // page at rest has 240 words for everything, so padding costs a card.
-  if (!out.length) out.push(c.sections === 1 ? "Stays on one subject" : `One subject across ${c.sections} turns`);
+  // No filler. Three cards in four used to carry the same sentence, which taught a reader that the reason
+  // slot says nothing (design review, 2026-09-21). A card with nothing true to say says nothing.
+  if (out.length === 0 && c.sections > 1) out.push(`One subject across ${c.sections} turns`);
   return out.slice(0, 2);
 }

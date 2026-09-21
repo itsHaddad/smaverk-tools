@@ -176,9 +176,9 @@ test("the reasons are sentences about the passage, never a number, and never mor
   const span = { startS: 0, endS: 300, startWord: 0, endWord: 9, sections: 1, fromSection: 0 };
   const strong = reasons(span, { selfContained: 0.6, length: 300, setupPayoff: 1 });
   expect(strong).toEqual(["Explains itself, with no need for what came before", "Opens with a problem and answers it later"]);
-  // A passage with nothing to say for itself still says something true rather than nothing at all —
-  // but that line never rides underneath a real reason, where it is padding.
-  expect(reasons(span, { selfContained: 0, length: 300, setupPayoff: 0 })).toEqual(["Stays on one subject"]);
+  // A passage with nothing true to say says nothing. Three cards in four used to carry "Stays on one
+  // subject", which teaches a reader that the reason slot is decoration (design review, 2026-09-21).
+  expect(reasons(span, { selfContained: 0, length: 300, setupPayoff: 0 })).toEqual([]);
   expect(reasons({ ...span, sections: 3 }, { selfContained: 0, length: 300, setupPayoff: 0 })).toEqual(["One subject across 3 turns"]);
   expect(reasons(span, { selfContained: 0, length: 300, setupPayoff: 0.5 })).toEqual(["Sets something up and comes back to it"]);
   // The length is on the card beside the time; repeating it in a reason spends words the page has not got.
