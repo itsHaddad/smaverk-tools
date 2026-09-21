@@ -248,6 +248,15 @@ const PLAY_ICON =
 
 function render() {
   list.textContent = "";
+  // A sentence printed on every card is not a finding about any of them. The cold user got the same
+  // reason five times out of five on her own recordings, and the design reviewer saw it on all four
+  // sample cards: "a sentence on every card stops being information and becomes a standing instruction".
+  // So when it IS the same for every moment, it is said once above the list, and the cards keep only what
+  // tells them apart — which is what makes a per-card line mean something when it does appear.
+  const first = moments[0]?.why[0] ?? "";
+  const shared = moments.length > 1 && first && moments.every((m) => m.why[0] === first) ? first : "";
+  $("allwhy").textContent = shared ? `Every one of these: ${shared.toLowerCase()}.` : "";
+  $("allwhy").hidden = !shared;
   for (const [i, m] of moments.entries()) {
     const li = document.createElement("li");
     li.className = "moment";
@@ -257,7 +266,7 @@ function render() {
       `<button class="go" type="button" aria-label="Play from ${clock(m.startS)}">${PLAY_ICON}</button>` +
       `<div class="at"><b>${clock(m.startS)}</b><span>${spoken(m.endS - m.startS)}</span></div>` +
       `<p class="says">${escapeHtml(m.opening)}</p>` +
-      `<p class="why">${escapeHtml(m.why.join(" · "))}</p>`;
+      `<p class="why">${escapeHtml((shared ? m.why.slice(1) : m.why).join(" · "))}</p>`;
     if (state === "found" && file) {
       const row = document.createElement("div");
       row.className = "trimrow";
