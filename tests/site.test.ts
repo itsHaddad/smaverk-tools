@@ -578,3 +578,22 @@ test("terms states the clip finder is free while it is new, and invents no price
   expect(terms).toMatch(/Clip finder is free while it is new/);
   expect(terms, "no price invented for the clip finder").not.toMatch(/Clip finder[^.]*\$\d+/);
 });
+
+// The studio page exists to list the tools. A live tool missing from it is the failure this guards.
+test("the studio lists every tool that is live, with its price state", () => {
+  const studio = read(STUDIO); const t = text(studio).replace(/\s+/g, " ");
+  for (const [name, host] of [["Captions", "captions"], ["Vertical", "vertical"], ["Clip finder", "clipfinder"]] as const) {
+    expect(t, `the studio names ${name}`).toContain(name);
+    expect(studio, `${name} links to its own host`).toContain(`https://${host}.smaverk.com/?src=studio`);
+  }
+  expect((studio.match(/<article class="tool/g) ?? []).length, "one card per live tool").toBe(3);
+  // The clip finder has no price: the owner has not set one and its live page says so.
+  expect(t, "the studio states the clip finder is free while it is new").toMatch(/Clip finder is free while it is new|Free while it is new/);
+  expect(t, "no price is invented for the clip finder").not.toMatch(/Clip finder[^.]*\$\d+/);
+  // "Pay once per tool" stopped being the whole truth the day a free tool joined.
+  expect(t, "the studio no longer promises only pay-once").toMatch(/free while it is new/i);
+  // The true claim for a tool that reads recordings, not the absolute.
+  expect(t, "the clip finder's claim is about the recording").toContain("Your recording stays on your device");
+  // Anything a machine reads must know about it too.
+  expect(read(`${SITES.captions.dist}/llms.txt`), "llms.txt names the clip finder").toContain("clipfinder.smaverk.com");
+});
