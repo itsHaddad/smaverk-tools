@@ -255,7 +255,7 @@ function render() {
   // tells them apart — which is what makes a per-card line mean something when it does appear.
   const first = moments[0]?.why[0] ?? "";
   const shared = moments.length > 1 && first && moments.every((m) => m.why[0] === first) ? first : "";
-  $("allwhy").textContent = shared ? `Every one of these: ${shared.toLowerCase()}.` : "";
+  $("allwhy").textContent = shared ? `All of these ${shared.replace(/^Leans/, "lean").replace(/, so give it a/, " — give each a")}.` : "";
   $("allwhy").hidden = !shared;
   for (const [i, m] of moments.entries()) {
     const li = document.createElement("li");
