@@ -222,13 +222,14 @@ export const tidyOpening = (text: string) => {
  */
 export function reasons(c: Candidate, f: Features): string[] {
   const out: string[] = [];
-  if (f.selfContained > 0.35) out.push("Explains itself, with no need for what came before");
+  // The first line says what the strongest feature measured, whichever way it came out. It used to be said
+  // only when the answer flattered the passage, and everything else fell through to "Stays on one subject"
+  // — three cards in four carrying one sentence, which teaches a reader that the slot is decoration
+  // (design review, 2026-09-21). Saying the unflattering half is both more honest and more useful: it
+  // tells the person this one needs a line of setup before they post it.
+  out.push(f.selfContained > 0.35 ? "Explains itself, with no need for what came before" : "Leans on what came before, so give it a line of setup");
   if (f.setupPayoff >= 1) out.push("Opens with a problem and answers it later");
   else if (f.setupPayoff > 0) out.push("Sets something up and comes back to it");
-  // Only when there is nothing else true to say. Adding it underneath a real reason is padding, and a
-  // page at rest has 240 words for everything, so padding costs a card.
-  // No filler. Three cards in four used to carry the same sentence, which taught a reader that the reason
-  // slot says nothing (design review, 2026-09-21). A card with nothing true to say says nothing.
-  if (out.length === 0 && c.sections > 1) out.push(`One subject across ${c.sections} turns`);
+  else if (c.sections > 1) out.push(`One subject across ${c.sections} turns`);
   return out.slice(0, 2);
 }

@@ -178,9 +178,9 @@ test("the reasons are sentences about the passage, never a number, and never mor
   expect(strong).toEqual(["Explains itself, with no need for what came before", "Opens with a problem and answers it later"]);
   // A passage with nothing true to say says nothing. Three cards in four used to carry "Stays on one
   // subject", which teaches a reader that the reason slot is decoration (design review, 2026-09-21).
-  expect(reasons(span, { selfContained: 0, length: 300, setupPayoff: 0 })).toEqual([]);
-  expect(reasons({ ...span, sections: 3 }, { selfContained: 0, length: 300, setupPayoff: 0 })).toEqual(["One subject across 3 turns"]);
-  expect(reasons(span, { selfContained: 0, length: 300, setupPayoff: 0.5 })).toEqual(["Sets something up and comes back to it"]);
+  expect(reasons(span, { selfContained: 0, length: 300, setupPayoff: 0 })).toEqual(["Leans on what came before, so give it a line of setup"]);
+  expect(reasons({ ...span, sections: 3 }, { selfContained: 0, length: 300, setupPayoff: 0 })).toEqual(["Leans on what came before, so give it a line of setup", "One subject across 3 turns"]);
+  expect(reasons(span, { selfContained: 0, length: 300, setupPayoff: 0.5 })).toEqual(["Leans on what came before, so give it a line of setup", "Sets something up and comes back to it"]);
   // The length is on the card beside the time; repeating it in a reason spends words the page has not got.
   for (const why of [strong, reasons(span, { selfContained: 0.6, length: 300, setupPayoff: 0 })]) {
     expect(why.length).toBeLessThanOrEqual(2);
