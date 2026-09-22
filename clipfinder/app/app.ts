@@ -48,11 +48,10 @@ function showPrice(price: string) {
   $("tag").innerHTML = `Free ·<b>${price} once</b>`;
   $("amount").textContent = copy.amount;
   $("per").textContent = copy.per;
-  $("pricefine").textContent = copy.fine;
   // The line under the main button is the one a visitor actually reads before picking a file, so it states
   // the limit in force. The find gate failed on this: the paid rail was still saying the free one's sentence.
   $("trust").textContent = copy.trust;
-  $("paytrust").textContent = "Your recording stays on your device. Refund within 14 days.";
+  $("paytrust").textContent = "Refund within 14 days.";
   $("afterpay").hidden = false;
   const buy = $<HTMLAnchorElement>("buy");
   buy.hidden = false;

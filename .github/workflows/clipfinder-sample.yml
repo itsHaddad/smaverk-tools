@@ -19,7 +19,7 @@ on:
         default: 'https://images-assets.nasa.gov/video/iss071m261311538_NASA_Astronaut_Matt_Dominick_Talks_with_KMGH_Denver_240510/iss071m261311538_NASA_Astronaut_Matt_Dominick_Talks_with_KMGH_Denver_240510~mobile.mp4'
       title:
         description: 'Shown beside the sample on the page.'
-        default: 'Astronaut Matt Dominick talks with KMGH Denver, 15 min'
+        default: 'Astronaut interview from space, 15 min'
       credit:
         description: 'Who made the recording, and under what.'
         default: 'NASA, 10 May 2024 — public domain'

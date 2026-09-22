@@ -67,6 +67,7 @@ ul{padding-left:20px;margin:0 0 12px}li{margin-bottom:6px}
 .screen .now{position:absolute;left:10px;right:10px;bottom:10px;margin:0;padding:6px 10px;border-radius:10px;background:rgba(0,0,0,.62);color:#fff;font-size:15px;line-height:1.3;width:max-content;max-width:calc(100% - 20px)}
 .screen .now:empty{display:none}
 /* The recording itself: one band, the whole length, with the found moments lit. */
+@media(max-width:899px){.screen:not([hidden])~.map{height:84px}.screen:not([hidden])~#chiphint{display:none}}
 .map{display:block;width:100%;height:132px;border-radius:var(--r);background:var(--surface);border:1px solid var(--line);cursor:pointer;touch-action:manipulation}
 .chips{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 .chip{appearance:none;border:2px solid var(--line);border-radius:12px;background:var(--surface);padding:6px;cursor:pointer;display:flex;flex-direction:column;gap:6px;align-items:center;min-height:44px}
@@ -198,10 +199,10 @@ details p,details ul{margin:0 0 14px}
 
     <section class="rest">
       <div class="price" id="price">
-        <div><div class="amt"><span id="amount">$50</span><small id="per">once</small></div><div class="fine">Recordings up to four hours, and every export. No account.</div><div class="fine" id="paytrust">Your recording stays on your device.</div></div>
+        <div><div class="amt"><span id="amount">$50</span><small id="per">once</small></div><div class="fine">Recordings up to four hours, and every export. No account.</div><div class="fine" id="paytrust">Refund within 14 days.</div></div>
         <a class="btn hi" id="buy" href="https://buy.polar.sh/polar_cl_CeiGjaPBZWG6oU9e66wtcNieFV1SNBNgwRqmZ4G9X4L" target="_blank" rel="noopener" aria-label="Buy once — $50 (opens the checkout in a new tab)">Buy once — $50</a>
       </div>
-      <p class="fine" id="pricefine">Free: 30 minutes, every moment shown. Paid: four hours, and every export.</p>
+      <p class="fine" id="pricefine"></p>
 
       <div id="paidpanel" hidden><h2>Paid version on this device</h2><p class="fine">Your key, in full. Paste it on your own other devices to unlock them too.</p><p class="keyline"><b id="paidkey" class="keyshow"></b><button class="btn primary" id="keycopy" type="button">Copy</button></p><p class="fine" id="keyalso" hidden></p><p class="keyline"><button class="btn quiet" id="removekey" type="button">Remove the key from this device</button></p></div>
 
