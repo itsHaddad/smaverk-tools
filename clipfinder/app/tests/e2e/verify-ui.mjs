@@ -11,6 +11,7 @@ import { spawn, execFileSync } from "node:child_process";
 import { mkdirSync, existsSync, copyFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+const PRICE = (await import("node:fs")).readFileSync(new URL("../../app.ts", import.meta.url), "utf8").match(/export const PRICE = "(\$\d+)"/)?.[1] ?? "(no price constant)";
 
 const skillTool = [process.env.PAI_DIR, process.env.PAI_DIR && `${process.env.PAI_DIR}/..`, `${process.env.HOME}/.claude`]
   .filter(Boolean)
@@ -136,8 +137,7 @@ try {
   await snap("0-rest");
 
   // What it costs is on the first phone screen, tall enough to tap, clear of the name and of the edge.
-  // While the tool is free that is the word "Free" and no number; a number here would be an unapproved
-  // price in front of a visitor, so the gate fails on one.
+  // It states the owner's price, the one constant in app.ts (free while new until 2026-09-22).
   {
     const t = await p.evaluate(() => {
       const el = document.getElementById("tag");
@@ -145,7 +145,7 @@ try {
       const brand = document.querySelector(".brand").getBoundingClientRect();
       return { text: el.textContent, top: a.top, bottom: a.bottom, h: a.height, right: a.right, gap: a.left - brand.right, vw: innerWidth, vh: innerHeight };
     });
-    check(t.top >= 0 && t.bottom <= t.vh && t.h >= 44 && t.gap >= 8 && t.right <= t.vw - 15 && /free/i.test(t.text) && !/\$\d/.test(t.text), `what it costs is on the first screen: "${t.text.trim()}" (${Math.round(t.h)} px tall, ${Math.round(t.gap)} px from the name)`);
+    check(t.top >= 0 && t.bottom <= t.vh && t.h >= 44 && t.gap >= 8 && t.right <= t.vw - 15 && t.text.includes(PRICE), `what it costs is on the first screen: "${t.text.trim()}" (${Math.round(t.h)} px tall, ${Math.round(t.gap)} px from the name)`);
   }
   // The main button sits whole inside the first screen.
   {
