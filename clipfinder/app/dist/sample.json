@@ -1,12 +1,12 @@
 {
- "title": "Astronaut Matt Dominick talks with KMGH Denver, 15 min",
+ "title": "Astronaut interview from space, 15 min",
  "credit": "NASA, 10 May 2024 — public domain",
  "url": "https://images.nasa.gov/details/iss071m261311538_NASA_Astronaut_Matt_Dominick_Talks_with_KMGH_Denver_240510",
  "durationS": 927.5,
- "audio": "sample.mp4?v=1790104004",
+ "audio": "sample.mp4",
  "video": true,
- "poster": "poster.jpg?v=1790104004",
- "readTimesRealTime": 0.088,
+ "poster": "poster.jpg",
+ "readTimesRealTime": 0.091,
  "words": 2723,
  "silences": 64,
  "sets": {
@@ -15,7 +15,7 @@
     "startS": 722.7,
     "endS": 779.5,
     "why": [
-     "Leans on what came before, so give it a line of setup",
+     "Needs a line of setup first",
      "Sets something up and comes back to it"
     ],
     "opening": "There's so many really important jobs, too, on the…",
@@ -47,7 +47,7 @@
     "startS": 170.9,
     "endS": 210.6,
     "why": [
-     "Leans on what came before, so give it a line of setup"
+     "Needs a line of setup first"
     ],
     "opening": "That seemed pretty awesome because it meant a lot…",
     "clipStartS": 45,
@@ -72,7 +72,7 @@
     "startS": 357.4,
     "endS": 722.7,
     "why": [
-     "Leans on what came before, so give it a line of setup",
+     "Needs a line of setup first",
      "Sets something up and comes back to it"
     ],
     "opening": "…seems like something that can be a little daunting…",

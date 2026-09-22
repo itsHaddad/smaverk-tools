@@ -175,7 +175,7 @@ test("a problem posed early and answered later scores on order, not on presence"
 test("the reasons are sentences about the passage, never a number, and never more than two", () => {
   const span = { startS: 0, endS: 300, startWord: 0, endWord: 9, sections: 1, fromSection: 0 };
   const strong = reasons(span, { selfContained: 0.6, length: 300, setupPayoff: 1 });
-  expect(strong).toEqual(["Explains itself, with no need for what came before", "Opens with a problem and answers it later"]);
+  expect(strong).toEqual(["Stands on its own", "Opens with a problem and answers it later"]);
   // A passage with nothing true to say says nothing. Three cards in four used to carry "Stays on one
   // subject", which teaches a reader that the reason slot is decoration (design review, 2026-09-21).
   expect(reasons(span, { selfContained: 0, length: 300, setupPayoff: 0 })).toEqual(["Needs a line of setup first"]);
