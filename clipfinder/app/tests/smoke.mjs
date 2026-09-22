@@ -44,7 +44,10 @@ try {
   const st = await p.evaluate(() => {
     const btn = document.querySelector(".btn.primary");
     const r = btn.getBoundingClientRect();
-    const map = document.getElementById("map").getBoundingClientRect();
+    // The picture at rest: the video stage when the sample has one (2026-09-22), the band otherwise.
+    const stage = document.getElementById("stage");
+    const map = (stage && !stage.hidden ? stage : document.getElementById("map")).getBoundingClientRect();
+    const poster = stage && !stage.hidden ? document.getElementById("audio").getAttribute("poster") : "none needed";
     return {
       action: btn.textContent.trim(),
       buy: document.getElementById("buy")?.getAttribute("href"),
@@ -55,6 +58,7 @@ try {
       disabled: [...document.querySelectorAll("button")].filter((x) => x.disabled && x.offsetParent !== null).length,
       selects: document.querySelectorAll("select").length,
       map: { w: Math.round(map.width), h: Math.round(map.height) },
+      poster,
       moments: window.__cf.moments,
       reasons: (window.__cf.list ?? []).every((m) => m.why.length > 0),
       ordered: (window.__cf.list ?? []).every((m) => m.endS > m.startS),
@@ -66,7 +70,8 @@ try {
   if (st.words > 240) fail(`${st.words} words at rest (max 240)`);
   if (st.disabled) fail(`${st.disabled} button(s) disabled at rest`);
   if (st.selects) fail(`${st.selects} native dropdown(s)`);
-  if (st.map.h < 120 || st.map.w < 120) fail(`the recording map is ${st.map.w}x${st.map.h}, too small to count as the picture`);
+  if (st.map.h < 120 || st.map.w < 120) fail(`the picture at rest is ${st.map.w}x${st.map.h}, too small to count as one`);
+  if (!st.poster) fail("the video sample shows no poster at rest, so the first screen is a black box");
   if (!st.reasons) fail("a moment came with no reason");
   if (!st.ordered) fail("a moment ends before it starts");
   if (st.below > 0) fail(`the main button ends ${st.below} px below the first phone screen`);
