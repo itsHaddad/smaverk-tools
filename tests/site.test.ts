@@ -449,7 +449,7 @@ test("Clip finder: the links, the hosts and the credit", () => {
   expect(unknown).toEqual([]);
   // The sample is somebody else's recording: it is credited on the page and its source is written down.
   const sources = read("clipfinder/app/SOURCES.md");
-  const url = sources.match(/https:\/\/www\.nasa\.gov\/[\w/-]+/)?.[0];
+  const url = sources.match(/https:\/\/(www\.nasa\.gov|images\.nasa\.gov)\/[\w/-]+/)?.[0];
   expect(url, "SOURCES.md names where the sample came from").toBeTruthy();
   expect(read(`${CF.dist}/index.html`), "the page credits the sample").toContain(url!);
   const sample = JSON.parse(read(`${CF.dist}/sample.json`));

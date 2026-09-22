@@ -14,7 +14,9 @@
   Cache-Control: no-cache
 /llms.txt
   Cache-Control: no-cache
-/sample.m4a
+/sample.mp4
+  Cache-Control: public, max-age=86400
+/poster.jpg
   Cache-Control: public, max-age=86400
 /fonts/bricolage-grotesque-latin.woff2
   Cache-Control: public, max-age=86400

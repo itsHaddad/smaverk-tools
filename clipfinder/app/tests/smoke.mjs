@@ -79,7 +79,7 @@ try {
   // The page must never have a way to send the recording anywhere. Anything that could is a bug in the promise.
   for (const banned of ["FormData", "XMLHttpRequest", "navigator.sendBeacon"]) if (appjs.includes(banned)) fail(`app.js mentions ${banned}`);
 
-  for (const f of ["sample.json", "sample.m4a", "llms.txt", "fonts/bricolage-grotesque-latin.woff2"]) {
+  for (const f of ["sample.json", "sample.mp4", "poster.jpg", "llms.txt", "fonts/bricolage-grotesque-latin.woff2"]) {
     const r = await fetch(`http://localhost:${port}/${f}`, { method: "HEAD" });
     if (r.status !== 200) fail(`${f} ${r.status}`);
   }

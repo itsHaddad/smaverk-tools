@@ -1,149 +1,83 @@
 {
- "title": "Artemis II: The Crew, 65 min",
- "credit": "NASA, Houston We Have a Podcast, 27 March 2026 — public domain",
- "url": "https://www.nasa.gov/podcasts/houston-we-have-a-podcast/",
- "durationS": 3878.1,
- "audio": "sample.m4a?v=1789953848",
- "readTimesRealTime": 0.09,
- "words": 12414,
- "silences": 239,
+ "title": "Astronaut Matt Dominick talks with KMGH Denver, 15 min",
+ "credit": "NASA, 10 May 2024 — public domain",
+ "url": "https://images.nasa.gov/details/iss071m261311538_NASA_Astronaut_Matt_Dominick_Talks_with_KMGH_Denver_240510",
+ "durationS": 927.5,
+ "audio": "sample.mp4?v=1790104004",
+ "video": true,
+ "poster": "poster.jpg?v=1790104004",
+ "readTimesRealTime": 0.088,
+ "words": 2723,
+ "silences": 64,
  "sets": {
   "60": [
    {
-    "startS": 2716.9,
-    "endS": 2821.7,
+    "startS": 722.7,
+    "endS": 779.5,
     "why": [
      "Leans on what came before, so give it a line of setup",
      "Sets something up and comes back to it"
     ],
-    "opening": "…be small golf ball held at arm's length if…",
+    "opening": "There's so many really important jobs, too, on the…",
     "clipStartS": 0,
-    "clipEndS": 12
+    "clipEndS": 15
    },
    {
-    "startS": 2063.6,
-    "endS": 2153.9,
+    "startS": 305.6,
+    "endS": 361.2,
     "why": [
-     "Leans on what came before, so give it a line of setup",
-     "Sets something up and comes back to it"
+     "Opens on the question it answers",
+     "One subject across 2 turns"
     ],
-    "opening": "…little bit. I am really curious, how are you…",
-    "clipStartS": 12,
-    "clipEndS": 24
+    "opening": "So when did you get to space and when…",
+    "clipStartS": 15,
+    "clipEndS": 30
    },
    {
-    "startS": 1897.5,
-    "endS": 1957.5,
+    "startS": 531.8,
+    "endS": 577.7,
     "why": [
-     "Leans on what came before, so give it a line of setup",
-     "Sets something up and comes back to it"
+     "Opens on the question it answers"
     ],
-    "opening": "…spacecraft integrity which you've named dropped a few times…",
-    "clipStartS": 24,
-    "clipEndS": 36
+    "opening": "Why do you feel personally that space exploration…",
+    "clipStartS": 30,
+    "clipEndS": 45
    },
    {
-    "startS": 2847.5,
-    "endS": 2932.8,
+    "startS": 170.9,
+    "endS": 210.6,
     "why": [
-     "Leans on what came before, so give it a line of setup",
-     "Sets something up and comes back to it"
+     "Leans on what came before, so give it a line of setup"
     ],
-    "opening": "…little bits from them that are making me hopefully…",
-    "clipStartS": 36,
-    "clipEndS": 48
+    "opening": "That seemed pretty awesome because it meant a lot…",
+    "clipStartS": 45,
+    "clipEndS": 60
    }
   ],
   "180": [
    {
-    "startS": 2398.2,
-    "endS": 2716.9,
+    "startS": 305.6,
+    "endS": 517.6,
     "why": [
-     "Leans on what came before, so give it a line of setup",
+     "Opens on the question it answers",
      "Sets something up and comes back to it"
     ],
-    "opening": "…four years in college and spends a semester abroad.…",
-    "clipStartS": 48,
-    "clipEndS": 60
-   },
-   {
-    "startS": 1897.5,
-    "endS": 2153.9,
-    "why": [
-     "Leans on what came before, so give it a line of setup",
-     "Sets something up and comes back to it"
-    ],
-    "opening": "…spacecraft integrity which you've named dropped a few times…",
-    "clipStartS": 24,
-    "clipEndS": 36
-   },
-   {
-    "startS": 3094.5,
-    "endS": 3353.5,
-    "why": [
-     "Leans on what came before, so give it a line of setup",
-     "Opens with a problem and answers it later"
-    ],
-    "opening": "…we're all federal workers or military and i think…",
-    "clipStartS": 60,
-    "clipEndS": 72
-   },
-   {
-    "startS": 132.9,
-    "endS": 389.8,
-    "why": [
-     "Leans on what came before, so give it a line of setup",
-     "Sets something up and comes back to it"
-    ],
-    "opening": "…roots with each other going back to the selection…",
-    "clipStartS": 72,
-    "clipEndS": 84
+    "opening": "So when did you get to space and when…",
+    "clipStartS": 15,
+    "clipEndS": 30
    }
   ],
   "300": [
    {
-    "startS": 996.4,
-    "endS": 1381.5,
-    "why": [
-     "Leans on what came before, so give it a line of setup",
-     "Opens with a problem and answers it later"
-    ],
-    "opening": "…put some thought into getting help from professional…",
-    "clipStartS": 84,
-    "clipEndS": 96
-   },
-   {
-    "startS": 132.9,
-    "endS": 672,
+    "startS": 357.4,
+    "endS": 722.7,
     "why": [
      "Leans on what came before, so give it a line of setup",
      "Sets something up and comes back to it"
     ],
-    "opening": "…roots with each other going back to the selection…",
-    "clipStartS": 72,
-    "clipEndS": 84
-   },
-   {
-    "startS": 2063.6,
-    "endS": 2526.1,
-    "why": [
-     "Leans on what came before, so give it a line of setup",
-     "Sets something up and comes back to it"
-    ],
-    "opening": "…little bit. I am really curious, how are you…",
-    "clipStartS": 12,
-    "clipEndS": 24
-   },
-   {
-    "startS": 3094.5,
-    "endS": 3612.8,
-    "why": [
-     "Leans on what came before, so give it a line of setup",
-     "Sets something up and comes back to it"
-    ],
-    "opening": "…we're all federal workers or military and i think…",
+    "opening": "…seems like something that can be a little daunting…",
     "clipStartS": 60,
-    "clipEndS": 72
+    "clipEndS": 75
    }
   ]
  }

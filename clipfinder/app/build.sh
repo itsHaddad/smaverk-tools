@@ -14,6 +14,8 @@ grep -q "worker.js?v=$V" dist/app.js || { echo "version stamp failed: worker url
 # The sample is a real recording we read with this tool; a replaced sample must not be served stale. The
 # address of the sound lives INSIDE sample.json, so it is stamped there rather than in the script.
 sed -i -E "s#(sample\.json|poster\.png)(\?v=[0-9]+)?([\"')])#\1?v=$V\3#g" dist/index.html dist/app.js
-sed -i -E "s#\"audio\": ?\"sample\.m4a(\?v=[0-9]+)?\"#\"audio\": \"sample.m4a?v=$V\"#" dist/sample.json
-grep -q "sample.m4a?v=$V" dist/sample.json || { echo "version stamp failed: the sample sound"; exit 1; }
+# The sample is a video now (sample.mp4 + poster.jpg); sample.m4a is what a sound-only sample would be.
+sed -i -E "s#\"(audio|poster)\": ?\"(sample\.m4a|sample\.mp4|poster\.jpg)(\?v=[0-9]+)?\"#\"\1\": \"\2?v=$V\"#g" dist/sample.json
+grep -qE "sample\.(m4a|mp4)\?v=$V" dist/sample.json || { echo "version stamp failed: the sample"; exit 1; }
+if grep -q '"video": true' dist/sample.json; then grep -q "poster.jpg?v=$V" dist/sample.json || { echo "version stamp failed: the sample poster"; exit 1; }; fi
 echo "built v=$V"
