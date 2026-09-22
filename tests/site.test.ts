@@ -14,7 +14,7 @@ const ROOT = join(import.meta.dir, "..");
 const SITES = {
   captions: { dist: "captions/app/dist", src: ["captions/app/app.ts", "captions/app/worker.ts"], prices: ["$19"], limits: ["60 seconds", "five minutes"], page: "index.html", host: "captions.smaverk.com", copy: "captions/app/app.ts", savedPrice: true },
   vertical: { dist: "vertical/app/dist", src: ["vertical/app/app.ts", "vertical/app/src/detect.ts", "vertical/app/src/fastsave.ts"], prices: ["$24", "$29"], limits: ["60 seconds", "five minutes"], page: "index.html", host: "vertical.smaverk.com", copy: "vertical/app/app.ts", savedPrice: true },
-  clipfinder: { dist: "clipfinder/app/dist", src: ["clipfinder/app/app.ts", "clipfinder/app/worker.ts"], prices: ["$50"], limits: ["30 minutes", "four hours"], page: "index.html", host: "clipfinder.smaverk.com", copy: "clipfinder/app/src/lib/pricing.ts", savedPrice: false },
+  clipfinder: { dist: "clipfinder/app/dist", src: ["clipfinder/app/app.ts", "clipfinder/app/worker.ts"], prices: ["$29"], limits: ["30 minutes", "four hours"], page: "index.html", host: "clipfinder.smaverk.com", copy: "clipfinder/app/src/lib/pricing.ts", savedPrice: false },
 } as const;
 const STUDIO = "captions/app/dist/studio.html"; const LEGAL = ["captions/app/dist/privacy.html", "captions/app/dist/terms.html"];
 const read = (p: string) => readFileSync(join(ROOT, p), "utf8");
@@ -348,7 +348,7 @@ test("the terms protect the studio: bounded refunds, a liability cap, no open-en
 // this tool and no other: a stricter list of words that would give away how it is built, a sample that is
 // public-domain rather than CC BY, a dist where nothing is content-addressed, and the free-while-new rail
 // with its one sleeping constant. A check that SITES already makes is not repeated.
-const CF = { dist: "clipfinder/app/dist", src: ["clipfinder/app/app.ts", "clipfinder/app/worker.ts"], price: "$50", host: "clipfinder.smaverk.com" };
+const CF = { dist: "clipfinder/app/dist", src: ["clipfinder/app/app.ts", "clipfinder/app/worker.ts"], price: "$29", host: "clipfinder.smaverk.com" };
 const cfPages = () => readdirSync(join(ROOT, CF.dist)).filter((f) => /\.(html|txt)$/.test(f) && !/^google/.test(f)).map((f) => `${CF.dist}/${f}`);
 
 test("Clip finder: no permanence wording, one word for where it runs, and nothing about how it is built", () => {
@@ -383,7 +383,7 @@ test("Clip finder: it says AI, it says where it runs, and it says the same thing
 });
 
 test("Clip finder: the owner's price, stated once and the same everywhere", () => {
-  // Free while it was new from 2026-09-21; the owner set $50 on 2026-09-22. The number lives in one named
+  // Free while it was new from 2026-09-21; priced 2026-09-22 ($50 for an hour, then $29 from the evidence). The number lives in one named
   // constant, the pages say the same one, and the script holds no second.
   for (const f of ["index.html", "llms.txt"]) {
     const found = [...new Set(text(read(`${CF.dist}/${f}`)).replace(/\$\d+ a month/g, " ").match(/\$\d+/g) ?? [])];
@@ -626,7 +626,7 @@ test("the studio lists every tool that is live, with its price state", () => {
   }
   expect((studio.match(/<article class="tool/g) ?? []).length, "one card per live tool").toBe(3);
   // Every tool is priced now, and each card says its own: free to try, then once.
-  expect(t, "the clip finder's card states its price").toContain("$50 once: up to four hours");
+  expect(t, "the clip finder's card states its price").toContain("$29 once: up to four hours");
   expect(t, "nothing left from the free-while-new days").not.toMatch(/while it is new/i);
   // The true claim for a tool that reads recordings, not the absolute.
   expect(t, "the clip finder's claim is about the recording").toContain("Your recording stays on your device");

@@ -1,6 +1,6 @@
 // pricing.ts: what the page says about money, and who has to pay, in one place.
 //
-// The tool was free while it was new (2026-09-21 to 22) and is $50 once since (the owner, 2026-09-22).
+// The tool was free while it was new (2026-09-21 to 22) and is $29 once since 2026-09-22 (the evidence in the ledger).
 // Both states are written here side by side, tested, so switching between them never means writing copy
 // under time pressure. Nothing here touches the DOM, so both states are testable.
 

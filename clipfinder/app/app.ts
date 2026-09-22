@@ -23,9 +23,9 @@ const RAIL = SANDBOX
  *
  * It is the owner's number and nobody else's, so it is a single constant rather than a string scattered
  * through the page, and `tests/site.test.ts` fails if a number ever appears on the page that is not
- * this one. The owner set it, 2026-09-22.
+ * this one. Set 2026-09-22 from the evidence (clipfinder ledger): rivals $14–15 a month, buyers said $19–30, the studio band $19–29.
  */
-export const PRICE = "$50";
+export const PRICE = "$29";
 
 /**
  * Free while it is new ran from launch (2026-09-21) to 2026-09-22, when the owner set the price. The free
@@ -297,7 +297,9 @@ list.addEventListener("click", (e) => {
     play(i);
     return;
   }
-  select(i);
+  if ((e.target as HTMLElement).closest(".trimrow")) return select(i);
+  if (current === i && !audio.paused) return audio.pause();
+  play(i);
 });
 
 list.addEventListener("input", (e) => {
@@ -342,6 +344,7 @@ function play(i: number) {
   const m = moments[i];
   if (!m) return;
   select(i);
+  if (!stage.hidden) stage.scrollIntoView({ block: "nearest", behavior: "smooth" });
   const src = state === "sample" ? sample?.audio : mediaUrl;
   if (!src) return;
   if (!audio.src.endsWith(src) && audio.src !== src) audio.src = src;
@@ -638,6 +641,7 @@ function showResult(title: string, name: string, line: string) {
 function needsPaying(): boolean {
   if (!mustPay(TRIAL, licensed)) return false;
   say(`Saving is the paid half. ${PRICE} once, and every export is open.`, "");
+  $("exporthint").textContent = `Saving is the paid half: ${PRICE} once. The price and the key box are just below.`;
   // The price and the key box are both on the page, never behind a fold-out: a paying customer who is told the
   // price and then has to hunt for where the key goes is the finding that reached a real buyer (cold user, 2026-09-19).
   $("price").scrollIntoView({ block: "center", behavior: "smooth" });

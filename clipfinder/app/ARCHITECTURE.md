@@ -36,7 +36,7 @@ why. Everything the person's file touches runs in their browser.
   the privacy page does not account for, and any body over 8 KB — the fixture is a 2.3 MB recording, so
   nothing worth taking out of it fits under that bar.
 - With the tool already on the device, the whole thing works with the network off. That is in the gate.
-- $50 once (the owner, 2026-09-22; free while new from 2026-09-21). Free reads 30 minutes and shows every
+- $29 once since 2026-09-22 (set from the rivals' prices, what buyers said and the measured quality; see the ledger; free while new from 2026-09-21). Free reads 30 minutes and shows every
   moment; paid reads four hours and opens every export. `PRICE` in `app.ts` is the one number and
   `tests/site.test.ts` fails if a page states another or the script holds a second one. `TRIAL` turns the
   free-while-new state back on; its copy stays tested in `src/lib/pricing.ts`.

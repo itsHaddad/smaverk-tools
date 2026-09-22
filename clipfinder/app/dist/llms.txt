@@ -1,6 +1,6 @@
 # Clip finder by Småverk
 
-> AI that finds the moments worth posting in a long recording, on your device, in the page at https://clipfinder.smaverk.com. The recording is read on the device and is not uploaded. Free for recordings up to 30 minutes, with every moment on screen. $50 once opens recordings up to four hours and every export. There is no account.
+> AI that finds the moments worth posting in a long recording, on your device, in the page at https://clipfinder.smaverk.com. The recording is read on the device and is not uploaded. Free for recordings up to 30 minutes, with every moment on screen. $29 once opens recordings up to four hours and every export. There is no account.
 
 Clip finder is one of the tools by Småverk; https://smaverk.com lists them all.
 
