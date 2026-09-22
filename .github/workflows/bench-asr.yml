@@ -3,6 +3,10 @@
 # It transcribes public audio and uploads the transcripts. It scores nothing; whoever dispatched it
 # fetches the artifacts and does that elsewhere.
 #
+# Audio is fetched over plain HTTPS from the publisher's own file. Fetching by YouTube id was tried and
+# cannot work from a runner — YouTube answers datacentre ranges with "Sign in to confirm you're not a
+# bot" — and the answer to that is the publisher's file, never a session cookie in a public repository.
+#
 # Runner minutes are the thing to be careful with here. Transcription runs at roughly half of real
 # time, so an hour of audio is half an hour of runner time and a careless matrix is a day of it. Three
 # guards, because a previous bench burned about ten hours and produced nothing:
@@ -19,7 +23,7 @@ on:
   workflow_dispatch:
     inputs:
       refs:
-        description: 'Comma-separated YouTube ids'
+        description: 'Comma-separated name=https://…/episode.mp3[@minutes]'
         required: true
       model:
         description: 'tiny | tiny.en | base | small | moonshine-tiny | moonshine-base'
@@ -66,17 +70,18 @@ jobs:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
       - name: Tools
+        # ffmpeg only. Audio comes from the publisher's own HTTPS file, so there is no downloader
+        # here and nothing that could be pointed at a site that blocks datacentres.
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq ffmpeg
-          pipx install yt-dlp || pip install --quiet yt-dlp
       - name: Dependencies
         working-directory: bench/asr
         run: bun add @huggingface/transformers@4.3.0 onnxruntime-node@1.30.0
       - name: Audio
         env:
           BENCH_AUDIO: ${{ runner.temp }}/audio
-        run: bench/asr/fetch-audio.sh ${{ matrix.ref }}
+        run: bench/asr/fetch-audio.sh '${{ matrix.ref }}=${{ matrix.url }}' 
       - name: Transcribe
         env:
           BENCH_AUDIO: ${{ runner.temp }}/audio

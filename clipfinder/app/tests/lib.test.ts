@@ -4,8 +4,9 @@ import { acceptWindowWords, shouldRerank, targetLengthS } from "../src/lib/strea
 import { transcriptOf, wordIndexAt, textBetween, type Word } from "../src/lib/words";
 import { normalize, stem, pseudoSentences, segment, blockFor } from "../src/lib/segment";
 import { pauses, snap } from "../src/lib/pause";
-import { rank, features, reasons, edgeSeconds } from "../src/lib/rank";
+import { rank, features, reasons, edgeSeconds, pickSeparated } from "../src/lib/rank";
 import { candidates } from "../src/lib/candidates";
+import { mustPay, priceCopy, readLimitS, TRIAL_COPY } from "../src/lib/pricing";
 
 // --- names and clocks ------------------------------------------------------------------------
 
@@ -175,11 +176,11 @@ test("the reasons are sentences about the passage, never a number, and never mor
   const span = { startS: 0, endS: 300, startWord: 0, endWord: 9, sections: 1, fromSection: 0 };
   const strong = reasons(span, { selfContained: 0.6, length: 300, setupPayoff: 1 });
   expect(strong).toEqual(["Explains itself, with no need for what came before", "Opens with a problem and answers it later"]);
-  // A passage with nothing to say for itself still says something true rather than nothing at all —
-  // but that line never rides underneath a real reason, where it is padding.
-  expect(reasons(span, { selfContained: 0, length: 300, setupPayoff: 0 })).toEqual(["Stays on one subject"]);
-  expect(reasons({ ...span, sections: 3 }, { selfContained: 0, length: 300, setupPayoff: 0 })).toEqual(["One subject across 3 turns"]);
-  expect(reasons(span, { selfContained: 0, length: 300, setupPayoff: 0.5 })).toEqual(["Sets something up and comes back to it"]);
+  // A passage with nothing true to say says nothing. Three cards in four used to carry "Stays on one
+  // subject", which teaches a reader that the reason slot is decoration (design review, 2026-09-21).
+  expect(reasons(span, { selfContained: 0, length: 300, setupPayoff: 0 })).toEqual(["Leans on what came before, so give it a line of setup"]);
+  expect(reasons({ ...span, sections: 3 }, { selfContained: 0, length: 300, setupPayoff: 0 })).toEqual(["Leans on what came before, so give it a line of setup", "One subject across 3 turns"]);
+  expect(reasons(span, { selfContained: 0, length: 300, setupPayoff: 0.5 })).toEqual(["Leans on what came before, so give it a line of setup", "Sets something up and comes back to it"]);
   // The length is on the card beside the time; repeating it in a reason spends words the page has not got.
   for (const why of [strong, reasons(span, { selfContained: 0.6, length: 300, setupPayoff: 0 })]) {
     expect(why.length).toBeLessThanOrEqual(2);
@@ -253,4 +254,95 @@ test("a short recording is still cut into subjects rather than left whole", () =
   expect(t.words.length).toBeGreaterThan(900);
   expect(segment(t, t.lastWordS + 1, { minSectionS: 30 }).length).toBeGreaterThan(1);
   expect(rank(t, t.lastWordS + 1, { targetS: 98, minSectionS: 30 }).length).toBeGreaterThan(0);
+});
+
+// --- money, while there is none ----------------------------------------------------------------
+
+test("while the tool is free nobody is asked to pay, and the paid page still exists in one piece", () => {
+  // The owner, 2026-09-20: free at the start. So the page names no price, and the rail underneath is
+  // asleep rather than deleted. Both states are checked here because only one of them is on the page:
+  // the other would rot unread otherwise, and rotten copy is what gets written in a hurry later.
+  expect(mustPay(true, false)).toBe(false); // free: a visitor saves everything
+  expect(mustPay(true, true)).toBe(false); // free, and holding an old key: still nothing to pay
+  expect(mustPay(false, false)).toBe(true); // priced, no key: the paywall holds
+  expect(mustPay(false, true)).toBe(false); // priced, with a key: it opens
+
+  // The trial reads four hours, as the page says it does; the free tier under a price reads half an hour.
+  expect(readLimitS(true, false, 1800, 14400)).toBe(14400);
+  expect(readLimitS(false, false, 1800, 14400)).toBe(1800);
+  expect(readLimitS(false, true, 1800, 14400)).toBe(14400);
+
+  // Every sentence of the paid page carries the one number, and none of them is hard-coded.
+  const paid = priceCopy("$29");
+  for (const [where, line] of [["tag", paid.tag], ["amount", paid.amount], ["buy", paid.buy]] as const)
+    expect(line, `${where} states the price`).toContain("$29");
+  expect(priceCopy("$19").buy).toBe("Buy once — $19");
+  for (const line of Object.values(paid)) expect(line).not.toMatch(/\$(?!19|24|29\b)\d+/);
+  // Both halves of the offer are named, because a limit found after the work is done earns one-star reviews.
+  expect(paid.fine).toMatch(/30 minutes/);
+  expect(paid.fine).toMatch(/four hours/);
+  expect(paid.trust).toMatch(/30 minutes/);
+
+  // And the free page names no number at all.
+  for (const line of Object.values(TRIAL_COPY)) expect(line).not.toMatch(/\$\d/);
+  expect(TRIAL_COPY.amount).toBe("Free");
+  expect(TRIAL_COPY.fine).toMatch(/four hours/); // the limit that is actually in force
+});
+
+// --- separate moments, not one passage cut into slabs -------------------------------------------
+
+test("two chosen moments never abut, because separate moments are the product", () => {
+  // Spans every 200 s, each 300 s long, so neighbours overlap and every other one does not — the
+  // shape the real shortlist has, because a candidate starts at every topic boundary.
+  const ranked = Array.from({ length: 10 }, (_, i) => ({ c: { startS: i * 200, endS: i * 200 + 300 }, i }));
+
+  // Switched off, the top four are neighbours: one passage cut into slabs, which is what a cold user
+  // got back as 4:59 -> 12:29 -> 18:11 -> 23:52 on a 27:49 interview.
+  expect(pickSeparated(ranked, 4, 0).map((x) => x.c.startS)).toEqual([0, 200, 400, 600]);
+
+  // At one second, nothing abuts and nothing overlaps.
+  const taken = pickSeparated(ranked, 4, 1);
+  expect(taken.map((x) => x.c.startS)).toEqual([0, 400, 800, 1200]);
+  for (let i = 1; i < taken.length; i++) expect(taken[i]!.c.startS - taken[i - 1]!.c.endS).toBeGreaterThanOrEqual(1);
+
+  // The best moment stays the best moment whatever the gap — the rule declines neighbours, it never
+  // re-ranks — and it comes back short rather than breaking its own promise.
+  for (const g of [0, 1, 60, 600]) expect(pickSeparated(ranked, 4, g)[0]!.c.startS).toBe(0);
+  expect(pickSeparated(ranked, 9, 600).length).toBeLessThan(9);
+  expect(pickSeparated(ranked, 1, 1)).toHaveLength(1);
+
+  // There is no end-to-end case here on purpose. Synthetic text does not produce real topic
+  // boundaries — TextTiling needs genuine vocabulary shifts, and a fixture that yields one section
+  // exercises none of this. The end-to-end claim is carried by the bench instead, over fourteen real
+  // recordings: 48.3% of offered pairs abutted before this rule and 0.0% after
+  // (`clipfinder/text/bench/moments.md`), which is stronger evidence than a fixture could be.
+});
+
+test("a short recording gets an answer instead of an empty list", () => {
+  // One subject held for eight minutes: every section is far longer than a one-minute clip, so a
+  // candidate made of whole sections cannot fit under the cap and the generator returned nothing.
+  const t = transcriptOf(say(Array.from({ length: 1400 }, (_, i) => `steady${i % 9}`).join(" ")));
+  const durationS = t.lastWordS + 5;
+
+  expect(candidates(t, durationS, { targetS: 60 }).candidates).toHaveLength(0);
+  const out = candidates(t, durationS, { targetS: 60, endInsideS: 20 });
+  expect(out.candidates.length).toBeGreaterThan(0);
+
+  // What it hands back is still a real clip: it opens on a topic boundary and is at least half the
+  // length asked for, the two things the generator promised before this option existed.
+  const starts = new Set(out.sections.map((s) => s.startS));
+  for (const c of out.candidates) {
+    expect(starts.has(c.startS), `a candidate starts at ${c.startS}, which is not a boundary`).toBe(true);
+    expect(c.endS - c.startS).toBeGreaterThanOrEqual(30);
+    expect(c.endWord).toBeGreaterThan(c.startWord);
+  }
+
+  // It only ever rescues what would otherwise be discarded. Every candidate the plain generator finds
+  // survives unchanged, on a recording where whole sections do fit.
+  const long = transcriptOf(say(Array.from({ length: 3000 }, (_, i) => `steady${i % 9}`).join(" ")));
+  const longDur = long.lastWordS + 5;
+  const plain = candidates(long, longDur, { targetS: 700 }).candidates;
+  const rescued = candidates(long, longDur, { targetS: 700, endInsideS: 20 }).candidates;
+  expect(plain.length).toBeGreaterThan(0);
+  for (const c of plain) expect(rescued).toContainEqual(c);
 });

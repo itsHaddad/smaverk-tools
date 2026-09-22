@@ -103,11 +103,61 @@ export type RankOptions = Partial<CandidateOptions> & {
   targetS?: number;
   /** How many to return. */
   n?: number;
+  /**
+   * Seconds of clear air a chosen moment must keep from every moment already chosen.
+   *
+   * Without this the list is plain top N, and because a candidate starts at every topic boundary the
+   * highest-scoring ones are usually neighbours: the tool cuts the middle of a recording into
+   * contiguous slabs and hands them back as separate finds. A cold user got 4:59→12:29→18:11→23:52
+   * on a 27:49 interview — three "moments" with no gaps between them — and said the obvious thing,
+   * that a seven-minute slab means she still has to sit through it.
+   *
+   * Measured against the creators themselves (`clipfinder/text/bench/moments.md`): THEIR consecutive
+   * published clips abut in 6.4% of pairs, ours abutted in 48.3%, and with this at one second ours
+   * abut in **0.0%**. It is not a cost dressed up as a quality fix — it is the largest improvement
+   * ever measured on this ranker: **+14.2 points against darts where plain top N scores +8.0**, with
+   * luck falling from 7.2% to 0.3%, positive in all three shows (+14.3/+15.3/+12.4 against
+   * +9.7/+11.0/−0.3) and in all three leave-one-show-out folds, at zero cost — no creator clip goes
+   * out of reach and every list still fills.
+   *
+   * One second, not more, although a 60 s gap scored higher (+15.7). The bar was pre-registered as
+   * the SMALLEST gap that brings abutting down to the creators' own rate, because picking the
+   * best-scoring value off a sweep of five is how a corpus gets fitted, and 1.5 points is one hit in
+   * seventy-two. A larger gap also starts refusing to fill the list: at 120 s it declines 3 of 72.
+   */
+  gapS?: number;
 };
+
+/** The default clear air between two moments: enough to forbid abutting, and nothing more. */
+export const GAP_S = 1;
+
+/**
+ * Walk a ranked list best-first and take an item only if it keeps `gapS` seconds of clear air from
+ * everything already taken, so the answer is separate finds rather than one passage cut into slabs.
+ *
+ * It can come back short of `want`, and that is the honest outcome rather than a bug: there were not
+ * that many separate things to offer. `gapS` of zero switches the rule off entirely.
+ */
+export function pickSeparated<T extends { c: { startS: number; endS: number } }>(ranked: T[], want: number, gapS: number): T[] {
+  const taken: T[] = [];
+  for (const x of ranked) {
+    if (taken.length >= want) break;
+    if (gapS > 0 && taken.some(({ c: o }) => x.c.startS - o.endS < gapS && o.startS - x.c.endS < gapS)) continue;
+    taken.push(x);
+  }
+  return taken;
+}
 
 export function rank(t: Transcript, durationS: number, opts: RankOptions = {}): Moment[] {
   const targetS = opts.targetS ?? 300;
-  const { sections, candidates: cands } = candidates(t, durationS, { snapToPauseS: 3, edgeS: edgeSeconds(durationS), ...opts, targetS });
+  const gapS = opts.gapS ?? GAP_S;
+  const { sections, candidates: cands } = candidates(t, durationS, {
+    snapToPauseS: 3,
+    edgeS: edgeSeconds(durationS),
+    endInsideS: 20,
+    ...opts,
+    targetS,
+  });
   if (!cands.length) return [];
 
   // How many sections each term appears in, so a term used throughout counts for less than one used here.
@@ -124,10 +174,8 @@ export function rank(t: Transcript, durationS: number, opts: RankOptions = {}): 
   const feats = cands.map((c) => features(c, t, df, sections.length));
   const columns = (Object.keys(WEIGHTS) as (keyof Features)[]).map((f) => z(feats.map((x) => x[f])).map((v) => v * WEIGHTS[f]));
   const scores = feats.map((_, i) => columns.reduce((n, col) => n + col[i]!, 0));
-  return cands
-    .map((c, i) => ({ c, s: scores[i]!, f: feats[i]!, i }))
-    .sort((a, b) => b.s - a.s || a.i - b.i)
-    .slice(0, opts.n ?? cands.length)
+  const ranked = cands.map((c, i) => ({ c, s: scores[i]!, f: feats[i]!, i })).sort((a, b) => b.s - a.s || a.i - b.i);
+  return pickSeparated(ranked, opts.n ?? cands.length, gapS)
     .map(({ c, f }) => ({
       startS: +c.startS.toFixed(1),
       endS: +c.endS.toFixed(1),
@@ -143,8 +191,25 @@ export function openingLine(t: Transcript, c: Candidate, words = 9): string {
     .map((w) => w.text)
     .join(" ")
     .trim();
-  return text ? `${text}…` : textBetween(t.words, c.startS, c.startS + 12);
+  return text ? tidyOpening(text) : textBetween(t.words, c.startS, c.startS + 12);
 }
+
+/**
+ * The quote on a card, tidied for reading only — the boundary does not move and no score changes.
+ *
+ * A moment can open mid-sentence: moving the start to a sentence was measured at −2.6 points and did not
+ * ship (bench/moments.md). So the card opens with an ellipsis, which reads as a deliberate excerpt rather
+ * than a broken sentence, and a word the recogniser heard twice in a row is printed once. The design
+ * review, 2026-09-21: "put some some thought" was the first line in the shop window and read as a bug in
+ * the page. What is cut, saved and exported is untouched by this.
+ */
+export const display = (text: string) => text.replace(/\b(\w+) \1\b/gi, "$1");
+
+/** The same tidy, applied to a quote that was written down earlier: the sample on the page is stored text. */
+export const tidyOpening = (text: string) => {
+  const t = display(text).replace(/^…\s*/, "").replace(/\s*…$/, "").trim();
+  return t ? `…${t}…` : t;
+};
 
 /**
  * Why this one is in the list, in words the person can check against the recording and disagree with.
@@ -157,11 +222,14 @@ export function openingLine(t: Transcript, c: Candidate, words = 9): string {
  */
 export function reasons(c: Candidate, f: Features): string[] {
   const out: string[] = [];
-  if (f.selfContained > 0.35) out.push("Explains itself, with no need for what came before");
+  // The first line says what the strongest feature measured, whichever way it came out. It used to be said
+  // only when the answer flattered the passage, and everything else fell through to "Stays on one subject"
+  // — three cards in four carrying one sentence, which teaches a reader that the slot is decoration
+  // (design review, 2026-09-21). Saying the unflattering half is both more honest and more useful: it
+  // tells the person this one needs a line of setup before they post it.
+  out.push(f.selfContained > 0.35 ? "Explains itself, with no need for what came before" : "Leans on what came before, so give it a line of setup");
   if (f.setupPayoff >= 1) out.push("Opens with a problem and answers it later");
   else if (f.setupPayoff > 0) out.push("Sets something up and comes back to it");
-  // Only when there is nothing else true to say. Adding it underneath a real reason is padding, and a
-  // page at rest has 240 words for everything, so padding costs a card.
-  if (!out.length) out.push(c.sections === 1 ? "Stays on one subject" : `One subject across ${c.sections} turns`);
+  else if (c.sections > 1) out.push(`One subject across ${c.sections} turns`);
   return out.slice(0, 2);
 }
