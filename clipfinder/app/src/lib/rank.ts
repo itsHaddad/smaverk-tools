@@ -24,6 +24,7 @@
 import { candidates, type Candidate, type CandidateOptions } from "./candidates";
 import { normalize } from "./segment";
 import { textBetween, type Transcript } from "./words";
+import { beginsSentence, cleanAll, isQuestionAt } from "./edges";
 
 /** Words that point outside themselves. A passage opening on these needs what came before it. */
 const DEICTIC = new Set("it its that this these those they them he she him her his hers there then such".split(" "));
@@ -175,13 +176,20 @@ export function rank(t: Transcript, durationS: number, opts: RankOptions = {}): 
   const columns = (Object.keys(WEIGHTS) as (keyof Features)[]).map((f) => z(feats.map((x) => x[f])).map((v) => v * WEIGHTS[f]));
   const scores = feats.map((_, i) => columns.reduce((n, col) => n + col[i]!, 0));
   const ranked = cands.map((c, i) => ({ c, s: scores[i]!, f: feats[i]!, i })).sort((a, b) => b.s - a.s || a.i - b.i);
-  return pickSeparated(ranked, opts.n ?? cands.length, gapS)
-    .map(({ c, f }) => ({
+  const picked = pickSeparated(ranked, opts.n ?? cands.length, gapS).map(({ c }) => c);
+  // The same moments, then each one's edges moved to whole sentences, a question preferred as the opening
+  // (`edges.ts`; measured as R5 in clipfinder/text/bench/edges-after.md: the identical 36 hits, +14.4 as
+  // shipped, and moments opening on a sentence 5.6% → 62.5%). The reasons are read off the passage as it
+  // will be shown, so a card never says "leans on what came before" about an opening that no longer does.
+  return cleanAll(picked, t, durationS, targetS, gapS, opts.overshoot ?? 1.8).map((c) => {
+    const f = features(c, t, df, sections.length);
+    return {
       startS: +c.startS.toFixed(1),
       endS: +c.endS.toFixed(1),
-      why: reasons(c, f),
+      why: reasons(c, f, t),
       opening: openingLine(t, c),
-    }));
+    };
+  });
 }
 
 /** The first few words, so the list reads like the recording rather than like a table of numbers. */
@@ -191,7 +199,8 @@ export function openingLine(t: Transcript, c: Candidate, words = 9): string {
     .map((w) => w.text)
     .join(" ")
     .trim();
-  return text ? tidyOpening(text) : textBetween(t.words, c.startS, c.startS + 12);
+  if (!text) return textBetween(t.words, c.startS, c.startS + 12);
+  return beginsSentence(t, c.startWord) ? `${display(text).trim()}…` : tidyOpening(text);
 }
 
 /**
@@ -203,9 +212,12 @@ export function openingLine(t: Transcript, c: Candidate, words = 9): string {
  * review, 2026-09-21: "put some some thought" was the first line in the shop window and read as a bug in
  * the page. What is cut, saved and exported is untouched by this.
  */
-export const display = (text: string) => text.replace(/\b(\w+) \1\b/gi, "$1");
+export const display = (text: string) => text.replace(/^[-–—]\s*/, "").replace(/\b(\w+) \1\b/gi, "$1");
 
-/** The same tidy, applied to a quote that was written down earlier: the sample on the page is stored text. */
+/** A quote written down earlier (the sample on the page is stored text): tidied the same way, and marked as an excerpt only where it was one. */
+export const tidyStored = (text: string) => (text.startsWith("…") ? tidyOpening(text) : `${display(text).replace(/\s*…$/, "").trim()}…`);
+
+/** The same tidy, for a quote that opens mid-sentence. */
 export const tidyOpening = (text: string) => {
   const t = display(text).replace(/^…\s*/, "").replace(/\s*…$/, "").trim();
   return t ? `…${t}…` : t;
@@ -220,14 +232,18 @@ export const tidyOpening = (text: string) => {
  * At most two lines, strongest first, and never the length — the length is already on the card next to
  * the time, and a page at rest has 240 words for everything (UiStandard.md).
  */
-export function reasons(c: Candidate, f: Features): string[] {
+export function reasons(c: Candidate, f: Features, t?: Transcript): string[] {
   const out: string[] = [];
   // The first line says what the strongest feature measured, whichever way it came out. It used to be said
   // only when the answer flattered the passage, and everything else fell through to "Stays on one subject"
   // — three cards in four carrying one sentence, which teaches a reader that the slot is decoration
   // (design review, 2026-09-21). Saying the unflattering half is both more honest and more useful: it
   // tells the person this one needs a line of setup before they post it.
-  out.push(f.selfContained > 0.35 ? "Explains itself, with no need for what came before" : "Leans on what came before, so give it a line of setup");
+  // 2026-09-22: once the edges moved to whole sentences, "leans on what came before" sat on a moment that opens
+  // on the interviewer's own question — true of the passage's words, false of what a viewer hears first. The
+  // opening a person will hear is checked first, because it is the thing they can verify in two seconds.
+  if (t && beginsSentence(t, c.startWord) && isQuestionAt(t, c.startWord)) out.push("Opens on the question it answers");
+  else out.push(f.selfContained > 0.35 ? "Explains itself, with no need for what came before" : "Leans on what came before, so give it a line of setup");
   if (f.setupPayoff >= 1) out.push("Opens with a problem and answers it later");
   else if (f.setupPayoff > 0) out.push("Sets something up and comes back to it");
   else if (c.sections > 1) out.push(`One subject across ${c.sections} turns`);

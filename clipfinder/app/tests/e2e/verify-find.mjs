@@ -9,16 +9,14 @@
 //      every one, and the words it opens on.
 //   3. The recording never leaves the device: every host is one the privacy page accounts for, and
 //      nothing leaving is anywhere near the size of a recording.
-//   4. Nothing asks the visitor for money: no price, no checkout, no key box, and every export saves —
-//      a timeline file that contains the moments, and the clip itself, checked with ffprobe.
-//   5. The price rail is whole and asleep: it exists at ?rail=sandbox, where nobody lands by accident,
-//      and the number on it is the one constant in app.ts.
+//   4. The paywall holds: an export asks to be paid for first; with a key (the unlock worker stubbed),
+//      every export saves — a timeline file that contains the moments, and the clip itself, checked with ffprobe.
+//   5. The sandbox rail shows the price, the checkout and the key box, and the number on it is the one
+//      constant in app.ts.
 //   6. With the network off, the whole pipeline still runs. It goes last because it picks a
 //      forty-second file and leaves the page with no list for anything above it to check.
 //
-// Until 2026-09-20 point 4 was the opposite check — that the paywall held. The tool is free while it is
-// new (the owner's decision), so what has to be proven flipped with it: not that saving is blocked, but
-// that nothing a visitor touches asks them to pay.
+// From 2026-09-20 to 22 the tool was free and point 4 proved the opposite: that nothing asked for money.
 import { chromium } from "playwright";
 import { spawn } from "node:child_process";
 import { execFileSync } from "node:child_process";
@@ -145,9 +143,12 @@ try {
   // the privacy page accounts for, and that nothing leaving is anywhere near the size of a recording —
   // the fixture is 2.3 MB and the smallest thing worth stealing out of it is far above this bar.
   // huggingface.co redirects the weights to its own file hosts, which have several names (cdn-lfs…,
-  // us.aws.cdn.hf.co, and whichever region answers next). The privacy page accounts for them as a
-  // category — "public file hosts" — which is the only form that survives them being renamed.
-  const ALLOWED_HOSTS = /^(huggingface\.co|[\w.-]*\.hf\.co|cdn\.jsdelivr\.net|static\.cloudflareinsights\.com|cloudflareinsights\.com|[\w.-]*\.polar\.sh|polar\.sh)$/;
+  // us.aws.cdn.hf.co, and whichever region answers next). The privacy page names them rather than describing a
+  // category, which is the principal's decision of 2026-09-18 (do not tell the world how the tools are built) and
+  // the only form that survives them being renamed. The page now also says that Vertical serves every file itself
+  // while these two do not yet, and that closing that gap is work we have not done.
+  // unlock.smaverk.com is the one host the key check talks to; the page no longer calls Polar itself.
+  const ALLOWED_HOSTS = /^(huggingface\.co|[\w.-]*\.hf\.co|cdn\.jsdelivr\.net|static\.cloudflareinsights\.com|cloudflareinsights\.com|unlock\.smaverk\.com|[\w.-]*\.polar\.sh|polar\.sh)$/;
   const BODY_LIMIT = 8 * 1024;
   const strangers = sent.filter((s) => !ALLOWED_HOSTS.test(s.host));
   const heavy = sent.filter((s) => s.bytes > BODY_LIMIT);
@@ -156,17 +157,25 @@ try {
   if (!strangers.length && !heavy.length)
     ok(`${sent.length} request(s) off this page, every host accounted for, the largest body ${Math.max(0, ...sent.map((s) => s.bytes))} bytes against a ${Math.round(2340958 / 1024)} KB recording`);
 
-  // 4. Free means free: nothing on the page asks for money, and no key is anywhere near the exports.
-  {
-    const money = await page.evaluate(() => ({
-      text: document.body.innerText.match(/\$\d+/)?.[0] ?? "",
-      buy: !document.getElementById("buy") || document.getElementById("buy").hidden,
-      key: !document.getElementById("afterpay") || document.getElementById("afterpay").hidden,
-    }));
-    if (money.text) fail(`a price is on the page: ${money.text}`);
-    if (!money.buy || !money.key) fail("the checkout or the key box is in front of a visitor while the tool is free");
-    if (!money.text && money.buy && money.key) ok("no price, no checkout and no key box anywhere a visitor looks");
-  }
+  // 4. The paywall, before it is opened.
+  const before = page.waitForEvent("download", { timeout: 4000 }).then(() => "downloaded").catch(() => "blocked");
+  await page.click('[data-save="premiere"]');
+  if ((await before) !== "blocked") fail("an export was saved without paying");
+  else ok("an export asks to be paid for first");
+
+  // 5. With a key, the exports. What a key opens is decided by the unlock worker, which is off this page, so
+  // it is stubbed; everything the page then does is real.
+  await page.route(/unlock\.smaverk\.com\/entitlements/, (r) =>
+    r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ status: "granted", tools: ["clipfinder"], expires: null }) }),
+  );
+  // The key box is on the page, not inside a fold-out: being told the price and then having to hunt for where
+  // the key goes is the finding that reached a paying customer (cold user, 2026-09-19).
+  if (await page.evaluate(() => !document.getElementById("keyrow") || document.getElementById("keyrow").closest("details")))
+    fail("the key box is missing, or back inside a fold-out");
+  if (await page.evaluate(() => document.getElementById("keyrow").hidden)) fail("the key box is hidden while the tool is locked");
+  await page.fill("#key", "SMVCF-TEST-0000-0000");
+  await page.click("#keygo");
+  await page.waitForFunction(() => window.__cf?.licensed === true, null, { timeout: 15000 });
 
   // 5. The exports, with no key and nothing paid for.
   const list = await page.evaluate(() => window.__cf.list);
@@ -202,7 +211,7 @@ try {
     else ok(`${clip.suggestedFilename()}: ${(saved.bytes / 1024).toFixed(0)} KB, ${probed.toFixed(1)} s against ${wanted.toFixed(1)} s asked for`);
   }
 
-  // 5c. The price rail, asleep. The paid page is not deleted, it is parked somewhere no visitor lands:
+  // 5c. The sandbox rail: the same paid page against Polar's sandbox, where no visitor lands by accident:
   //     a second tab on ?rail=sandbox must show the price, the checkout and the key box, and the number
   //     it shows must be the one constant in app.ts. This is what stops the paid path rotting unread
   //     while it waits for a number, and it is the only place a price is allowed to appear at all.
@@ -223,7 +232,7 @@ try {
       else if (shown.amount !== want || !shown.tag.includes(want)) fail(`the paid rail shows "${shown.tag}" / "${shown.amount}", the constant is ${want}`);
       else if (shown.buyHidden || shown.keyHidden) fail("the paid rail hides its own checkout or key box");
       else if (!/30 minutes/.test(shown.trust)) fail(`the paid rail does not state its free limit: "${shown.trust}"`);
-      else ok(`the paid rail is whole and states ${want}, and the page a visitor gets states none`);
+      else ok(`the sandbox rail is whole and states ${want}, the same constant the live page states`);
     } finally {
       await rail.close();
     }

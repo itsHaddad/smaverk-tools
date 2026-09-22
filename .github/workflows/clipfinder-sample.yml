@@ -15,17 +15,17 @@ on:
   workflow_dispatch:
     inputs:
       mp3:
-        description: 'Recording to read. The default is the episode in clipfinder/app/SOURCES.md.'
-        default: 'https://traffic.megaphone.fm/NATIONALAERONAUTICSANDSPACEADMINISTRATION8653428112.mp3?updated=1774531589'
+        description: 'Recording to read, sound or video. The default is the episode in clipfinder/app/SOURCES.md.'
+        default: 'https://images-assets.nasa.gov/video/iss071m261311538_NASA_Astronaut_Matt_Dominick_Talks_with_KMGH_Denver_240510/iss071m261311538_NASA_Astronaut_Matt_Dominick_Talks_with_KMGH_Denver_240510~mobile.mp4'
       title:
         description: 'Shown beside the sample on the page.'
-        default: 'Artemis II: The Crew, 65 min'
+        default: 'Astronaut Matt Dominick talks with KMGH Denver, 15 min'
       credit:
         description: 'Who made the recording, and under what.'
-        default: 'NASA, Houston We Have a Podcast, 27 March 2026 — public domain'
+        default: 'NASA, 10 May 2024 — public domain'
       url:
         description: 'Where a visitor can go and hear the whole thing.'
-        default: 'https://www.nasa.gov/podcasts/houston-we-have-a-podcast/'
+        default: 'https://images.nasa.gov/details/iss071m261311538_NASA_Astronaut_Matt_Dominick_Talks_with_KMGH_Denver_240510'
 
 permissions:
   contents: read
@@ -69,7 +69,7 @@ jobs:
       - name: What came out
         run: |
           set -euo pipefail
-          ls -l dist/sample.json dist/sample.m4a
+          ls -l dist/sample.json dist/sample.m4a dist/sample.mp4 dist/poster.jpg 2>/dev/null || true
           bun -e 'const s=JSON.parse(await Bun.file("dist/sample.json").text());
             console.log(`${s.durationS}s · ${s.words} words · ${s.silences} silences · read ${s.readTimesRealTime}x`);
             for (const [k,v] of Object.entries(s.sets)) console.log(`${k}s → ${v.length}: ` + v.map(m=>`${Math.round(m.startS)}-${Math.round(m.endS)}`).join(", "));
@@ -81,7 +81,9 @@ jobs:
           path: |
             clipfinder/app/dist/sample.json
             clipfinder/app/dist/sample.m4a
+            clipfinder/app/dist/sample.mp4
+            clipfinder/app/dist/poster.jpg
             clipfinder/app/.sample-read.json
           retention-days: 7
           include-hidden-files: true
-          if-no-files-found: error
+          if-no-files-found: warn

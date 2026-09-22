@@ -8,7 +8,7 @@
 // the heavy states (reading, found, a moment being trimmed, saved) are driven once on the real fixture.
 import { chromium } from "playwright";
 import { spawn, execFileSync } from "node:child_process";
-import { mkdirSync, existsSync, copyFileSync } from "node:fs";
+import { mkdirSync, existsSync, copyFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -54,6 +54,51 @@ if (!existsSync(shortFile)) execFileSync("ffmpeg", ["-v", "error", "-y", "-t", "
 // Every control in the working column is the full content width. The map is allowed its own (it is a picture).
 const COLUMNS = ["#action", ".chips", ".moments", ".steps", "#status", ".caplabel", "#trust", "#exportbox"];
 
+
+// Two controls must never claim the same pixels, in any state, at any width.
+//
+// Design review, 2026-09-21: "Lost it?" and "Remove the key from this device" were inline links on consecutive
+// 22 px lines, each given a 44 px tap box by the page's own rule. The boxes overlapped by 123 x 22 px and the
+// later one won the hit test, so aiming at the link that RECOVERS a key removed it instead. Measuring each
+// control's own size cannot see that — only overlap can.
+//
+// The first version of this check could not have caught its own sibling (N1: the bottom 3 px of the key input
+// belonged to the recovery link). It had no `input` in its selector, it ran only in the paid state where the
+// locked controls are hidden, and it lived in one tool of three. So: every interactive thing, every state the
+// matrix already visits, and the same function in all three tools.
+const HITTABLE = "a[href], button, input, select, textarea, [onclick], [role=button], summary";
+const overlaps = [];
+async function unlockCheck(page, state, check) {
+  let r;
+  try {
+    r = await page.evaluate((sel) => {
+      const shown = [...document.querySelectorAll(sel)].filter((el) => {
+        if (!el.offsetParent && getComputedStyle(el).position !== "fixed") return false;
+        const b = el.getBoundingClientRect();
+        return b.width > 0 && b.height > 0;
+      });
+      const boxes = shown.map((el) => ({ id: el.id || (el.textContent || el.value || el.placeholder || el.tagName).trim().slice(0, 24), r: el.getBoundingClientRect() }));
+      const bad = [];
+      for (let i = 0; i < boxes.length; i++)
+        for (let j = i + 1; j < boxes.length; j++) {
+          const a = boxes[i].r, b = boxes[j].r;
+          // A control legitimately inside another (a button in a label, a summary in details) is not a clash.
+          if ((a.left >= b.left && a.right <= b.right && a.top >= b.top && a.bottom <= b.bottom) || (b.left >= a.left && b.right <= a.right && b.top >= a.top && b.bottom <= a.bottom)) continue;
+          const w = Math.min(a.right, b.right) - Math.max(a.left, b.left);
+          const h = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+          if (w > 0.5 && h > 0.5)
+            bad.push({ a: boxes[i].id, b: boxes[j].id, w: Math.round(w), h: Math.round(h), px: Math.round(w * h), ar: [a.x, a.y, a.width, a.height].map(Math.round), br: [b.x, b.y, b.width, b.height].map(Math.round) });
+        }
+      return { count: shown.length, bad, width: innerWidth };
+    }, HITTABLE);
+  } catch (e) {
+    check(false, `${state}: the hit rectangles could not be measured (${String(e.message).slice(0, 90)})`);
+    return;
+  }
+  overlaps.push({ state, width: r.width, controls: r.count, bad: r.bad });
+  if (r.bad.length) check(false, `${state} @${r.width}px: ${r.bad.map((o) => `${o.a} and ${o.b} share ${o.w}x${o.h} px`).join("; ")}`);
+}
+
 const fails = [];
 const check = (ok, msg) => {
   console.log((ok ? "  ok   " : "  FAIL ") + msg);
@@ -77,6 +122,7 @@ p.on("console", (m) => { if (m.type() === "error" && !/cloudflareinsights|Failed
 
 let baseFont = null;
 const snap = async (tag) => {
+  await unlockCheck(p, tag, check);
   const f = await auditPage(p, COLUMNS);
   baseFont ??= f.font;
   await p.screenshot({ path: join(out, `${tag}.png`) });
@@ -177,8 +223,12 @@ try {
   }
   await snap("5b-trimmed");
 
-  // Saving, on a phone, with nothing in the way: the tool is free while it is new, so there is no key to
-  // paste and no checkout to come back from. This used to unlock a stub first.
+  // What a key opens is decided by the unlock worker, which is off this page: stubbed here, real everywhere else.
+  await p.route(/unlock\.smaverk\.com\/entitlements/, (r) => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ status: "granted", tools: ["clipfinder"], expires: null }) }));
+  await p.fill("#key", "SMVCF-TEST-0000-0000");
+  await p.click("#keygo");
+  await p.waitForFunction(() => window.__cf?.licensed === true, null, { timeout: 15000 });
+
   const [dl] = await Promise.all([p.waitForEvent("download", { timeout: 30000 }), p.click('[data-save="edl"]')]);
   await dl.saveAs(join(out, dl.suggestedFilename()));
   await p.waitForTimeout(400);
@@ -189,6 +239,34 @@ try {
 } catch (e) {
   check(false, String(e?.stack ?? e?.message ?? e));
 } finally {
+  // The paid panel is the one surface no state above reaches: at rest the page is locked and #paidpanel is hidden,
+  // so it had shipped without a single tap-target pass. The key comes from SAMPLE_KEY in the shared unlock module,
+  // at the length Polar actually issues — the overlapping tap targets only reproduced with a full-length key,
+  // because that is what wraps, and a short stub would have shown a tidy panel and certified a state nobody saw.
+  if (!(await p.evaluate(() => typeof window.__cf?.setLicensed === "function"))) {
+    // Say what is wrong, not "setLicensed is not a function" from inside an evaluate. An audit that cannot reach
+    // a state must fail loudly and name the reason: silently certifying a state it never saw is how the unlock
+    // panel shipped unaudited in the first place.
+    check(false, "this tool exposes no way to force the paid state (window.__cf.setLicensed), so the paid panel cannot be audited");
+  } else {
+    try {
+      await p.evaluate(() => window.__cf.setLicensed(true));
+      await p.waitForTimeout(250);
+      await snap("9-paid");
+      await p.evaluate(() => window.__cf.setLicensed(false));
+    } catch (e) {
+      check(false, `the paid panel could not be measured: ${String(e.message).slice(0, 110)}`);
+    }
+  }
+
+  // What the guard saw, as data. A gate that fails with only screenshots costs whoever picks it up more than it
+  // saves, so every state, width, control count and offending pair is written down (the lead, 2026-09-21).
+  writeFileSync(join(out, "unlock-overlaps.json"), JSON.stringify({ tool: "clipfinder", states: overlaps }, null, 2));
+  {
+    const clashes = overlaps.filter((o) => o.bad.length);
+    check(!clashes.length, clashes.length ? `${clashes.length} state(s) with overlapping controls — see unlock-overlaps.json` : `no overlapping controls in ${overlaps.length} states`);
+  }
+
   await b.close();
   server?.kill();
 }

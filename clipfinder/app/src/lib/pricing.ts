@@ -1,10 +1,8 @@
 // pricing.ts: what the page says about money, and who has to pay, in one place.
 //
-// The tool is free while it is new and the page names no price (the owner, 2026-09-20: "about the
-// money, we can make it available as trial in the beginning or something like that"). The rail
-// underneath is whole and asleep: the checkout, the key box and every sentence that names a number
-// live here, tested, so the day a number is given the page has a price again without anyone writing
-// copy under time pressure. Nothing here touches the DOM, so both states are testable.
+// The tool was free while it was new (2026-09-21 to 22) and is $50 once since (the owner, 2026-09-22).
+// Both states are written here side by side, tested, so switching between them never means writing copy
+// under time pressure. Nothing here touches the DOM, so both states are testable.
 
 /** Every sentence the page says about money once a number exists. */
 export type PriceCopy = {

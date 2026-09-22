@@ -1,47 +1,38 @@
 // app.ts: everything the person sees and touches. The reading itself happens in worker.ts.
 //
 // The page has one job and shows it at rest: a real recording, already read, with the moments it found.
-// Nothing here uploads anything. The only addresses this file knows are the checkout, the key check and
-// the page's own files.
+// Nothing here uploads anything. The only addresses this file knows are the checkout and the page's own
+// files; the key check lives in src/lib/unlock.ts, which every Småverk tool shares.
 
 import { FORMATS, type ExportMedia, type ExportMoment, type Format } from "./src/lib/exports";
 import { clock, spoken, displayName, outputName, timelineName } from "./src/lib/naming";
-import { tidyOpening } from "./src/lib/rank";
+import { tidyStored } from "./src/lib/rank";
 import { mustPay, priceCopy, readLimitS, TRIAL_COPY } from "./src/lib/pricing";
 import { pickScheme } from "./src/lib/theme";
 import { nothingFoundLine } from "./src/lib/advice";
+import { Unlock, SAMPLE_KEY, type UnlockState } from "./src/lib/unlock";
 
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 const SANDBOX = new URL(location.href).searchParams.get("rail") === "sandbox";
 const RAIL = SANDBOX
-  ? { api: "https://sandbox-api.polar.sh", org: "655c19e9-2e14-40b6-9adf-612ca8937b49", benefit: "9fa617f8-59a7-43fa-8e77-ba0090644908", product: "af85b197-a67c-42cf-9f69-daabad01debf", link: "https://sandbox-api.polar.sh/v1/checkout-links/polar_cl_dDfF99RbC2SQYgy850ft0RluXsfNUTSrLrFYx0lpn9e/redirect" }
-  : { api: "https://api.polar.sh", org: "d3095233-7f56-42d9-9cb5-cbc391af654c", benefit: "__BENEFIT__", product: "__PRODUCT__", link: "__LINK__" };
-const UNLOCK = "https://unlock.smaverk.com";
-const KEY_STORE = "smaverk.clipfinder.key";
+  ? { product: "af85b197-a67c-42cf-9f69-daabad01debf", link: "https://sandbox-api.polar.sh/v1/checkout-links/polar_cl_dDfF99RbC2SQYgy850ft0RluXsfNUTSrLrFYx0lpn9e/redirect" }
+  : { product: "04316d81-3ff4-4aba-93e0-3b8b420db085", link: "https://buy.polar.sh/polar_cl_CeiGjaPBZWG6oU9e66wtcNieFV1SNBNgwRqmZ4G9X4L" };
 
 /**
  * The price, in one place.
  *
  * It is the owner's number and nobody else's, so it is a single constant rather than a string scattered
  * through the page, and `tests/site.test.ts` fails if a number ever appears on the page that is not
- * this one. `$29` is a PLACEHOLDER chosen to sit inside the studio's $19–29 band, not a decision.
- * Nothing a visitor sees states it while `TRIAL` is on.
+ * this one. The owner set it, 2026-09-22.
  */
-export const PRICE = "$29";
+export const PRICE = "$50";
 
 /**
- * Free while it is new: the page names no price and every visitor gets the whole tool.
- *
- * The owner, 2026-09-20: "about the money, we can make it available as trial in the beginning or
- * something like that." So nothing unapproved goes in front of a visitor, and nothing waits on him.
- *
- * The rail underneath is whole and asleep rather than deleted — the checkout, the key box, the
- * paywall and every sentence that names a number are still here and still tested (`src/lib/pricing.ts`,
- * `tests/lib.test.ts`). `?rail=sandbox` runs the paid page against Polar's sandbox, so the price the
- * gate sees is the constant above and the paid path cannot rot while it waits. Giving the tool a price
- * is this one line.
+ * Free while it is new ran from launch (2026-09-21) to 2026-09-22, when the owner set the price. The free
+ * version is the 30-minute one again. Turning the trial back on is this one line; the trial's copy stays in
+ * `src/lib/pricing.ts`, tested, so it cannot rot while it is off.
  */
-const TRIAL = !SANDBOX;
+const TRIAL = false;
 
 /** Free reads half an hour. Paid, and the trial, read four. One place decides, so the page and the worker cannot disagree. */
 const FREE_S = 30 * 60;
@@ -83,14 +74,17 @@ type Sample = {
   url: string;
   durationS: number;
   audio: string;
+  /** A video sample carries its picture; a sound-only one (the first sample) does not. */
+  video?: boolean;
+  poster?: string;
   sets: Record<string, { startS: number; endS: number; why: string[]; opening: string; clipStartS: number; clipEndS: number }[]>;
 };
 
 let sample: Sample | null = null;
 let state: "sample" | "loading" | "reading" | "found" = "sample";
-let targetS = 300;
+let targetS = 60;
 /** What the buttons asked for, kept apart from what the recording allowed. See the note in finish(). */
-let askedS = 300;
+let askedS = 60;
 /** The lengths the page offers, read off the buttons themselves so a sentence about them cannot drift. */
 const CLIP_LENGTHS = [...document.querySelectorAll<HTMLButtonElement>(".chip")].map((c) => Number(c.dataset.target)).filter((n) => n > 0);
 let moments: Shown[] = [];
@@ -101,7 +95,15 @@ let mediaUrl = "";
 let heardS = 0;
 let totalS = 0;
 
-const audio = $<HTMLAudioElement>("audio");
+// One element plays both kinds of recording: a video element plays sound-only files too, and shows the picture
+// when there is one. The stage around it is shown only then.
+const audio = $<HTMLVideoElement>("audio");
+const stage = $("stage");
+function showStage(on: boolean, poster = "") {
+  stage.hidden = !on;
+  if (poster) audio.poster = poster;
+  else audio.removeAttribute("poster");
+}
 const map = $<HTMLCanvasElement>("map");
 const list = $<HTMLOListElement>("moments");
 
@@ -354,6 +356,12 @@ function play(i: number) {
   }
 }
 
+// The big button on the picture: the moment already chosen, or the strongest one; again to pause.
+$("stageplay").addEventListener("click", () => {
+  if (!audio.paused) return audio.pause();
+  if (moments.length) play(current >= 0 ? current : 0);
+});
+
 audio.addEventListener("timeupdate", () => {
   const m = moments[current];
   if (m && audio.currentTime >= m.playToS) audio.pause();
@@ -362,6 +370,10 @@ for (const ev of ["play", "pause", "ended"]) {
   audio.addEventListener(ev, () => {
     for (const li of list.children) li.removeAttribute("data-playing");
     if (!audio.paused && current >= 0) (list.children[current] as HTMLElement)?.setAttribute("data-playing", "1");
+    stage.dataset.playing = audio.paused ? "0" : "1";
+    const m = moments[current];
+    $("now").textContent = !audio.paused && m ? `${clock(m.startS)} · ${m.why[0] ?? ""}` : "";
+    $("stageplay").setAttribute("aria-label", audio.paused ? "Play the moment" : "Pause");
   });
 }
 
@@ -374,11 +386,12 @@ function showSample() {
   const set = sample.sets[String(targetS)] ?? Object.values(sample.sets)[0] ?? [];
   totalS = sample.durationS;
   // The sample was written down by an earlier run, so its quotes go through the same tidy the live ones do.
-  moments = set.map((m) => ({ startS: m.startS, endS: m.endS, why: m.why, opening: tidyOpening(m.opening), playFromS: m.clipStartS, playToS: m.clipEndS }));
+  moments = set.map((m) => ({ startS: m.startS, endS: m.endS, why: m.why, opening: tidyStored(m.opening), playFromS: m.clipStartS, playToS: m.clipEndS }));
   current = -1;
   $("clipname").textContent = `Sample: ${sample.title}`;
   $("clipname").title = `${sample.title} — ${sample.credit}`;
   ($("samplesrc") as HTMLAnchorElement).href = sample.url;
+  showStage(!!sample.video, sample.poster ?? "");
   render();
 }
 
@@ -435,6 +448,7 @@ function onWorker(m: any) {
     if (media) {
       media.durationS = m.durationS || 0;
       media.hasVideo = !!m.hasVideo;
+      showStage(media.hasVideo);
       media.fps = m.fps || 30;
     }
     if (m.limitS && totalS > m.limitS + 1)
@@ -518,6 +532,8 @@ $("file").addEventListener("change", async (e) => {
   if (mediaUrl) URL.revokeObjectURL(mediaUrl);
   mediaUrl = URL.createObjectURL(picked);
   audio.src = mediaUrl;
+  showStage(false);
+  $("now").textContent = "";
   media = { name: picked.name, durationS: 0, fps: 30, hasVideo: false, hasAudio: true };
   moments = [];
   current = -1;
@@ -621,9 +637,8 @@ function showResult(title: string, name: string, line: string) {
 function needsPaying(): boolean {
   if (!mustPay(TRIAL, licensed)) return false;
   say(`Saving is the paid half. ${PRICE} once, and every export is open.`, "");
-  // Someone who has already bought it needs the key box, and it lives inside a fold-out that is shut.
-  // Being told the price and then having to hunt for where to type the key is not an answer either.
-  ($("afterpay") as HTMLDetailsElement).open = true;
+  // The price and the key box are both on the page, never behind a fold-out: a paying customer who is told the
+  // price and then has to hunt for where the key goes is the finding that reached a real buyer (cold user, 2026-09-19).
   $("price").scrollIntoView({ block: "center", behavior: "smooth" });
   return true;
 }
@@ -671,131 +686,84 @@ async function saveClip(i: number) {
 }
 
 // ---------------------------------------------------------------------------------------------
-// The paid version: a key from Polar. This tool's own key; another tool's key does not open it.
+// The paid version: one key, checked by the unlock worker.
+//
+// src/lib/unlock.ts is the same file in all three tools, so what a key does here is what it does in
+// Captions and Vertical. A key opens whatever it is entitled to: one tool today, several the day a
+// bundle is sold, and the page needs no change for that.
 // ---------------------------------------------------------------------------------------------
 
-async function validateKey(key: string): Promise<boolean> {
-  const r = await fetch(`${RAIL.api}/v1/customer-portal/license-keys/validate`, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ key, organization_id: RAIL.org }),
-  });
-  if (!r.ok) return false;
-  const j = await r.json();
-  return j?.status === "granted";
-}
+const unlock = new Unlock({
+  tool: "clipfinder",
+  sandbox: SANDBOX,
+  paidLine: "Recordings up to four hours, and every export.",
+  render: (s: UnlockState) => paintLicense(s),
+});
 
-function setLicensed(on: boolean, msg?: string) {
-  licensed = on;
-  $("keystatus").textContent = msg ?? (on ? "Paid version on this device." : "Already paid? Paste your key here.");
-  $("keystatus").className = "fine" + (on ? " ok" : "");
-  $("keyrow").hidden = on;
+function paintLicense(s: UnlockState) {
+  licensed = s.on;
+  dbg.licensed = s.on;
+  dbg.unlockTools = s.tools;
+  $("keystatus").textContent = s.text;
+  $("keystatus").className = "fine" + (s.tone ? " " + s.tone : "");
+  $("keyrow").hidden = s.on;
   // While it is free the block says so and stays: it is the price story, and hiding it would leave the
   // first screen with nothing about what this costs.
-  $("price").hidden = on && !TRIAL;
-  $("tag").hidden = on && !TRIAL;
-  $("pricefine").hidden = on && !TRIAL;
-  $("paidpanel").hidden = !on || TRIAL;
-  $("trust").textContent = TRIAL ? TRIAL_COPY.trust : on ? "Up to four hours. English. Nothing leaves your device." : priceCopy(PRICE).trust;
+  $("price").hidden = s.on && !TRIAL;
+  $("tag").hidden = s.on && !TRIAL;
+  $("pricefine").hidden = s.on && !TRIAL;
+  $("paidpanel").hidden = !s.on || TRIAL;
+  $("trust").textContent = TRIAL ? TRIAL_COPY.trust : s.on ? "Up to four hours. English. Nothing leaves your device." : priceCopy(PRICE).trust;
+  // The key in full, so it can be carried to another device. Masking it protected nothing: it is the person's
+  // own key and it is in their email, and a masked key cannot be typed into a second device.
+  $("paidkey").textContent = s.key;
+  $("keylost").setAttribute("href", unlock.portal);
+  $("keylostline").hidden = s.on; // the paid panel shows the key itself, so this is for whoever is locked out
+  // A key that opens more than this tool says so, and the link carries it across in one click.
+  const others = unlock.elsewhere;
+  $("keyalso").hidden = others.length === 0;
+  if (others.length) $("keyalso").innerHTML = `This key also opens ${others.map((o) => `<a href="${o.href}">${o.name}</a>`).join(" and ")}.`;
   mark();
-  let k = "";
-  try {
-    k = localStorage.getItem(KEY_STORE) ?? "";
-  } catch {
-    k = ""; // storage blocked in this browser: the key simply is not remembered
-  }
-  $("paidkey").textContent = k ? `${k.slice(0, 4)}…${k.slice(-6)}` : "";
+  // The checkout opens in its own tab so the recording being read stays here. When the key arrives from that
+  // tab, say so: the exports that were refused a moment ago are open now.
+  if (s.on && s.became === "another-tab") say("The paid version is on. Every export is open.", "ok");
+  if (s.on && s.became === "checkout") $("keystatus").scrollIntoView({ block: "center", behavior: "smooth" });
 }
 
+// Removing the key wipes the only copy on this screen, so it asks first (cold user, 2026-09-21).
 $("removekey").addEventListener("click", (e) => {
   e.preventDefault();
+  if (confirm("Remove the key from this device? Copy it first if you have not: you will need it to unlock this device again.")) unlock.forget();
+});
+
+$("keycopy").addEventListener("click", async (e) => {
+  e.preventDefault();
   try {
-    localStorage.removeItem(KEY_STORE);
+    await navigator.clipboard.writeText(unlock.state.key);
+    $("keycopy").textContent = "Copied";
   } catch {
-    /* nothing was stored, so nothing has to be removed */
+    // No clipboard permission in this browser: select it instead, so it can still be copied by hand.
+    getSelection()?.selectAllChildren($("paidkey"));
+    $("keycopy").textContent = "Select it and copy";
   }
-  setLicensed(false, "Key removed from this device. Paste it again any time.");
+  setTimeout(() => ($("keycopy").textContent = "Copy"), 2500);
 });
 
 $("keygo").addEventListener("click", async () => {
-  const k = $<HTMLInputElement>("key").value.trim();
-  if (!k) return;
-  $("keystatus").textContent = "Checking…";
-  try {
-    if (await validateKey(k)) {
-      try {
-        localStorage.setItem(KEY_STORE, k);
-      } catch {
-        /* the key works for this visit even when it cannot be remembered */
-      }
-      setLicensed(true);
-    } else {
-      $("keystatus").textContent = "That key did not work here. Check the email from Polar, or write to hello@smaverk.com.";
-      $("keystatus").className = "fine err";
-    }
-  } catch {
-    $("keystatus").textContent = "Could not check the key right now. Try again in a minute.";
-    $("keystatus").className = "fine err";
-  }
+  if (await unlock.paste($<HTMLInputElement>("key").value)) $<HTMLInputElement>("key").value = "";
+});
+$("key").addEventListener("keydown", (e) => {
+  if ((e as KeyboardEvent).key === "Enter") $("keygo").click();
 });
 
-// The checkout opens in its own tab so the recording being read stays here. When that tab comes back
-// with the key, this one picks it up.
-addEventListener("storage", (e: StorageEvent) => {
-  if (e.key !== KEY_STORE || !e.newValue || licensed) return;
-  setLicensed(true, "Thank you. The paid version is on this device now.");
-  say("The paid version is on. Every export is open.", "ok");
-});
+// For rigs that need the paid state without a rail: paints it, exactly as a real key would. It does not store a
+// key, so a reload goes back to whatever the device actually holds. Captions and Vertical have had this; the
+// clip finder did not, and the phone UI gate went red reaching for it (2026-09-21).
+dbg.setLicensed = (on: boolean) =>
+  paintLicense({ on, key: on ? SAMPLE_KEY.clipfinder : "", tools: on ? ["clipfinder"] : [], expires: null, text: on ? "Paid version on this device." : "Already paid? Paste your key here.", tone: on ? "ok" : "", became: "" });
 
-(async () => {
-  // Nothing is sold while the tool is free, so nothing is fetched, checked or remembered about keys:
-  // a visitor's page never calls the checkout at all.
-  if (TRIAL) return;
-  const u = new URL(location.href);
-  const session = u.searchParams.get("customer_session_token");
-  const checkout = u.searchParams.get("checkout_id");
-  if (session || checkout) {
-    setLicensed(false, "Payment received. Fetching your key…");
-    let k = "";
-    try {
-      if (session) {
-        const r = await fetch(`${RAIL.api}/v1/customer-portal/license-keys/?limit=10`, { headers: { authorization: `Bearer ${session}` } });
-        const j = r.ok ? await r.json() : null;
-        k = (j?.items ?? []).find((x: any) => x.status === "granted" && x.key && (RAIL.benefit.startsWith("__") || x.benefit_id === RAIL.benefit))?.key ?? "";
-      }
-      if (!k && checkout)
-        for (let i = 0; i < 6 && !k; i++) {
-          if (i) await new Promise((r) => setTimeout(r, 2000));
-          const r = await fetch(`${UNLOCK}/key?checkout_id=${encodeURIComponent(checkout)}&benefit=${encodeURIComponent(RAIL.benefit)}${SANDBOX ? "&rail=sandbox" : ""}`);
-          const j = r.ok ? await r.json() : null;
-          if (j?.status === "granted" && j.key) k = j.key;
-          else if (j?.status && !["pending", "confirmed", "succeeded"].includes(j.status)) break;
-        }
-    } catch {
-      k = ""; // the key can still be pasted by hand from the email
-    }
-    if (k) {
-      try {
-        localStorage.setItem(KEY_STORE, k);
-      } catch {
-        /* the key works for this visit even when it cannot be remembered */
-      }
-      setLicensed(true, "Thank you. The paid version is on this device now. Your key is in the email from Polar for your other devices.");
-    } else setLicensed(false, "Payment received. Your key is in the email from Polar; paste it here to unlock this device.");
-    for (const p of ["customer_session_token", "paid", "checkout_id"]) u.searchParams.delete(p);
-    history.replaceState(null, "", u.pathname + (u.search || ""));
-    $("keystatus").scrollIntoView({ block: "center", behavior: "smooth" });
-    return;
-  }
-  let saved = "";
-  try {
-    saved = localStorage.getItem(KEY_STORE) ?? "";
-  } catch {
-    saved = ""; // storage blocked: the free version is what this visit gets
-  }
-  if (saved && (await validateKey(saved).catch(() => false))) setLicensed(true);
-})();
-
+// Nothing is sold while the tool is free, so nothing is checked or remembered about keys then.
+if (!TRIAL) void unlock.start();
 // ---------------------------------------------------------------------------------------------
 // Start
 // ---------------------------------------------------------------------------------------------
