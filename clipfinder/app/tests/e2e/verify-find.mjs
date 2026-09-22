@@ -216,7 +216,9 @@ try {
   //     it shows must be the one constant in app.ts. This is what stops the paid path rotting unread
   //     while it waits for a number, and it is the only place a price is allowed to appear at all.
   {
-    const rail = await ctx.newPage();
+    // Its own context: the key unlocked above is in this one's storage, and a paid device shows no price.
+    const railCtx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+    const rail = await railCtx.newPage();
     try {
       await rail.goto(`http://localhost:${port}/?rail=sandbox`, { waitUntil: "load" });
       await rail.waitForFunction(() => window.__cf?.state === "sample", null, { timeout: 30000 });
@@ -234,7 +236,7 @@ try {
       else if (!/30 minutes/.test(shown.trust)) fail(`the paid rail does not state its free limit: "${shown.trust}"`);
       else ok(`the sandbox rail is whole and states ${want}, the same constant the live page states`);
     } finally {
-      await rail.close();
+      await railCtx.close();
     }
   }
 
