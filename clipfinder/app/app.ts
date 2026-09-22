@@ -52,7 +52,6 @@ function showPrice(price: string) {
   // the limit in force. The find gate failed on this: the paid rail was still saying the free one's sentence.
   $("trust").textContent = copy.trust;
   $("paytrust").textContent = "Refund within 14 days.";
-  $("pricefine").textContent = copy.fine;
   $("afterpay").hidden = false;
   const buy = $<HTMLAnchorElement>("buy");
   buy.hidden = false;
@@ -642,6 +641,7 @@ function needsPaying(): boolean {
   if (!mustPay(TRIAL, licensed)) return false;
   say(`Saving is the paid half. ${PRICE} once, and every export is open.`, "");
   $("exporthint").textContent = `Saving is the paid half: ${PRICE} once. The price and the key box are just below.`;
+  $("pricefine").textContent = priceCopy(PRICE).fine;
   // The price and the key box are both on the page, never behind a fold-out: a paying customer who is told the
   // price and then has to hunt for where the key goes is the finding that reached a real buyer (cold user, 2026-09-19).
   $("price").scrollIntoView({ block: "center", behavior: "smooth" });
