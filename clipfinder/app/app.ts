@@ -52,6 +52,7 @@ function showPrice(price: string) {
   // the limit in force. The find gate failed on this: the paid rail was still saying the free one's sentence.
   $("trust").textContent = copy.trust;
   $("paytrust").textContent = "Refund within 14 days.";
+  $("pricefine").textContent = copy.fine;
   $("afterpay").hidden = false;
   const buy = $<HTMLAnchorElement>("buy");
   buy.hidden = false;
@@ -256,7 +257,7 @@ function render() {
   // tells them apart — which is what makes a per-card line mean something when it does appear.
   const first = moments[0]?.why[0] ?? "";
   const shared = moments.length > 1 && first && moments.every((m) => m.why[0] === first) ? first : "";
-  $("allwhy").textContent = shared ? `All of these ${shared.replace(/^Leans/, "lean").replace(/, so give it a/, " — give each a")}.` : "";
+  $("allwhy").textContent = shared ? `All of these ${shared.replace(/^(\w+?)s\b/, (_, v: string) => v.toLowerCase())}.` : "";
   $("allwhy").hidden = !shared;
   for (const [i, m] of moments.entries()) {
     const li = document.createElement("li");
@@ -365,7 +366,7 @@ audio.addEventListener("timeupdate", () => {
   const m = moments[current];
   if (m && audio.currentTime >= m.playToS) audio.pause();
 });
-for (const ev of ["play", "pause", "ended"]) {
+for (const ev of ["play", "pause", "ended", "seeked"]) {
   audio.addEventListener(ev, () => {
     for (const li of list.children) li.removeAttribute("data-playing");
     if (!audio.paused && current >= 0) (list.children[current] as HTMLElement)?.setAttribute("data-playing", "1");
@@ -494,6 +495,7 @@ function finish(m: any) {
     $("exportbox").hidden = true;
   } else {
     step(3, "done", `${moments.length} found`);
+    $("hint").textContent = "Strongest first — pick one to hear it.";
     $("s3t").textContent = `${moments.length} moment${moments.length === 1 ? "" : "s"} found`;
     // The truncation notice was shown when the file was opened and then written over by this line, so a
     // free visitor reached the end believing the whole recording had been read.

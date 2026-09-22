@@ -31,8 +31,8 @@ export function priceCopy(price: string): PriceCopy {
     amount: price,
     per: "once",
     buy: `Buy once — ${price}`,
-    fine: "Free: 30 minutes, every moment shown. Paid: four hours, and every export.",
-    trust: "Free up to 30 minutes. English. Your recording stays on your device.",
+    fine: "Saving is the paid half.",
+    trust: "Free up to 30 minutes, without saving. English. Your recording stays on your device.",
   };
 }
 

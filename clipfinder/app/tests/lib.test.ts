@@ -279,9 +279,11 @@ test("while the tool is free nobody is asked to pay, and the paid page still exi
   expect(priceCopy("$19").buy).toBe("Buy once — $19");
   for (const line of Object.values(paid)) expect(line).not.toMatch(/\$(?!19|24|29\b)\d+/);
   // Both halves of the offer are named, because a limit found after the work is done earns one-star reviews.
-  expect(paid.fine).toMatch(/30 minutes/);
-  expect(paid.fine).toMatch(/four hours/);
+  // The free limit and what it leaves out are under the main button; the paid four hours is in the price box, and
+  // tests/site.test.ts checks both limits on the page itself. Where the paywall scroll lands, it says why (review 7).
   expect(paid.trust).toMatch(/30 minutes/);
+  expect(paid.trust, "the free line says saving is not in it").toMatch(/without saving/);
+  expect(paid.fine).toMatch(/paid/);
 
   // And the free page names no number at all.
   for (const line of Object.values(TRIAL_COPY)) expect(line).not.toMatch(/\$\d/);
