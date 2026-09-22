@@ -58,14 +58,14 @@ ul{padding-left:20px;margin:0 0 12px}li{margin-bottom:6px}
 .caplabel{display:grid;grid-template-columns:minmax(0,1fr);row-gap:2px;font-size:15px;color:var(--muted);min-height:22px}
 .caplabel b{color:var(--ink);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 /* The picture, for a recording that has one. The moment playing is named on it, so a person watching knows which card they are hearing. */
-.stage{position:relative;aspect-ratio:16/9;border-radius:var(--r);overflow:hidden;background:#000}
-.stage video{display:block;width:100%;height:100%;object-fit:contain;background:#000}
-.stage .play{position:absolute;inset:0;border:0;background:transparent;display:grid;place-items:center;cursor:pointer;padding:0}
-.stage .play i{width:64px;height:64px;border-radius:50%;background:var(--hi);color:var(--hi-ink);display:grid;place-items:center;box-shadow:0 4px 18px rgba(0,0,0,.35)}
-.stage .play svg{width:28px;height:28px;margin-left:3px}
-.stage[data-playing="1"] .play i{opacity:0}
-.stage .now{position:absolute;left:10px;right:10px;bottom:10px;margin:0;padding:6px 10px;border-radius:10px;background:rgba(0,0,0,.62);color:#fff;font-size:15px;line-height:1.3;width:max-content;max-width:calc(100% - 20px)}
-.stage .now:empty{display:none}
+.screen{position:relative;aspect-ratio:16/9;border-radius:var(--r);overflow:hidden;background:#000}
+.screen video{display:block;width:100%;height:100%;object-fit:contain;background:#000}
+.screen .play{position:absolute;inset:0;border:0;background:transparent;display:grid;place-items:center;cursor:pointer;padding:0}
+.screen .play i{width:64px;height:64px;border-radius:50%;background:var(--hi);color:var(--hi-ink);display:grid;place-items:center;box-shadow:0 4px 18px rgba(0,0,0,.35)}
+.screen .play svg{width:28px;height:28px;margin-left:3px}
+.screen[data-playing="1"] .play i{opacity:0}
+.screen .now{position:absolute;left:10px;right:10px;bottom:10px;margin:0;padding:6px 10px;border-radius:10px;background:rgba(0,0,0,.62);color:#fff;font-size:15px;line-height:1.3;width:max-content;max-width:calc(100% - 20px)}
+.screen .now:empty{display:none}
 /* The recording itself: one band, the whole length, with the found moments lit. */
 .map{display:block;width:100%;height:132px;border-radius:var(--r);background:var(--surface);border:1px solid var(--line);cursor:pointer;touch-action:manipulation}
 .chips{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
@@ -156,7 +156,7 @@ details p,details ul{margin:0 0 14px}
 
     <section class="demo" aria-label="Try it">
       <div class="caplabel"><b id="clipname">Sample: a 65-minute interview</b><span id="hint">Strongest first — pick one to hear it.</span></div>
-      <div class="stage" id="stage" hidden>
+      <div class="screen" id="stage" hidden>
         <video id="audio" preload="none" playsinline crossorigin="anonymous"></video>
         <button class="play" id="stageplay" type="button" aria-label="Play the strongest moment"><i><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor"/></svg></i></button>
         <p class="now" id="now" aria-live="polite"></p>

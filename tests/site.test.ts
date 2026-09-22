@@ -14,7 +14,7 @@ const ROOT = join(import.meta.dir, "..");
 const SITES = {
   captions: { dist: "captions/app/dist", src: ["captions/app/app.ts", "captions/app/worker.ts"], prices: ["$19"], limits: ["60 seconds", "five minutes"], page: "index.html", host: "captions.smaverk.com", copy: "captions/app/app.ts", savedPrice: true },
   vertical: { dist: "vertical/app/dist", src: ["vertical/app/app.ts", "vertical/app/src/detect.ts", "vertical/app/src/fastsave.ts"], prices: ["$24", "$29"], limits: ["60 seconds", "five minutes"], page: "index.html", host: "vertical.smaverk.com", copy: "vertical/app/app.ts", savedPrice: true },
-  clipfinder: { dist: "clipfinder/app/dist", src: ["clipfinder/app/app.ts", "clipfinder/app/worker.ts"], prices: [], limits: ["four hours"], page: "index.html", host: "clipfinder.smaverk.com", copy: "clipfinder/app/src/lib/pricing.ts", savedPrice: false },
+  clipfinder: { dist: "clipfinder/app/dist", src: ["clipfinder/app/app.ts", "clipfinder/app/worker.ts"], prices: ["$50"], limits: ["30 minutes", "four hours"], page: "index.html", host: "clipfinder.smaverk.com", copy: "clipfinder/app/src/lib/pricing.ts", savedPrice: false },
 } as const;
 const STUDIO = "captions/app/dist/studio.html"; const LEGAL = ["captions/app/dist/privacy.html", "captions/app/dist/terms.html"];
 const read = (p: string) => readFileSync(join(ROOT, p), "utf8");
@@ -110,7 +110,7 @@ test("each tool's price is the same wherever it is stated, a free tool states no
     } else {
       // Free today. Nothing a visitor reads may carry a number, and the card says what it costs in words.
       expect([...found], `${name}: a price on a page of a free tool`).toEqual([]);
-      expect(studio, `studio card for ${name} says what it costs`).toMatch(/Free while it is new/);
+      throw new Error(`${name} has no price, and every tool has one now`);
     }
   }
   for (const l of LEGAL) expect(text(read(l)).match(/\$\d+/g) ?? []).toEqual([]);
@@ -190,6 +190,9 @@ test("what it costs is on the first screen and in the Saved box, per tool", () =
     const top = html.match(/<div class="top">[\s\S]*?<\/div>/)?.[0] ?? "";
     expect(top, `${name}: header price tag`).toMatch(new RegExp(`<a class="tag" id="tag" href="#price">[^<]*<b>${price} once</b></a>`));
     expect(html, `${name}: the tag's target exists`).toContain('<div class="price" id="price">');
+    expect(html.match(/<a [^>]*id="r?buy"[^>]*>/g)!.every((a) => /target="_blank" rel="noopener"/.test(a)), `${name}: buy links open their own tab`).toBe(true);
+    // The clip finder has no Saved box: it saves moments, not one clip, and its price sits beside the exports instead.
+    if (!s.savedPrice) continue;
     expect(html, `${name}: Saved box states the price with a link to the checkout`).toMatch(new RegExp(`<span id="rmark">[^<]*<a id="rbuy" href="https://[^"]+"[^>]*>${price} once</a>[^<]*five minutes[^<]*</span>`));
     expect(code(read(s.src[0]!)), `${name}: both buy links get the checkout address`).toMatch(/\["buy", "rbuy"\]/);
     // Cold user, 2026-09-19: the checkout opened in the same tab and Back wiped the clip. Both links open their own tab; the first tab picks the key up.
@@ -345,7 +348,7 @@ test("the terms protect the studio: bounded refunds, a liability cap, no open-en
 // this tool and no other: a stricter list of words that would give away how it is built, a sample that is
 // public-domain rather than CC BY, a dist where nothing is content-addressed, and the free-while-new rail
 // with its one sleeping constant. A check that SITES already makes is not repeated.
-const CF = { dist: "clipfinder/app/dist", src: ["clipfinder/app/app.ts", "clipfinder/app/worker.ts"], price: "$29", host: "clipfinder.smaverk.com" };
+const CF = { dist: "clipfinder/app/dist", src: ["clipfinder/app/app.ts", "clipfinder/app/worker.ts"], price: "$50", host: "clipfinder.smaverk.com" };
 const cfPages = () => readdirSync(join(ROOT, CF.dist)).filter((f) => /\.(html|txt)$/.test(f) && !/^google/.test(f)).map((f) => `${CF.dist}/${f}`);
 
 test("Clip finder: no permanence wording, one word for where it runs, and nothing about how it is built", () => {
@@ -379,34 +382,31 @@ test("Clip finder: it says AI, it says where it runs, and it says the same thing
   expect(code(read("clipfinder/app/src/lib/pricing.ts")), "the script writes the page's sentence").toContain(`trust: "${trust}"`);
 });
 
-test("Clip finder: it is free, it says so, and no price reaches a visitor", () => {
-  // The owner, 2026-09-20: "about the money, we can make it available as trial in the beginning or
-  // something like that." So nothing a visitor reads names a number — and the guard stays, because the
-  // day a number arrives it must be HIS number and only in the one place it is allowed to be.
-  const priced: string[] = [];
-  for (const f of ["index.html", "llms.txt"]) for (const m of text(read(`${CF.dist}/${f}`)).replace(/\$\d+ a month/g, " ").matchAll(/\$\d+/g)) priced.push(`${f}: ${m[0]}`);
-  expect(priced, "a price on something a visitor reads").toEqual([]);
-  // Where a price may still be written — the constant, and the sentences that are asleep with it — it is
-  // the one number and nothing else.
+test("Clip finder: the owner's price, stated once and the same everywhere", () => {
+  // Free while it was new from 2026-09-21; the owner set $50 on 2026-09-22. The number lives in one named
+  // constant, the pages say the same one, and the script holds no second.
+  for (const f of ["index.html", "llms.txt"]) {
+    const found = [...new Set(text(read(`${CF.dist}/${f}`)).replace(/\$\d+ a month/g, " ").match(/\$\d+/g) ?? [])];
+    expect(found, `${f}: the price`).toEqual([CF.price]);
+  }
   expect(read(CF.src[0]!), "the price is a single named constant in the script").toContain(`export const PRICE = "${CF.price}"`);
   expect([...new Set(code(read(CF.src[0]!)).match(/\$\d+/g) ?? [])], "no second price anywhere in the script").toEqual([CF.price]);
   expect(code(read("clipfinder/app/src/lib/pricing.ts")).match(/\$\d+/g) ?? [], "the paid sentences are written from the constant, not around it").toEqual([]);
-  // Free means the whole tool: the rail is off for everyone the page is served to, and only a rail
-  // nobody reaches by accident turns it back on.
-  expect(code(read(CF.src[0]!)), "the trial is what a visitor gets").toMatch(/const TRIAL = !SANDBOX;/);
-  // Hidden limits earn one-star reviews, so the limit in force is on the page, in llms.txt, and in the
-  // script that enforces it. Both limits stay in the script: one is in force, the other is asleep.
-  for (const f of ["index.html", "llms.txt"]) expect(text(read(`${CF.dist}/${f}`)), `${f}: the limit in force`).toMatch(/four hours/);
+  expect(code(read(CF.src[0]!)), "the trial is off").toMatch(/const TRIAL = false;/);
+  // Hidden limits earn one-star reviews: both limits on the page, in llms.txt, and in the script that enforces them.
+  for (const f of ["index.html", "llms.txt"]) { const t = text(read(`${CF.dist}/${f}`)); expect(t, `${f}: the free limit`).toMatch(/30 minutes/); expect(t, `${f}: the paid limit`).toMatch(/four hours/); }
   const app = read(CF.src[0]!);
   expect(app, "the free limit in the script").toMatch(/FREE_S = 30 \* 60/);
   expect(app, "the paid limit in the script").toMatch(/PAID_S = 4 \* 3600/);
-  // What it costs is in the header, on the first screen, and its target exists.
-  expect(read(`${CF.dist}/index.html`).match(/<div class="top">[\s\S]*?<\/div>/)?.[0], "header tag").toMatch(/<a class="tag" id="tag" href="#price"><b>Free while it is new<\/b><\/a>/);
-  expect(read(`${CF.dist}/index.html`), "the tag's target").toContain('<div class="price" id="price">');
-  expect(read(`${CF.dist}/index.html`).match(/<a [^>]*id="buy"[^>]*>/g)!.every((a) => /target="_blank" rel="noopener"/.test(a)), "the buy link opens its own tab").toBe(true);
-  // The checkout button and the box a key goes in are in the markup and hidden: asleep, not deleted.
-  for (const id of ["buy", "afterpay"]) expect(read(`${CF.dist}/index.html`).match(new RegExp(`<[a-z]+ [^>]*id="${id}"[^>]*>`))?.[0], `${id} is hidden while the tool is free`).toMatch(/\shidden(\s|>)/);
-  expect(code(read(CF.src[0]!)), "the first tab picks up the key").toMatch(/addEventListener\("storage"/);
+  // The price is in the header, on the first screen, and its target exists; the checkout is the production link.
+  const html = read(`${CF.dist}/index.html`);
+  expect(html.match(/<div class="top">[\s\S]*?<\/div>/)?.[0], "header tag").toContain(`<b>${CF.price} once</b>`);
+  expect(html, "the tag's target").toContain('<div class="price" id="price">');
+  const buy = html.match(/<a [^>]*id="buy"[^>]*>/)?.[0] ?? "";
+  expect(buy, "the buy link opens its own tab").toMatch(/target="_blank" rel="noopener"/);
+  expect(buy, "the buy link is shown").not.toMatch(/\shidden(\s|>)/);
+  expect(buy, "and goes to the production checkout").toMatch(/href="https:\/\/buy\.polar\.sh\/polar_cl_/);
+  expect(code(app), "the script knows the same checkout").toContain(buy.match(/href="([^"]+)"/)![1]!);
 });
 
 test("Clip finder: it promises only what it measures", () => {
@@ -482,9 +482,7 @@ const TOOLS = [
   { name: "vertical", dist: "vertical/app/dist", app: "vertical/app/app.ts" },
   { name: "clipfinder", dist: "clipfinder/app/dist", app: "clipfinder/app/app.ts" },
 ] as const;
-// The clip finder is live on its own older unlock (branch cfbuild) and free, so the buy button is asleep. Its move to the
-// shared module is done on branch cfkey and not yet shipped; until it is, the shared-unlock checks cover the two sold tools.
-const SHARED = TOOLS.filter((t) => t.name !== "clipfinder");
+const SHARED = TOOLS;
 const UNLOCK_SRC = SHARED.map((t) => `${t.app.replace(/app\.ts$/, "")}src/lib/unlock.ts`);
 
 test("unlocking cannot diverge: one unlock module, byte for byte, in every tool", () => {
@@ -515,8 +513,6 @@ test("unlocking cannot diverge: one unlock module, byte for byte, in every tool"
     expect(app, `${t.name}: the audit fixture is a real-length key, not a stub`).toContain(`SAMPLE_KEY.${t.name}`);
   }
 });
-
-test.todo("the clip finder moves to the shared unlock module (branch cfkey) before it takes money");
 
 test("a key already on the device survives our own downtime", () => {
   // The tools work offline once loaded, and the clip finder invites people to prove it by switching the network
@@ -613,12 +609,12 @@ test("every studio card's data is produced by the build, together", () => {
   }
 });
 
-// Terms describes the clip finder, which is live and free while it is new — that is true whether or not the
-// studio page carries its card yet.
-test("terms states the clip finder is free while it is new, and invents no price for it", () => {
+// Terms describes each tool's free and paid versions, and names no price: prices live on each tool's page.
+test("terms describes the clip finder's two versions, and names no price", () => {
   const terms = text(read(LEGAL[1]!)).replace(/\s+/g, " ");
-  expect(terms).toMatch(/Clip finder is free while it is new/);
-  expect(terms, "no price invented for the clip finder").not.toMatch(/Clip finder[^.]*\$\d+/);
+  expect(terms).toMatch(/In Clip finder the free version reads recordings up to 30 minutes/);
+  expect(terms, "no price in the terms").not.toMatch(/\$\d+/);
+  expect(terms, "nothing left from the free-while-new days").not.toMatch(/while it is new/i);
 });
 
 // The studio page exists to list the tools. A live tool missing from it is the failure this guards.
@@ -629,11 +625,9 @@ test("the studio lists every tool that is live, with its price state", () => {
     expect(studio, `${name} links to its own host`).toContain(`https://${host}.smaverk.com/?src=studio`);
   }
   expect((studio.match(/<article class="tool/g) ?? []).length, "one card per live tool").toBe(3);
-  // The clip finder has no price: the owner has not set one and its live page says so.
-  expect(t, "the studio states the clip finder is free while it is new").toMatch(/Clip finder is free while it is new|Free while it is new/);
-  expect(t, "no price is invented for the clip finder").not.toMatch(/Clip finder[^.]*\$\d+/);
-  // "Pay once per tool" stopped being the whole truth the day a free tool joined.
-  expect(t, "the studio no longer promises only pay-once").toMatch(/free while it is new/i);
+  // Every tool is priced now, and each card says its own: free to try, then once.
+  expect(t, "the clip finder's card states its price").toContain("$50 once: up to four hours");
+  expect(t, "nothing left from the free-while-new days").not.toMatch(/while it is new/i);
   // The true claim for a tool that reads recordings, not the absolute.
   expect(t, "the clip finder's claim is about the recording").toContain("Your recording stays on your device");
   // Anything a machine reads must know about it too.

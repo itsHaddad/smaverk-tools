@@ -2,7 +2,7 @@
 
 > AI captions for short videos, made on your device, in the page at https://captions.smaverk.com. Nothing is uploaded. Free for clips up to 60 seconds with a small corner mark; $19 once removes the mark and allows clips up to five minutes.
 
-Captions is one of the tools by Småverk, a one-person studio in Sweden; https://smaverk.com is the studio page listing every tool. The others are Vertical (https://vertical.smaverk.com, a landscape clip made tall with the speaker kept in frame) and Clip finder (https://clipfinder.smaverk.com, the moments worth posting found in a long recording, free while it is new).
+Captions is one of the tools by Småverk, a one-person studio in Sweden; https://smaverk.com is the studio page listing every tool. The others are Vertical (https://vertical.smaverk.com, a landscape clip made tall with the speaker kept in frame) and Clip finder (https://clipfinder.smaverk.com, the moments worth posting found in a long recording, free to try).
 
 ## What it does
 - Input: a video or audio file (mp4, mov, webm, m4a), up to 60 seconds free and up to five minutes paid. English speech. Output: the same clip with burned-in captions (mp4 on Safari and Chrome, webm elsewhere), plus word timings.
