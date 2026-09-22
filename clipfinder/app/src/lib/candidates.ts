@@ -153,7 +153,10 @@ export function candidates(
       while (j > i && sections[j]!.startS >= end) j--;
     }
     if (len < floor) continue;
-    if (edgeS > 0 && (startS < edgeS || end > durationS - edgeS)) continue;
+    // The opening is counted from the first word, not the first second of the file: a video that starts on a
+    // minute of silence and a countdown (the page's own sample, 2026-09-22: speech from 0:58, the room still
+    // settling) would otherwise have its opening chatter treated as content. Identical wherever speech starts at once.
+    if (edgeS > 0 && (startS < (t.words[0]?.t ?? 0) + edgeS || end > durationS - edgeS)) continue;
     out.push({
       startS,
       endS: end,

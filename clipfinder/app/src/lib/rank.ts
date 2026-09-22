@@ -206,9 +206,9 @@ export function openingLine(t: Transcript, c: Candidate, words = 9): string {
 /**
  * The quote on a card, tidied for reading only — the boundary does not move and no score changes.
  *
- * A moment can open mid-sentence: moving the start to a sentence was measured at −2.6 points and did not
- * ship (bench/moments.md). So the card opens with an ellipsis, which reads as a deliberate excerpt rather
- * than a broken sentence, and a word the recogniser heard twice in a row is printed once. The design
+ * Most moments open on a whole sentence now (`edges.ts`, after the ranking). One that still opens
+ * mid-sentence — where no sentence start was in reach — shows an ellipsis, which reads as a deliberate
+ * excerpt rather than a broken sentence, and a word the recogniser heard twice in a row is printed once. The design
  * review, 2026-09-21: "put some some thought" was the first line in the shop window and read as a bug in
  * the page. What is cut, saved and exported is untouched by this.
  */

@@ -2,38 +2,34 @@
 
 ## The sample on the page
 
-`dist/sample.m4a` and `dist/sample.json` — **Artemis II: The Crew**, NASA's *Houston We Have a Podcast*,
-episode 417, 27 March 2026. 64 minutes 38 seconds. Source:
-https://www.nasa.gov/podcasts/houston-we-have-a-podcast/
+`dist/sample.mp4`, `dist/poster.jpg` and `dist/sample.json` — **Astronaut Matt Dominick talks with KMGH
+Denver**, 10 May 2024: a TV reporter in Denver interviews a NASA astronaut aboard the International Space
+Station. 15 minutes 27 seconds, video. Source: https://images.nasa.gov/details/iss071m261311538_NASA_Astronaut_Matt_Dominick_Talks_with_KMGH_Denver_240510
 
 NASA material is generally not copyrighted (17 U.S.C. §105, and NASA's own media usage guidelines), so it
-can be used commercially. The page names NASA as the source next to the sample. Nobody speaking in it is
-claimed to use or endorse anything, which is the one thing NASA's guidelines do ask.
+can be used commercially. The page names NASA as the source next to the sample. Nobody in it is claimed to
+use or endorse anything, which is the one thing NASA's guidelines do ask.
 
-The whole episode was read by this tool, with the same three steps the page runs — the same thirty-second
-windows, the same recogniser, the same silences, the same ranking (`tools/sample.ts`).
-`sample.json` holds what came out, at each of the three clip lengths the page offers. `sample.m4a` is
-twelve seconds cut from the opening of each moment, one after another, so a visitor can hear whether a
-moment starts cleanly without downloading an hour of sound.
+Chosen 2026-09-22 because the page should show what the tool does to a video, the job most people bring it:
+a real conversation, questions and answers, with a picture worth looking at. It replaced a 65-minute NASA
+podcast episode that was sound only.
 
-The episode itself, from the podcast's feed:
-https://traffic.megaphone.fm/NATIONALAERONAUTICSANDSPACEADMINISTRATION8653428112.mp3
+The whole recording was read by this tool, with the same steps the page runs — the same thirty-second
+windows, the same recogniser, the same silences, the same ranking and the same clean edges
+(`tools/sample.ts`). `sample.json` holds what came out, at each of the three clip lengths the page offers.
+`sample.mp4` is fifteen seconds from the opening of each moment, one after another, 640 wide, so a visitor
+can see and hear whether a moment starts cleanly without downloading the whole interview. `poster.jpg` is
+a frame from the strongest one-minute moment.
+
+The file read, NASA's own mobile rendition:
+https://images-assets.nasa.gov/video/iss071m261311538_NASA_Astronaut_Matt_Dominick_Talks_with_KMGH_Denver_240510/iss071m261311538_NASA_Astronaut_Matt_Dominick_Talks_with_KMGH_Denver_240510~mobile.mp4
 
 **Rebuild it whenever the ranker changes**, or the page shows output its own tool would no longer return.
-Reading an hour costs about 0.4x real time, so it runs on a runner, not the laptop — dispatch
-`clipfinder-sample` in the public repo and commit the two files it uploads:
+It runs on a runner, not the laptop (about two minutes for this one) — dispatch `clipfinder-sample` in the
+public repo, which defaults to this recording, and commit the files it uploads:
 
 ```
 gh workflow run clipfinder-sample.yml -R itsHaddad/smaverk-tools
-```
-
-It defaults to the episode above. The same thing by hand, if you have the recording and the half hour:
-
-```
-bun tools/sample.ts --mp3 <episode.mp3> \
-  --title "Artemis II: The Crew, 65 min" \
-  --credit "NASA, Houston We Have a Podcast, 27 March 2026 — public domain" \
-  --url "https://www.nasa.gov/podcasts/houston-we-have-a-podcast/"
 ```
 
 ## The gate fixture

@@ -9,21 +9,22 @@ why. Everything the person's file touches runs in their browser.
 | Piece | File | Job | Tested by |
 |---|---|---|---|
 | Page | `dist/index.html` | structure, copy, all CSS (light-dark tokens, phone-first, the studio's palette and type) | `tests/smoke.mjs`, `tests/e2e/verify-ui.mjs`, `Tools/Qa.ts` |
-| UI wiring | `app.ts` | state machine (`sample → reading → found`), the recording drawn as a band with the moments lit, the list, trim handles, playback, the exports, the licence | `tests/e2e/*` |
+| UI wiring | `app.ts` | state machine (`sample → reading → found`), the picture on a 16:9 stage when the recording has one, the recording drawn as a band with the moments lit, the list, trim handles, playback, the exports, the licence | `tests/e2e/*` |
 | Reading | `worker.ts` | the whole loop in a Web Worker: a window of sound → words → silences → ranked list, every three minutes of read sound | `tests/e2e/verify-find.mjs` |
 | Windowed decode | `src/lib/decode.ts` | mediabunny reads the file in ranges and decodes a packet at a time; mix to mono, area-average resample to 16 kHz, fill one reused window buffer. Peak memory is one window, never the recording | the memory proof in `clipfinder/engine/tests/memory.test.ts` (its command-line twin) |
 | Silences | `src/lib/silence.ts` | frame loudness against the window's own loud level; a quiet run over 0.6 s is a break. A few hundred numbers an hour | `tests/silence.test.ts` |
 | Topic cuts | `src/lib/segment.ts` | TextTiling over word overlap: where the subject changes. No model, no weights, no download | `tests/lib.test.ts` |
 | Candidates | `src/lib/candidates.ts` | runs of whole sections grown to the wanted length, each starting at a boundary, each boundary moved to the nearest silence | `tests/lib.test.ts` |
 | Ranking | `src/lib/rank.ts` | three numbers, z-scored within the recording, equal weight; plus the sentences that say why | `tests/lib.test.ts` |
+| Clean edges | `src/lib/edges.ts` | after the ranking has chosen, each moment's start moves to a whole sentence (a question first) and its end to a finished one, never into a neighbour | `tests/edges.test.ts`; bench R5 in `clipfinder/text/bench/edges-after.md` |
 | Streaming | `src/lib/stream.ts` | which words a window may contribute, when to rank again, how long the clips should be for this recording | `tests/lib.test.ts` |
 | Exports | `src/lib/exports.ts` | EDL (CMX3600), Final Cut 7 XML (Premiere and Resolve), FCPXML, and a marker list | `tests/exports.test.ts`, `tests/e2e/verify-find.mjs` |
 | The cut clip | `app.ts` (`saveClip`) | mediabunny copies the chosen range out of the file, without re-encoding where it can | `tests/e2e/verify-find.mjs` (ffprobe on the saved file) |
-| Money | `src/lib/pricing.ts` | free while it is new, and every sentence the paid page would say, written side by side so neither rots | `tests/lib.test.ts`, `tests/e2e/verify-find.mjs` (the sandbox rail) |
+| Money | `src/lib/pricing.ts` | every sentence the page says about money, paid and trial side by side so neither rots; the key itself is `src/lib/unlock.ts`, the same file in all three tools | `tests/lib.test.ts`, `tests/e2e/verify-find.mjs` (the sandbox rail) |
 | Canvas colours | `src/lib/theme.ts` | resolves `light-dark(a,b)`, which a canvas silently drops and which made the map paint black on black | `tests/page.test.ts` |
 | Empty answers | `src/lib/advice.ts` | what to say when a recording holds nothing at this length — never a length that is not on the page | `tests/page.test.ts` |
 | Names | `src/lib/naming.ts` | clocks, spoken lengths, a long file name shortened in the middle, output file names | `tests/lib.test.ts` |
-| Sample | `dist/sample.json`, `dist/sample.m4a` | a real 65-minute recording read by this tool, at all three clip lengths, with twelve seconds from the opening of each moment | `tests/smoke.mjs`, `tests/site.test.ts` |
+| Sample | `dist/sample.json`, `dist/sample.mp4`, `dist/poster.jpg` | a real 15-minute video interview read by this tool, at all three clip lengths, with fifteen seconds from the opening of each moment | `tests/smoke.mjs`, `tests/site.test.ts` |
 | Sample builder | `tools/sample.ts` | runs the page's own three steps on the command line, so the sample is this tool's output and can be rebuilt | — |
 | Fixture | `tests/fixtures/talk6.mp3` | 6 min 30 s of a different public-domain recording, as an mp3 because that is what podcasts are | — |
 
@@ -35,10 +36,10 @@ why. Everything the person's file touches runs in their browser.
   the privacy page does not account for, and any body over 8 KB — the fixture is a 2.3 MB recording, so
   nothing worth taking out of it fits under that bar.
 - With the tool already on the device, the whole thing works with the network off. That is in the gate.
-- Free while it is new: four hours and every export, for everyone, and no number anywhere a visitor reads.
-  `TRIAL` in `app.ts` is the one line; `PRICE`, the checkout, the key box and the paywall stay wired and
-  asleep, and `?rail=sandbox` runs the paid page so the gate checks that the number it shows IS the
-  constant. `tests/site.test.ts` fails if a price reaches a page, or if the script holds a second one.
+- $50 once (the owner, 2026-09-22; free while new from 2026-09-21). Free reads 30 minutes and shows every
+  moment; paid reads four hours and opens every export. `PRICE` in `app.ts` is the one number and
+  `tests/site.test.ts` fails if a page states another or the script holds a second one. `TRIAL` turns the
+  free-while-new state back on; its copy stays tested in `src/lib/pricing.ts`.
 - The ranking never becomes a prediction. No score is shown, and the page may not say "viral",
   "engagement" or "will perform" — `tests/site.test.ts` fails the build if it does.
 - Every public string obeys `MarketingRules.md`; errors name the step and say what to do next.
