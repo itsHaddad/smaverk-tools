@@ -239,6 +239,27 @@ test("every sample clip is credited where it is shown, with the source its SOURC
   }
 });
 
+test("every studio card shows its tool at work, from the tool's own sample", () => {
+  // 2026-09-23: the Clip finder card was the one card of three with no demo. Each card now plays its tool's own sample in the
+  // same 16:9 slot — muted, looping, tap to stop — and every file it names exists where build.sh copies it from.
+  const studio = read(STUDIO);
+  const cards = [...studio.matchAll(/<div class="demo" data-demo="([a-z]+)">([\s\S]*?)<\/div>/g)].map((m) => [m[1]!, m[2]!] as const);
+  expect(cards.map(([n]) => n), "a card without a demo, or a demo without a card").toEqual(["captions", "vertical", "clipfinder"]);
+  expect(studio, "no card is left without a demo").not.toContain("tool nodemo");
+  for (const [name, html] of cards) {
+    const video = html.match(/<video[^>]*>/)?.[0];
+    expect(video, `${name}: the card plays the tool at work`).toBeTruthy();
+    for (const a of ["muted", "loop", "playsinline", "poster="]) expect(video, `${name}: ${a}`).toContain(a);
+    expect(html, `${name}: a visitor can stop it`).toContain('<button class="dtap"');
+    expect(video, `${name}: the video says what is in it`).toMatch(/aria-label="[^"]{40,}"/);
+  }
+  // The Clip finder card is cut from the tool's own sample at build time; the build fails if the source is missing.
+  expect(read("captions/app/build.sh"), "the card is made from the Clip finder's own sample").toMatch(/clipfinder\/app\/dist\/sample\.mp4[\s\S]*clipfinder-sample\.mp4/);
+  expect(read("captions/app/build.sh")).toMatch(/for f in [^;]*clipfinder-sample\.mp4[^;]*clipfinder-poster\.jpg/);
+  // Its sample is credited like the other two.
+  expect(studio, "the studio credits the Clip finder's sample").toMatch(/Clip finder sample: NASA, public domain/);
+});
+
 test("Captions: the defaults keep the words off the speaker's face and the main button on the first screen", () => {
   // Design review 2, 2026-09-19: Big sat at the middle of the frame, over the speaker's mouth (band 0.44 to 0.55 of the height, face 0.19 to 0.47);
   // on a 1440 x 900 screen the stage took 78% of the height and the button sat below the fold (Qa.ts now fails on that too).

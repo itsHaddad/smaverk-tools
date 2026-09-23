@@ -11,7 +11,7 @@
 <meta property="og:title" content="Småverk — small AI tools that run on your device">
 <meta property="og:description" content="Three tools, one job each, in your browser. Nothing uploaded. Free to try, pay once per tool.">
 <meta property="og:url" content="https://smaverk.com/"><meta property="og:type" content="website"><meta property="og:site_name" content="Småverk">
-<meta property="og:image" content="https://smaverk.com/studio-demo/vertical-poster.jpg?v=1790108944">
+<meta property="og:image" content="https://smaverk.com/studio-demo/vertical-poster.jpg?v=1790177158">
 <meta name="twitter:card" content="summary"><meta name="twitter:title" content="Småverk — small AI tools that run on your device"><meta name="twitter:description" content="Each tool does one job in your browser. Nothing uploaded. Pay once per tool.">
 <link rel="preload" href="fonts/bricolage-grotesque-latin.woff2" as="font" type="font/woff2" crossorigin>
 <style>@font-face{font-family:"Bricolage Grotesque";font-style:normal;font-weight:200 800;font-stretch:100%;font-display:swap;src:url(fonts/bricolage-grotesque-latin.woff2) format("woff2")}</style>
@@ -53,6 +53,9 @@ p{margin:0 0 12px;text-wrap:pretty;overflow-wrap:anywhere}
    empty page beside a headline it shared no edge with, under a sentence that says "Three tools". */
 .tools{display:grid;gap:14px}
 @media(min-width:720px){.tools{grid-template-columns:1fr 1fr}.tools>.tool:last-child:nth-child(odd){grid-column:1/-1}}
+/* The card given the whole row keeps its demo the size of its neighbours': picture on the left at one column's width, words on
+   the right. A full-row demo was 842px of a 640px video beside two 395px ones (2026-09-23). */
+@media(min-width:720px){.tools>.tool:last-child:nth-child(odd):has(.demo){display:grid;grid-template-columns:1fr 1fr;column-gap:calc(14px + 36px + 2px);align-items:start}.tools>.tool:last-child:nth-child(odd):has(.demo)>.demo{grid-row:1/span 4}.tools>.tool:last-child:nth-child(odd):has(.demo)>.btn{margin-top:4px}}
 /* There is no three-column rule, and that is the finding rather than a compromise. Three columns need a row wider than the
    880px measure, which gives the page a second left edge — and it buys a SMALLER demo: 292px in a 1012px row against 433px
    here at 1280. Measured on the shipping bytes: the Captions caption holds one line at a 253px demo in two columns and
@@ -72,6 +75,8 @@ p{margin:0 0 12px;text-wrap:pretty;overflow-wrap:anywhere}
 .demo .dim{position:absolute;top:0;bottom:0;background:rgba(0,0,0,.32)}
 .demo .win{position:absolute;top:0;bottom:0;border:2px solid var(--hi);border-radius:3px;box-shadow:0 0 0 1px rgba(0,0,0,.35)}
 .demo .inset{transition:left .25s,right .25s;position:absolute;bottom:4%;height:62%;aspect-ratio:9/16;border:1.5px solid rgba(255,255,255,.85);border-radius:6px;background:#000;box-shadow:0 6px 18px rgba(0,0,0,.45)}
+/* The Clip finder card: the whole recording as a band, its moments marked, the one playing lit and named. Drawn, not typed. */
+.demo .band{position:absolute;left:0;right:0;bottom:0;width:100%;height:58px;pointer-events:none}
 .demo .dtap{position:absolute;inset:0;width:100%;height:100%;appearance:none;border:0;padding:0;background:transparent;cursor:pointer}
 .demo .sound{position:absolute;right:10px;top:10px;z-index:2;width:44px;height:44px;padding:0;border:0;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;display:grid;place-items:center;cursor:pointer}
 .demo .sound svg{width:21px;height:21px}
@@ -103,7 +108,7 @@ footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--line);color:v
   <section class="tools" aria-label="Tools">
     <article class="tool">
       <div class="demo" data-demo="captions">
-        <video src="sample.mp4?v=1790108944" poster="poster.webp?v=1790108944" muted loop playsinline preload="metadata" aria-label="A sample clip. Captions appear on it as each word is spoken."></video>
+        <video src="sample.mp4?v=1790177158" poster="poster.webp?v=1790177158" muted loop playsinline preload="metadata" aria-label="A sample clip. Captions appear on it as each word is spoken."></video>
         <p class="cap" aria-hidden="true"></p>
         <button class="dtap" type="button" aria-label="Play or pause the Captions demo"></button>
         <button class="sound" type="button" aria-pressed="false" aria-label="Sound is off. Turn it on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10v4h4l5 4V6L8 10H4z"/><path class="wave" d="M16.5 9a4 4 0 0 1 0 6M19 6.5a8 8 0 0 1 0 11"/><path class="mute" d="M17 9.5l4.5 5M21.5 9.5l-4.5 5"/></svg></button>
@@ -115,7 +120,7 @@ footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--line);color:v
     </article>
     <article class="tool">
       <div class="demo" data-demo="vertical">
-        <video src="studio-demo/vertical-sample.mp4?v=1790108944" poster="studio-demo/vertical-poster.jpg?v=1790108944" muted loop playsinline preload="none" aria-label="A landscape sample clip of a soccer coach talking as he moves across a field. A yellow window follows him, and the small picture shows the vertical result."></video>
+        <video src="studio-demo/vertical-sample.mp4?v=1790177158" poster="studio-demo/vertical-poster.jpg?v=1790177158" muted loop playsinline preload="none" aria-label="A landscape sample clip of a soccer coach talking as he moves across a field. A yellow window follows him, and the small picture shows the vertical result."></video>
         <i class="dim" data-side="l"></i><i class="dim" data-side="r"></i><i class="win"></i>
         <canvas class="inset" width="180" height="320" aria-hidden="true"></canvas>
         <button class="dtap" type="button" aria-label="Play or pause the Vertical demo"></button>
@@ -126,9 +131,15 @@ footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--line);color:v
       <p class="price">Free: clips up to 60 seconds, with a small smaverk.com mark. $24 once: clips up to five minutes, no mark.</p>
       <a class="btn" href="https://vertical.smaverk.com/?src=studio">Open Vertical</a>
     </article>
-    <article class="tool nodemo">
+    <article class="tool">
+      <div class="demo" data-demo="clipfinder">
+        <video src="studio-demo/clipfinder-sample.mp4?v=1790177158" poster="studio-demo/clipfinder-poster.jpg?v=1790177158" muted loop playsinline preload="none" aria-label="Four moments the Clip finder picked from a 15-minute interview with an astronaut on the space station, each played from its opening. A band along the bottom shows where each one sits in the whole recording, and why it was picked."></video>
+        <canvas class="band" aria-hidden="true"></canvas>
+        <button class="dtap" type="button" aria-label="Play or pause the Clip finder demo"></button>
+        <button class="sound" type="button" aria-pressed="false" aria-label="Sound is off. Turn it on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10v4h4l5 4V6L8 10H4z"/><path class="wave" d="M16.5 9a4 4 0 0 1 0 6M19 6.5a8 8 0 0 1 0 11"/><path class="mute" d="M17 9.5l4.5 5M21.5 9.5l-4.5 5"/></svg></button>
+      </div>
       <h3>Clip finder</h3>
-      <p>A long recording in, the moments worth posting out. AI marks the parts that stand on their own and says why it picked each one. English. Your recording stays on your device.</p>
+      <p>A long recording in, the moments worth posting out. AI marks the parts that stand on their own. English. Your recording stays on your device.</p>
       <p class="price">Free: recordings up to 30 minutes, every moment shown. $29 once: up to four hours, and every export.</p>
       <a class="btn" href="https://clipfinder.smaverk.com/?src=studio">Open Clip finder</a>
     </article>
@@ -149,6 +160,7 @@ footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--line);color:v
     <a href="https://smaverk.com/terms">Terms</a>
     <a href="https://www.youtube.com/watch?v=96eBO8N3qn4" rel="noopener">Captions sample: Peter Kramm, CC BY</a>
     <a href="https://www.youtube.com/watch?v=GoE-e8u-P1g" rel="noopener">Vertical sample: Coach Javi, CC BY</a>
+    <a href="https://images.nasa.gov/details/iss071m261311538_NASA_Astronaut_Matt_Dominick_Talks_with_KMGH_Denver_240510" rel="noopener">Clip finder sample: NASA, public domain</a>
   </footer>
 </main>
 <script type="module">
@@ -159,14 +171,26 @@ for (const box of document.querySelectorAll(".demo")) {
   const v = box.querySelector("video"), tap = box.querySelector(".dtap"); let paint = () => {};
   if (box.dataset.demo === "captions") {
     const cap = box.querySelector(".cap"); let lines = [];
-    fetch("sample-words.json?v=1790108944").then((r) => r.json()).then((w) => { const marked = w.some((x) => x.br); let cur = []; for (const x of w) { cur.push(x); const end = /[.!?]$/.test(x.text), comma = /,$/.test(x.text); if (x.br || end || (!marked && ((comma && cur.length >= 3) || cur.length >= 5))) { lines.push(cur); cur = []; } } if (cur.length) lines.push(cur); paint(); }).catch(() => {});
+    fetch("sample-words.json?v=1790177158").then((r) => r.json()).then((w) => { const marked = w.some((x) => x.br); let cur = []; for (const x of w) { cur.push(x); const end = /[.!?]$/.test(x.text), comma = /,$/.test(x.text); if (x.br || end || (!marked && ((comma && cur.length >= 3) || cur.length >= 5))) { lines.push(cur); cur = []; } } if (cur.length) lines.push(cur); paint(); }).catch(() => {});
     let shown = "";
     paint = () => { const t = v.currentTime; const line = lines.find((l) => t >= l[0].start - 0.05 && t <= l[l.length - 1].end + 0.35) ?? (t < (lines[0]?.[0].start ?? 0) ? lines[0] : null);
       const key = line ? line[0].start + ":" + line.findIndex((x) => t >= x.start && t < x.end + 0.05) : ""; if (key === shown) return; shown = key;
       cap.replaceChildren(...(line ?? []).flatMap((x, i) => { const on = t >= x.start && t < x.end + 0.05; const n = document.createElement(on ? "b" : "span"); n.textContent = x.text; return i ? [" ", n] : [n]; })); };
+  } else if (box.dataset.demo === "clipfinder") {
+    // The tool's own answer for this recording (its sample.json, the one-minute set), drawn over the moments it picked.
+    const band = box.querySelector(".band"), g = band.getContext("2d"); let s = null;
+    fetch("studio-demo/clipfinder-sample.json?v=1790177158").then((r) => r.json()).then((j) => { s = j; paint(); }).catch(() => {});
+    const clock = (x) => { const r = Math.round(x); return `${Math.floor(r / 60)}:${String(r % 60).padStart(2, "0")}`; }; // rounded the way the tool rounds, so the card and the tool name the same second
+    paint = () => { if (!s) return; const set = s.sets["60"] ?? []; const t = v.currentTime; const i = Math.max(0, set.findIndex((m) => t >= m.clipStartS && t < m.clipEndS));
+      const d = devicePixelRatio || 1, W = Math.round(band.clientWidth * d), H = Math.round(band.clientHeight * d); if (band.width !== W || band.height !== H) { band.width = W; band.height = H; }
+      g.clearRect(0, 0, W, H); const grad = g.createLinearGradient(0, 0, 0, H); grad.addColorStop(0, "rgba(0,0,0,0)"); grad.addColorStop(1, "rgba(0,0,0,.72)"); g.fillStyle = grad; g.fillRect(0, 0, W, H);
+      const pad = 12 * d, y = H - 14 * d, bw = W - 2 * pad; g.fillStyle = "rgba(255,255,255,.28)"; g.fillRect(pad, y, bw, 4 * d);
+      set.forEach((m, k) => { const x = pad + (m.startS / s.durationS) * bw, w = Math.max(4 * d, ((m.endS - m.startS) / s.durationS) * bw); g.fillStyle = k === i ? "#FFD84D" : "rgba(255,255,255,.8)"; g.fillRect(x, y - (k === i ? 3 : 1) * d, w, (k === i ? 10 : 6) * d); });
+      const m = set[i]; if (!m) return; g.font = `700 ${14 * d}px "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif`; g.fillStyle = "#fff"; g.shadowColor = "rgba(0,0,0,.7)"; g.shadowBlur = 6 * d;
+      g.fillText(`${clock(m.startS)} · ${m.why?.[0] ?? ""}`, pad, y - 10 * d, bw); g.shadowBlur = 0; };
   } else {
     const win = box.querySelector(".win"), L = box.querySelector("[data-side=l]"), R = box.querySelector("[data-side=r]"), inset = box.querySelector(".inset"), g = inset.getContext("2d"); let track = [];
-    fetch("studio-demo/vertical-track.json?v=1790108944").then((r) => r.json()).then((t) => { track = t; paint(); }).catch(() => {});
+    fetch("studio-demo/vertical-track.json?v=1790177158").then((r) => r.json()).then((t) => { track = t; paint(); }).catch(() => {});
     paint = () => { if (!track.length) return; const t = v.currentTime; let i = track.findIndex((p) => p.t > t); if (i < 0) i = track.length - 1; const a = track[Math.max(0, i - 1)], b = track[i]; const cx = b.t > a.t ? lerp(a.cx, b.cx, Math.min(1, Math.max(0, (t - a.t) / (b.t - a.t)))) : a.cx;
       const W = v.videoWidth || 1280, H = v.videoHeight || 720, w = Math.min(1, (H * 9 / 16) / W), left = Math.min(1 - w, Math.max(0, cx - w / 2));
       win.style.left = left * 100 + "%"; win.style.width = w * 100 + "%"; L.style.left = "0"; L.style.width = left * 100 + "%"; R.style.left = (left + w) * 100 + "%"; R.style.right = "0";

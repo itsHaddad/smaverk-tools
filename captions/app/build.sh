@@ -15,7 +15,10 @@ cp ../../vertical/app/dist/sample.mp4 dist/studio-demo/vertical-sample.mp4
 cp ../../vertical/app/dist/sample-track.json dist/studio-demo/vertical-track.json
 cp ../../vertical/app/dist/poster.jpg dist/studio-demo/vertical-poster.jpg
 cp ../../clipfinder/app/dist/sample.json dist/studio-demo/clipfinder-sample.json
-for f in vertical-sample.mp4 vertical-track.json vertical-poster.jpg clipfinder-sample.json; do
+# The Clip finder card plays the tool's own sample: the four one-minute moments are its first 60 s, cut without re-encoding.
+ffmpeg -v error -y -i ../../clipfinder/app/dist/sample.mp4 -t 60 -c copy -movflags +faststart dist/studio-demo/clipfinder-sample.mp4
+cp ../../clipfinder/app/dist/poster.jpg dist/studio-demo/clipfinder-poster.jpg
+for f in vertical-sample.mp4 vertical-track.json vertical-poster.jpg clipfinder-sample.json clipfinder-sample.mp4 clipfinder-poster.jpg; do
   [ -s "dist/studio-demo/$f" ] || { echo "studio-demo/$f is missing or empty; deploying now would take it off the live page"; exit 1; }
 done
 bun build app.ts worker.ts --target browser --outdir dist --minify --splitting --format esm | tail -3
