@@ -141,7 +141,7 @@ try {
     const moments = [];
     for (const [k, c] of report.clips.entries()) {
       const name = `sample-${k + 1}.mp4`;
-      execFileSync("ffmpeg", ["-v", "error", "-y", "-i", join(out, c.name), "-t", String(EX), "-vf", "scale=360:-2", "-c:v", "libx264", "-profile:v", "main", "-preset", "slow", "-crf", "30", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "64k", "-movflags", "+faststart", join(dist, name)]);
+      execFileSync("ffmpeg", ["-v", "error", "-y", "-i", join(out, c.name), "-t", String(EX), "-vf", "scale=432:768:flags=lanczos", "-c:v", "libx264", "-profile:v", "main", "-preset", "slow", "-crf", "26", "-maxrate", "450k", "-bufsize", "900k", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "64k", "-movflags", "+faststart", join(dist, name)]);
       const m = found.list.find((x) => Math.abs(x.startS - c.startS) < 0.01);
       const opening = await page.evaluate((i) => document.querySelectorAll(".moment .says")[i]?.textContent ?? "", made.made[k].i);
       moments.push({ startS: c.startS, endS: c.endS, why: m?.why ?? [], opening, clip: name, lengthS: c.ffprobeS });

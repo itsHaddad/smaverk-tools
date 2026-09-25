@@ -101,9 +101,32 @@ try {
   await p.setInputFiles("#file", fixture);
   await p.waitForFunction(() => window.__clips?.state === "reading" && (window.__clips.heardS ?? 0) > 30, null, { timeout: 300000, polling: 500 });
   await snap("2-reading");
+  // B2 (design review 1): the stage shows the visitor's own recording, not the sample's finished clip, once a file is picked.
+  check((await p.evaluate(() => document.getElementById("reel").currentSrc)).startsWith("blob:"), "the stage shows the picked recording, not the sample clip");
   await p.waitForFunction(() => window.__clips?.state === "found", null, { timeout: 1_200_000, polling: 1000 });
   await p.waitForTimeout(600);
   await snap("3-found");
+  // B4: once the moments are found, every step before making is done, the download step included.
+  check(await p.evaluate(() => ["s1", "s2"].every((id) => document.getElementById(id).classList.contains("done"))), "when the moments are found, steps 1 and 2 are both done");
+  // B1: tapping a moment makes it current and opens its trim row.
+  {
+    const n = await p.evaluate(() => document.querySelectorAll(".moment").length);
+    const k = Math.min(n, 2);
+    await p.click(`.moment:nth-child(${k}) .go`);
+    await p.waitForTimeout(500);
+    const t = await p.evaluate((k) => { const li = document.querySelector(`.moment:nth-child(${k})`); const row = li.querySelector(".trimrow"); return { cur: li.getAttribute("aria-current"), shown: !!row && row.getBoundingClientRect().height > 0 }; }, k);
+    check(t.cur === "true" && t.shown, `tapping moment ${k} makes it current (${t.cur}) and opens its trim row (${t.shown})`);
+    // B3: with one moment playing, tapping another moves the playing mark to it, and only to it.
+    if (n > 1) {
+      await p.click(".moment:nth-child(1) .go");
+      await p.waitForTimeout(800);
+      await p.click(".moment:nth-child(2) .go");
+      await p.waitForTimeout(1200);
+      const playing = await p.evaluate(() => [...document.querySelectorAll(".moment")].map((li, i) => (li.hasAttribute("data-playing") ? i + 1 : 0)).filter(Boolean));
+      check(playing.length === 1 && playing[0] === 2, `after tapping moment 2 while 1 plays, only moment 2 is marked playing (${JSON.stringify(playing)})`);
+    }
+    await p.evaluate(() => document.getElementById("reel").pause());
+  }
   await taps("3-found");
   {
     const t = await p.evaluate(() => { const li = document.querySelector(".moment"); const row = li.querySelector(".trimrow"); li.setAttribute("aria-current", "true"); const keep = li.querySelector("label.keep").getBoundingClientRect(); return { keepH: Math.round(keep.height), label: document.getElementById("action").textContent }; });

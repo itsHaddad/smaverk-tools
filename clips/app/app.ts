@@ -157,7 +157,8 @@ function play(i: number) {
   const c = cards[i];
   if (!c) return;
   current = i;
-  for (const li of list.children) li.toggleAttribute("aria-current", (li as HTMLElement).dataset.i === String(i));
+  // setAttribute, not toggleAttribute: the style and the trim row match aria-current="true", and toggle writes "" (design review 1, B1).
+  for (const li of list.children) { if ((li as HTMLElement).dataset.i === String(i)) li.setAttribute("aria-current", "true"); else li.removeAttribute("aria-current"); }
   const src = c.made?.url ?? (c.sampleClip ? c.sampleClip + ASSET_V : file ? mediaUrl : "");
   if (!src) return;
   const from = c.made || c.sampleClip ? 0 : c.startS;
@@ -170,7 +171,8 @@ function play(i: number) {
 }
 let stopAt = Infinity;
 reel.addEventListener("timeupdate", () => { if (reel.currentTime >= stopAt) reel.pause(); });
-for (const ev of ["play", "pause", "ended"]) reel.addEventListener(ev, () => {
+// "seeked" too: a jump to another moment in the same file fires no play or pause (design review 1, B3; the clip finder had the same bug).
+for (const ev of ["play", "pause", "ended", "seeked"]) reel.addEventListener(ev, () => {
   for (const li of list.children) li.removeAttribute("data-playing");
   if (!reel.paused && current >= 0) list.children[current]?.setAttribute("data-playing", "1");
 });
@@ -197,10 +199,12 @@ function onFinder(m: any) {
   else if (m.type === "phase") step(1, "active", "starting");
   else if (m.type === "ready") step(1, "done", "ready");
   else if (m.type === "media") {
+    step(1, "done", "ready"); // the finder sends no "ready" during a run: its first word about the file means the tool is on the device (B4)
     totalS = m.durationS || 0;
     if (!m.hasVideo) { stopFinding(); say("This recording has no picture, so there is nothing to put in a clip. Pick a video.", "err"); return; }
     if (m.limitS && totalS > m.limitS + 1) say("That recording is longer than four hours, so this reads the first four.");
   } else if (m.type === "reading") {
+    step(1, "done", "ready");
     const pct = Math.min(100, Math.round((m.heardS / Math.max(m.limitS || totalS || 1, 1)) * 100));
     step(2, "active", `${pct}%`);
     $("s2b").style.width = `${pct}%`;
@@ -215,7 +219,7 @@ function onFinder(m: any) {
       say(m.short ? "A recording needs about four minutes before there is anything to pick out." : "Nothing here stood on its own. Try a recording with more talk in it.");
     } else {
       $("hint").textContent = "Strongest first. Tick the ones to make.";
-      say(`Read ${clock(m.heardS)} in ${clock(Math.round(m.ms / 1000))}. Each clip is up to 90 seconds.`, "ok");
+      say(`Read ${clock(m.heardS)} in ${clock(Math.round(m.ms / 1000))}.`, "ok");
       warmMaking(); // the person is choosing now; the framing and the listening get onto the device meanwhile
     }
     render();
@@ -278,8 +282,15 @@ input.addEventListener("change", () => {
   file = picked;
   mediaUrl = URL.createObjectURL(picked);
   reel.pause();
-  reel.removeAttribute("src");
   reel.removeAttribute("poster");
+  // The visitor's own recording goes on the stage at once. Removing the src alone kept the sample's finished clip
+  // playing under their file name, which reads as "my clip is already made" (design review 1, B2).
+  reel.preload = "metadata";
+  reel.src = mediaUrl;
+  reel.muted = true;
+  stopAt = Infinity;
+  // A small source makes small clips: say so now, not after the work (S7).
+  reel.addEventListener("loadedmetadata", () => { if (reel.videoHeight && reel.videoHeight < 480 && state === "reading") say(`This recording is small (${reel.videoHeight} px tall), so the clips will be small too.`); dbg.sourceHeight = reel.videoHeight; }, { once: true });
   cards = [];
   current = -1;
   state = "reading";
@@ -346,7 +357,7 @@ async function makeAll() {
   dbg.makeMs = Math.round(performance.now() - t0);
   state = "made";
   const made = cards.filter((c) => c.made).length;
-  step(3, "done", `${made} made`);
+  step(3, "done");
   $("s3t").textContent = `${made} clip${made === 1 ? "" : "s"} made`;
   $("steps").classList.add("done");
   action.textContent = "Use another recording";
@@ -372,7 +383,9 @@ const sharable = (files: File[]) => { try { return isPhone && !!(navigator as an
 
 function needsPaying(): boolean {
   if (licensed) return false;
-  say(`The free version saves one clip. ${PRICE} once saves every clip, with no mark.`);
+  const why = `The free version saves one clip. ${PRICE} once saves every clip, with no mark.`;
+  say(why);
+  $("pricefine").textContent = why; // where the scroll lands, as the clip finder does (S3)
   $("price").scrollIntoView({ block: "center", behavior: "smooth" });
   return true;
 }
@@ -387,6 +400,7 @@ async function saveOne(i: number) {
   if (!licensed) countFreeSave();
   dbg.saved = [...(dbg.saved ?? []), c.made.name];
   say(licensed ? `Saved ${c.made.name}.` : `Saved ${c.made.name}, with a small smaverk.com mark. That was the free clip.`, "ok");
+  showResult();
 }
 
 $("saveall").addEventListener("click", async () => {
@@ -402,7 +416,9 @@ function showResult() {
   const made = cards.filter((c) => c.made);
   if (!made.length) return;
   $("rtitle").textContent = `${made.length} clip${made.length === 1 ? "" : "s"} ready`;
-  $("rline").textContent = licensed ? "Save each one, or all of them at once." : "The free version saves one, with a small smaverk.com mark.";
+  // What was made, and what the free version still allows (S4, S5).
+  const format = `MP4, 9:16. Saved as ${made[0]!.made!.name}${made.length > 1 ? " and so on" : ""}.`;
+  $("rline").textContent = licensed ? `${format} Save each one, or all of them at once.` : freeSaved() ? `Your free clip is saved. ${PRICE} once saves the rest, with no mark.` : `${format} The free version saves one, with a small smaverk.com mark.`;
   $("saveall").hidden = made.length < 2;
   $("result").classList.add("on");
 }
@@ -418,7 +434,7 @@ function showSample() {
   current = 0;
   $("clipname").textContent = `Sample: ${sample.title}`;
   $("clipname").title = `${sample.title} — ${sample.credit}`;
-  $("hint").textContent = "Made from it here. Tap one to watch.";
+  $("hint").textContent = "Three clips it made from it. Tap one below to watch.";
   reel.src = cards[0]!.sampleClip + ASSET_V;
   reel.poster = sample.poster + ASSET_V;
   reel.muted = true;

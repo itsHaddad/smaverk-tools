@@ -9,13 +9,13 @@
 <meta name="google-site-verification" content="_eN1ywvXp9R-hebN0pJSivwAN8J8DuuaNGwfr_QqmnU">
 <meta property="og:title" content="A long recording in, clips ready to post out. Your recording stays on your device.">
 <meta property="og:description" content="Moments found, framed 9:16 and captioned, on your device. No upload, no account.">
-<meta property="og:image" content="https://clips.smaverk.com/poster.jpg?v=1790366916">
+<meta property="og:image" content="https://clips.smaverk.com/poster.jpg?v=1790368492">
 <link rel="preload" href="fonts/bricolage-grotesque-latin.woff2" as="font" type="font/woff2" crossorigin>
 <style>@font-face{font-family:"Bricolage Grotesque";font-style:normal;font-weight:200 800;font-stretch:100%;font-display:swap;src:url(fonts/bricolage-grotesque-latin.woff2) format("woff2")}</style>
 <link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="icon" type="image/png" sizes="64x64" href="/icon-64.png">
 <link rel="canonical" href="https://clips.smaverk.com/">
 <meta property="og:url" content="https://clips.smaverk.com/"><meta property="og:type" content="website"><meta property="og:site_name" content="Småverk">
-<meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="A long recording in, clips ready to post out."><meta name="twitter:description" content="Moments found, framed 9:16 and captioned, on your device. Free to try, $49 once to save every clip."><meta name="twitter:image" content="https://clips.smaverk.com/poster.jpg?v=1790366916">
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="A long recording in, clips ready to post out."><meta name="twitter:description" content="Moments found, framed 9:16 and captioned, on your device. Free to try, $49 once to save every clip."><meta name="twitter:image" content="https://clips.smaverk.com/poster.jpg?v=1790368492">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Clips by Småverk","applicationCategory":"MultimediaApplication","operatingSystem":"Any (web browser)","description":"Finds the moments in a long recording and makes them into 9:16 clips with captions, on your device. Nothing is uploaded.","offers":{"@type":"Offer","price":"49","priceCurrency":"USD","description":"One-time purchase"},"url":"https://clips.smaverk.com"}</script>
 <style>
 :root{color-scheme:light dark;
@@ -144,9 +144,9 @@ details p,details ul{margin:0 0 14px}
 /* Clips' own shapes: the finished clip on a 9:16 stage, a tick on each moment, and the save row under a made one. */
 .reel{display:flex;justify-content:center;background:#0E0D12;border-radius:var(--r);overflow:hidden}
 .reel video{display:block;height:min(44svh,560px);max-width:100%;aspect-ratio:9/16;object-fit:contain;background:#000}
-@media(max-width:480px){.reel video{height:30svh}}
+@media(max-width:480px){.reel video{height:38svh}.price .btn{width:100%}}
 .keep{grid-column:1/-1;display:flex;align-items:center;gap:10px;min-height:44px;font-size:15px;cursor:pointer}
-.keep input{width:44px;height:44px;accent-color:var(--hi);margin:0 -6px 0 -10px}
+.keep input{width:44px;height:44px;accent-color:var(--hi);margin:0;flex:none}
 .made{grid-column:1/-1;display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0}
 .made .btn{width:auto}
 </style>
@@ -162,7 +162,7 @@ details p,details ul{margin:0 0 14px}
 
     <section class="demo" aria-label="Try it">
       <div class="caplabel"><b id="clipname">Sample: a 15-minute interview</b><span id="hint">Made from it here. Tap one to watch.</span></div>
-      <div class="reel" id="reelwrap"><video id="reel" playsinline muted loop controls preload="metadata" poster="poster.jpg?v=1790366916" aria-label="A finished clip: tall, the speaker in frame, captions written in"></video></div>
+      <div class="reel" id="reelwrap"><video id="reel" playsinline muted loop controls preload="metadata" poster="poster.jpg?v=1790368492" aria-label="A finished clip: tall, the speaker in frame, captions written in"></video></div>
       <input id="file" type="file" accept="video/*" hidden>
       <button class="btn primary" id="action">Use my own recording</button>
       <p class="trust" id="trust">Free to find and watch. Save one clip with a small mark. English. Your recording stays on your device.</p>
@@ -215,7 +215,7 @@ details p,details ul{margin:0 0 14px}
     </section>
   </div>
 </div>
-<script type="module" src="app.js?v=1790366916"></script>
+<script type="module" src="app.js?v=1790368492"></script>
 <script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "91285919879f4672a4342550a4b0b07c"}'></script>
 </body>
 </html>
