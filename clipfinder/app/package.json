@@ -6,7 +6,7 @@
   "devDependencies": {
     "@types/bun": "latest",
     "playwright": "1.63.0",
-    "wrangler": "^4.141.0"
+    "wrangler": "^4.134.0"
   },
   "peerDependencies": {
     "typescript": "^5"
@@ -26,7 +26,6 @@
     "test:find": "bun tests/e2e/verify-find.mjs",
     "test:ui": "bun tests/e2e/verify-ui.mjs",
     "serve": "bun serve.ts 8811",
-    "deploy": "wrangler deploy",
-    "preview": "wrangler dev"
+    "deploy": "./deploy.sh"
   }
 }
