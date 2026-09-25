@@ -57,7 +57,7 @@ try {
   page.on("console", (m) => { if (m.type() === "error" && !/Failed to load resource|^\[WARNING\]/.test(m.text())) errs.push(`console: ${m.text().slice(0, 200)}`); });
   page.on("response", (r) => { if (r.status() >= 400 && !/cloudflareinsights|unlock\.smaverk|polar\.sh/.test(r.url())) errs.push(`${r.status()} ${r.url()}`); });
   const sent = [];
-  page.on("request", (r) => { const u = new URL(r.url()); const body = r.postData(); if (u.host !== `localhost:${port}` || body) sent.push({ host: u.host, bytes: body ? body.length : 0, url: r.url().slice(0, 100) }); });
+  page.on("request", (r) => { if (/^(blob|data):/.test(r.url())) return; /* the page reading its own finished clip, not the network */ const u = new URL(r.url()); const body = r.postData(); if (u.host !== `localhost:${port}` || body) sent.push({ host: u.host, bytes: body ? body.length : 0, url: r.url().slice(0, 100) }); });
 
   await page.goto(`http://localhost:${port}/`, { waitUntil: "networkidle" });
   await page.waitForFunction(() => window.__clips?.state === "sample", null, { timeout: 20000 });
