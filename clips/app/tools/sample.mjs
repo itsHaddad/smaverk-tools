@@ -77,7 +77,9 @@ try {
   const page = await ctx.newPage();
   const errs = [];
   page.on("pageerror", (e) => errs.push(e.message));
-  page.on("console", (m) => { if (m.type() === "error") errs.push(`console: ${m.text().slice(0, 200)}`); });
+  // 404s are reported by the response handler with their address; the speech engine prints its own "[WARNING]" lines as errors.
+  page.on("console", (m) => { if (m.type() === "error" && !/Failed to load resource|^\[WARNING\]/.test(m.text())) errs.push(`console: ${m.text().slice(0, 200)}`); });
+  page.on("response", (r) => { if (r.status() >= 400 && !/cloudflareinsights|unlock\.smaverk|polar\.sh/.test(r.url())) errs.push(`${r.status()} ${r.url()}`); });
   const sent = [];
   page.on("request", (r) => { const body = r.postData(); if (body && body.length > 8192) sent.push({ url: r.url().slice(0, 100), bytes: body.length }); });
 

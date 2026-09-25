@@ -18,7 +18,10 @@ cp ../../clipfinder/app/dist/sample.json dist/studio-demo/clipfinder-sample.json
 # The Clip finder card plays the tool's own sample: the four one-minute moments are its first 60 s, cut without re-encoding.
 ffmpeg -v error -y -i ../../clipfinder/app/dist/sample.mp4 -t 60 -c copy -movflags +faststart dist/studio-demo/clipfinder-sample.mp4
 cp ../../clipfinder/app/dist/poster.jpg dist/studio-demo/clipfinder-poster.jpg
-for f in vertical-sample.mp4 vertical-track.json vertical-poster.jpg clipfinder-sample.json clipfinder-sample.mp4 clipfinder-poster.jpg; do
+# The Clips card plays three clips Clips made, side by side (clips/app/tools/sample.mjs writes them on a runner).
+cp ../../clips/app/dist/sample-strip.mp4 dist/studio-demo/clips-strip.mp4
+cp ../../clips/app/dist/poster.jpg dist/studio-demo/clips-poster.jpg
+for f in vertical-sample.mp4 vertical-track.json vertical-poster.jpg clipfinder-sample.json clipfinder-sample.mp4 clipfinder-poster.jpg clips-strip.mp4 clips-poster.jpg; do
   [ -s "dist/studio-demo/$f" ] || { echo "studio-demo/$f is missing or empty; deploying now would take it off the live page"; exit 1; }
 done
 bun build app.ts worker.ts --target browser --outdir dist --minify --splitting --format esm | tail -3
@@ -26,7 +29,7 @@ sed -i "s|src=\"app.js[^\"]*\"|src=\"app.js?v=$V\"|" dist/index.html
 sed -i "s|new URL(\"./worker.js[^\"]*\", *location.href)|new URL(\"./worker.js?v=$V\", location.href)|" dist/app.js
 grep -q "app.js?v=$V" dist/index.html && grep -q "worker.js?v=$V" dist/app.js || { echo "version stamp failed"; exit 1; }
 # media references get the same stamp, so a replaced sample or poster is never served stale from the edge or a browser cache
-sed -i -E "s#(sample\\.mp4|poster\\.(jpg|webp)|sample-words\\.json|vertical-track\\.json|clipfinder-sample\\.json)(\\?v=[0-9]+)?([\"')])#\\1?v=$V\\4#g" dist/index.html dist/studio.html
+sed -i -E "s#(sample\\.mp4|strip\\.mp4|poster\\.(jpg|webp)|sample-words\\.json|vertical-track\\.json|clipfinder-sample\\.json)(\\?v=[0-9]+)?([\"')])#\\1?v=$V\\4#g" dist/index.html dist/studio.html
 # the studio's Vertical card shows a sound button only when Vertical's sample has a sound track
 if ffprobe -v error -select_streams a -show_entries stream=codec_type -of csv=p=0 dist/studio-demo/vertical-sample.mp4 | grep -q audio; then sed -i -E "s#(<button class=\"sound\" data-for=\"vertical-sound\" type=\"button\") hidden#\\1#" dist/studio.html; else sed -i -E "s#(<button class=\"sound\" data-for=\"vertical-sound\" type=\"button\")( hidden)?#\\1 hidden#" dist/studio.html; fi
 # The search pages are made from dist/index.html AFTER every stamp above, so each one carries the same app.js and media
