@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://clips.smaverk.com/sitemap.xml

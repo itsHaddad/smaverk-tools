@@ -7,7 +7,7 @@ import { toMono16k, estimateFactor } from "./src/lib/audio";
 import { fastSave, canFastSave, savedFps } from "./src/fastsave";
 import { attachSeek } from "./src/seek";
 import { Unlock, SAMPLE_KEY, type UnlockState } from "./src/lib/unlock";
-type Style = "bar" | "karaoke" | "big";
+import { drawCaption, drawMark, FONT, type Style } from "./src/draw";
 type State = "sample" | "loaded" | "working" | "captioned" | "exporting" | "exported";
 
 // Sample files are fetched under the page's version (app.js?v=…), so a replaced sample reaches visitors at once: Cloudflare's edge
@@ -82,36 +82,15 @@ video.addEventListener("ended", () => stage.classList.remove("playing"));
 sound.addEventListener("click", () => { video.muted = !video.muted; sound.setAttribute("aria-pressed", String(!video.muted)); soundtxt.textContent = video.muted ? "Sound off" : "Sound on"; sound.setAttribute("aria-label", video.muted ? "Sound is off. Turn it on" : "Sound is on. Turn it off"); if (video.paused) video.play().catch(() => {}); });
 
 // ---------- drawing ----------
-const FONT = '"Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif';
+// The caption and the mark are drawn by src/draw.ts, which Clips uses too, so a caption looks the same in both tools.
 let lines: Line[] = []; let linesFor: Word[] | null = null; let linesLen = 0;
 function lineAt(t: number, span = 6) { if (linesFor !== words || linesLen !== words.length) { lines = buildLines(words); linesFor = words; linesLen = words.length; } return lineAtIn(lines, t, span); }
 function relines() { linesFor = null; }
 function paint(c: CanvasRenderingContext2D, W: number, H: number, t: number, st: Style, mark: boolean, source: CanvasImageSource | null, thumb = false, keep = false) {
   if (!keep) c.clearRect(0, 0, W, H); if (source) c.drawImage(source, 0, 0, W, H);
-  const line = lineAt(t, thumb ? 3 : 6); const fs = Math.round(Math.min(W, H) * (thumb ? 0.17 : 0.075));
-  c.textAlign = "center"; c.textBaseline = "middle"; c.lineJoin = "round";
-  if (line) {
-    const text = line.ws.map((w) => w.text).join(" ");
-    const yPos = thumb || capY === null ? (st === "big" ? 0.71 : st === "bar" ? 0.76 : 0.74) : capY; // defaults sit above the bottom fifth that Reels and TikTok cover with their own text and buttons
-    const cx = thumb || capX === null ? W / 2 : W * capX;
-    if (st === "bar") {
-      c.font = `700 ${fs}px ${FONT}`; const y = H * yPos; const w = Math.min(W - fs, c.measureText(text).width + fs);
-      c.fillStyle = "rgba(10,10,14,.78)"; roundRect(c, cx - w / 2, y - fs * 0.85, w, fs * 1.7, fs * 0.35); c.fillStyle = "#fff"; fitText(c, text, W - fs * 1.6, fs, 700); c.fillText(text, cx, y);
-    } else if (st === "karaoke") {
-      c.font = `800 ${fs}px ${FONT}`; fitText(c, text, W - fs, fs, 800); const y = H * yPos;
-      let x = cx - c.measureText(text).width / 2; c.textAlign = "left"; c.lineWidth = fs * 0.22; c.strokeStyle = "rgba(10,10,14,.9)";
-      line.ws.forEach((w, i) => { const s = w.text + " "; c.fillStyle = i === line.cur ? "#FFD84D" : "#fff"; c.strokeText(s, x, y); c.fillText(s, x, y); x += c.measureText(s).width; });
-      c.textAlign = "center";
-    } else {
-      const big = Math.round(fs * 1.45); c.font = `800 ${big}px ${FONT}`; const y = H * yPos; c.lineWidth = big * 0.24; c.strokeStyle = "rgba(10,10,14,.92)"; c.fillStyle = "#fff";
-      wrap(c, text, W - big).forEach((ln, i, arr) => { const yy = y + (i - (arr.length - 1) / 2) * big * 1.12; c.strokeText(ln, cx, yy); c.fillText(ln, cx, yy); });
-    }
-  }
-  if (mark) { c.font = `700 ${Math.round(Math.min(W, H) * 0.035)}px ${FONT}`; c.textAlign = "right"; c.lineWidth = 3; c.strokeStyle = "rgba(0,0,0,.5)"; c.fillStyle = "rgba(255,255,255,.85)"; c.strokeText("smaverk.com", W - 12, H - 16); c.fillText("smaverk.com", W - 12, H - 16); }
+  drawCaption(c, W, H, lineAt(t, thumb ? 3 : 6), st, { x: capX, y: capY }, thumb);
+  if (mark) drawMark(c, W, H);
 }
-function fitText(c: CanvasRenderingContext2D, text: string, maxW: number, fs: number, wt: number) { let f = fs; while (f > fs * 0.5 && c.measureText(text).width > maxW) { f -= 2; c.font = `${wt} ${f}px ${FONT}`; } }
-function wrap(c: CanvasRenderingContext2D, text: string, maxW: number) { const out: string[] = []; let cur = ""; for (const w of text.split(" ")) { const t = cur ? cur + " " + w : w; if (c.measureText(t).width > maxW && cur) { out.push(cur); cur = w; } else cur = t; } if (cur) out.push(cur); return out.slice(0, 3); }
-function roundRect(c: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) { c.beginPath(); c.roundRect(x, y, w, h, r); c.fill(); }
 
 function drawChips() {
   if (chipsDrawn || video.readyState < 2 || !words.length) return;

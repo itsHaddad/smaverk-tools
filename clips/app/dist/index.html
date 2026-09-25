@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>AI that turns a long recording into clips, on your device · Clips by Småverk</title>
+<meta name="description" content="AI that finds the moments in a long recording and makes them into 9:16 clips with captions, on your device. Nothing gets uploaded. Free to try; $49 once to save every clip.">
+<meta name="color-scheme" content="light dark">
+<meta name="google-site-verification" content="_eN1ywvXp9R-hebN0pJSivwAN8J8DuuaNGwfr_QqmnU">
+<meta property="og:title" content="A long recording in, clips ready to post out. Your recording stays on your device.">
+<meta property="og:description" content="Moments found, framed 9:16 and captioned, on your device. No upload, no account.">
+<meta property="og:image" content="https://clips.smaverk.com/poster.jpg?v=1790364675">
+<link rel="preload" href="fonts/bricolage-grotesque-latin.woff2" as="font" type="font/woff2" crossorigin>
+<style>@font-face{font-family:"Bricolage Grotesque";font-style:normal;font-weight:200 800;font-stretch:100%;font-display:swap;src:url(fonts/bricolage-grotesque-latin.woff2) format("woff2")}</style>
+<link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="icon" type="image/png" sizes="64x64" href="/icon-64.png">
+<link rel="canonical" href="https://clips.smaverk.com/">
+<meta property="og:url" content="https://clips.smaverk.com/"><meta property="og:type" content="website"><meta property="og:site_name" content="Småverk">
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="A long recording in, clips ready to post out."><meta name="twitter:description" content="Moments found, framed 9:16 and captioned, on your device. Free to try, $49 once to save every clip."><meta name="twitter:image" content="https://clips.smaverk.com/poster.jpg?v=1790364675">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Clips by Småverk","applicationCategory":"MultimediaApplication","operatingSystem":"Any (web browser)","description":"Finds the moments in a long recording and makes them into 9:16 clips with captions, on your device. Nothing is uploaded.","offers":{"@type":"Offer","price":"49","priceCurrency":"USD","description":"One-time purchase"},"url":"https://clips.smaverk.com"}</script>
+<style>
+:root{color-scheme:light dark;
+  --ground:light-dark(#F3F2F7,#0E0D12);--surface:light-dark(#FFFFFF,#18161F);--ink:light-dark(#16141D,#F2F0F7);--muted:light-dark(#67637A,#9D99AE);
+  --line:light-dark(#DAD7E3,#2B2836);--btn:light-dark(#16141D,#F2F0F7);--btn-ink:light-dark(#FFFFFF,#16141D);--hi:#FFD84D;--hi-ink:#16141D;
+  --good:light-dark(#1F7A4D,#5DD39E);--bad:light-dark(#B5432E,#F08A76);
+  --display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;--body:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --r:14px;--gap:14px}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+html,body{overflow-x:clip}
+.grid>*{min-width:0}
+.result,.status,.caplabel,.fine,.step,.trust,#paidpanel,#afterpay,.moment,.says,.why{overflow-wrap:anywhere}
+body{margin:0;background:var(--ground);color:var(--ink);font:16px/1.5 var(--body);padding-inline:max(16px,env(safe-area-inset-left)) max(16px,env(safe-area-inset-right));touch-action:manipulation}
+input,textarea{font-size:16px}
+a{color:inherit}
+button{font:inherit;color:inherit}
+.wrap{max-width:1100px;margin:0 auto;padding-block:20px 72px}
+.brand{text-decoration:none;display:flex;align-items:center;gap:10px;font:700 15px/1 var(--display);letter-spacing:.01em;min-height:44px;width:max-content;max-width:100%}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
+.tag{display:inline-flex;align-items:center;min-height:44px;font-size:15px;color:var(--muted);text-decoration:none;white-space:nowrap}
+.tag b{color:var(--ink);font:700 15px/1 var(--display);margin-left:.35em}
+.brand i{display:inline-block;width:14px;height:14px;background:var(--hi);border-radius:3px}
+.brand span{color:var(--muted);font:400 15px/1 var(--body)}
+h1{font:800 clamp(30px,8vw,46px)/1.04 var(--display);letter-spacing:-.025em;margin:0 0 12px;text-wrap:balance}
+h1 mark{background:linear-gradient(transparent 55%,var(--hi) 55%);color:inherit;padding:0 .08em}
+@media(prefers-color-scheme:dark){h1 mark{background:none;color:var(--hi);padding:0}}
+.sub{color:var(--muted);font-size:17px;margin:0 0 22px;text-wrap:pretty;max-width:34em}
+h2{font:700 21px/1.2 var(--display);letter-spacing:-.01em;margin:32px 0 10px}
+p{margin:0 0 12px;text-wrap:pretty}
+ul{padding-left:20px;margin:0 0 12px}li{margin-bottom:6px}
+.grid{display:grid;gap:28px}
+@media(min-width:900px){.grid{grid-template-columns:480px minmax(0,1fr);gap:56px;align-items:start;grid-template-areas:"demo say" "demo rest"}.say{grid-area:say}.demo{grid-area:demo;position:sticky;top:16px}.grid{grid-template-rows:auto 1fr}.rest{grid-area:rest}.top{margin-bottom:28px}.map{height:150px}}
+/* On the narrowest phones the headline reads first, so it is sized to leave the tool itself on the screen under it. */
+@media(max-width:480px){h1{font-size:clamp(26px,6.8vw,34px)}.sub{font-size:16px;margin-bottom:16px}.grid{gap:20px}}
+.demo{display:flex;flex-direction:column;gap:var(--gap)}
+.demo>*{width:100%;max-width:100%;min-width:0}
+.caplabel{display:grid;grid-template-columns:minmax(0,1fr);row-gap:2px;font-size:15px;color:var(--muted);min-height:22px}
+.caplabel b{color:var(--ink);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+/* The picture, for a recording that has one. The moment playing is named on it, so a person watching knows which card they are hearing. */
+.screen{position:relative;aspect-ratio:16/9;border-radius:var(--r);overflow:hidden;background:#000}
+.screen video{display:block;width:100%;height:100%;object-fit:contain;background:#000}
+.screen .play{position:absolute;inset:0;border:0;background:transparent;display:grid;place-items:center;cursor:pointer;padding:0}
+.screen .play i{width:64px;height:64px;border-radius:50%;background:var(--hi);color:var(--hi-ink);display:grid;place-items:center;box-shadow:0 4px 18px rgba(0,0,0,.35)}
+.screen .play svg{width:28px;height:28px;margin-left:3px}
+.screen[data-playing="1"] .play i{opacity:0}
+.screen .now{position:absolute;left:10px;right:10px;bottom:10px;margin:0;padding:6px 10px;border-radius:10px;background:rgba(0,0,0,.62);color:#fff;font-size:15px;line-height:1.3;width:max-content;max-width:calc(100% - 20px)}
+.screen .now:empty{display:none}
+/* The recording itself: one band, the whole length, with the found moments lit. */
+@media(max-width:899px){.screen:not([hidden])~.map{height:84px}.screen:not([hidden])~#chiphint{display:none}}
+.map{display:block;width:100%;height:132px;border-radius:var(--r);background:var(--surface);border:1px solid var(--line);cursor:pointer;touch-action:manipulation}
+.chips{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.chip{appearance:none;border:2px solid var(--line);border-radius:12px;background:var(--surface);padding:6px;cursor:pointer;display:flex;flex-direction:column;gap:6px;align-items:center;min-height:44px}
+.chip canvas{width:100%;aspect-ratio:9/3;border-radius:5px;display:block}
+.chip span{font:700 15px/1 var(--display);padding-bottom:4px}
+.chip[aria-pressed="true"]{border-color:var(--hi);background:color-mix(in oklab,var(--hi) 22%,var(--surface));box-shadow:0 0 0 2px color-mix(in oklab,var(--hi) 35%,transparent)}
+.chip:focus-visible,.btn:focus-visible,input:focus-visible,a:focus-visible,.moment .go:focus-visible{outline:3px solid var(--hi);outline-offset:2px}
+.btn{appearance:none;border:0;border-radius:12px;min-height:52px;padding:0 20px;font:700 16px var(--display);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;width:100%;transition:transform .08s}
+.btn:active{transform:scale(.99)}
+.btn.primary{background:var(--btn);color:var(--btn-ink)}
+.btn.hi{background:var(--hi);color:var(--hi-ink)}
+.btn.quiet{background:transparent;color:var(--ink);border:1.5px solid var(--line);min-height:44px;width:auto;font-weight:600}
+.btn.small{min-height:44px;padding:0 14px;font-size:15px}
+.trust{font-size:15px;color:var(--muted);text-align:center;margin:0}
+/* The moments */
+.moments{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.moment{background:var(--surface);border:1.5px solid var(--line);border-radius:var(--r);padding:10px 12px;display:grid;grid-template-columns:44px minmax(0,1fr);column-gap:12px;row-gap:4px;align-items:start}
+.moment[aria-current="true"]{border-color:var(--hi);box-shadow:0 0 0 2px color-mix(in oklab,var(--hi) 35%,transparent)}
+.moment .go{grid-row:1/3;width:44px;height:44px;border-radius:50%;border:0;background:color-mix(in oklab,var(--line) 60%,var(--surface));display:grid;place-items:center;cursor:pointer;padding:0}
+.moment .go svg{width:20px;height:20px}
+.moment .go .pause{display:none}
+.moment[data-playing="1"] .go{background:var(--hi);color:var(--hi-ink)}
+.moment[data-playing="1"] .go .pause{display:block}
+.moment[data-playing="1"] .go .play{display:none}
+.moment .at{display:flex;gap:10px;align-items:baseline;font:700 17px/1.2 var(--display);font-variant-numeric:tabular-nums}
+.moment .at span{font:600 15px var(--body);color:var(--muted)}
+.says{margin:0;font-size:15px;color:var(--ink);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.why{margin:0;font-size:15px;color:var(--muted);grid-column:2}
+.trimrow{grid-column:1/-1;display:none;gap:8px;align-items:center;padding-top:6px;border-top:1px solid var(--line);margin-top:4px;flex-wrap:wrap}
+.moment[aria-current="true"] .trimrow{display:flex}
+.trimrow .lab{font-size:15px;color:var(--muted);min-width:4.2em;font-variant-numeric:tabular-nums}
+.trimrow input[type=range]{flex:1 1 120px;min-width:100px;height:44px;accent-color:var(--hi)}
+.steps{display:none;flex-direction:column;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px}
+.steps.on{display:flex}
+.step{display:grid;grid-template-columns:22px 1fr auto;gap:10px;align-items:center;font-size:15px;color:var(--muted)}
+.step .dot{width:18px;height:18px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center}
+.step.active{color:var(--ink);font-weight:600}.step.active .dot{border-color:var(--ink)}
+.step.done{color:var(--good)}.step.done .dot{border-color:var(--good);background:var(--good)}
+.step.done .dot::after{content:"";width:5px;height:9px;border:solid #fff;border-width:0 2px 2px 0;rotate:45deg;translate:0 -1px}
+.step small{font-size:15px;font-weight:500;color:var(--muted);font-variant-numeric:tabular-nums}
+.bar{grid-column:2/4;height:6px;border-radius:3px;background:var(--line);overflow:hidden;display:none}
+.step.active .bar{display:block}
+.bar i{display:block;height:100%;width:0;background:var(--ink);border-radius:3px;transition:width .2s}
+.bar.pulse i{width:40%;animation:slide 1.2s ease-in-out infinite alternate}
+@keyframes slide{from{translate:-100% 0}to{translate:250% 0}}
+.result{display:none;background:var(--surface);border:1.5px solid var(--good);border-radius:var(--r);padding:14px 16px;gap:8px;flex-direction:column;font-size:15px}
+.result.on{display:flex}
+.result b{font:700 17px var(--display)}
+.result .row{display:flex;gap:10px;flex-wrap:wrap}
+.saveas{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.saveas .btn{min-height:48px;font-size:15px}
+.status{font-size:15px;color:var(--muted);min-height:22px;text-align:center}
+.status.err{color:var(--bad)}
+.status.ok{color:var(--good);font-weight:600}
+.fine.err{color:var(--bad)}
+.grid section p:not(.foot) a:not(.btn),.grid section li a,.result span a{padding:13px 0;margin:-13px 0}.grid section li>a:only-child{display:inline-flex;align-items:center;min-height:44px;padding:0;margin:0}
+@media(min-width:900px){.grid section p:not(.foot) a:not(.btn),.grid section li a,.result span a{padding:6px 0;margin:-6px 0}}
+.price{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;margin:24px 0 10px}
+.price .amt{font:800 34px/1 var(--display);letter-spacing:-.02em}
+.price .amt small{font:600 15px var(--body);color:var(--muted);margin-left:8px}
+.price .btn{width:auto;min-width:180px}
+.fine{font-size:15px;color:var(--muted)}
+.key{display:flex;gap:10px;flex-wrap:wrap;margin:8px 0}
+.key input{flex:1 1 220px;min-height:48px;border:1.5px solid var(--line);border-radius:12px;padding:0 14px;font:16px var(--body);background:var(--surface);color:var(--ink)}
+.key .btn{width:auto;min-height:48px}.keyshow{font:600 15px ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--line);color:var(--ink);border-radius:8px;padding:4px 8px;user-select:all;overflow-wrap:anywhere}.keyline{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:8px 0}#keylostline{margin-top:16px}.keyline .btn{width:auto;min-height:44px;padding:0 16px;font-size:15px}
+.ok{color:var(--good);font-weight:600}
+.foot{color:var(--muted);font-size:15px;margin-top:36px;display:flex;gap:4px 18px;flex-wrap:wrap;align-items:center}
+.foot a{color:var(--muted);display:inline-flex;align-items:center;min-height:44px}
+details{border-top:1px solid var(--line)}
+details summary{cursor:pointer;font-weight:600;font-size:16px;padding:12px 0;min-height:44px}
+details p,details ul{margin:0 0 14px}
+[hidden]{display:none!important}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+<style>
+/* Clips' own shapes: the finished clip on a 9:16 stage, a tick on each moment, and the save row under a made one. */
+.reel{display:flex;justify-content:center;background:#0E0D12;border-radius:var(--r);overflow:hidden}
+.reel video{display:block;height:min(44svh,560px);max-width:100%;aspect-ratio:9/16;object-fit:contain;background:#000}
+@media(max-width:480px){.reel video{height:30svh}}
+.keep{grid-column:1/-1;display:flex;align-items:center;gap:10px;min-height:44px;font-size:15px;cursor:pointer}
+.keep input{width:22px;height:22px;accent-color:var(--hi);margin:0}
+.made{grid-column:1/-1;display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0}
+.made .btn{width:auto}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><a class="brand" href="https://smaverk.com"><i></i>Småverk <span>Clips</span></a><a class="tag" id="tag" href="#price">Free ·<b>$49 once</b></a></div>
+  <div class="grid">
+    <div class="say">
+      <h1>A long recording in, clips ready to post out. <mark>Your recording stays on your device.</mark></h1>
+      <p class="sub">AI that finds the moments, keeps the speaker in frame and adds captions, on your device.</p>
+    </div>
+
+    <section class="demo" aria-label="Try it">
+      <div class="caplabel"><b id="clipname">Sample: a 15-minute interview</b><span id="hint">Made from it here. Tap one to watch.</span></div>
+      <div class="reel" id="reelwrap"><video id="reel" playsinline muted loop controls preload="metadata" poster="poster.jpg?v=1790364675" aria-label="A finished clip: tall, the speaker in frame, captions written in"></video></div>
+      <input id="file" type="file" accept="video/*" hidden>
+      <button class="btn primary" id="action">Use my own recording</button>
+      <p class="trust" id="trust">Free to find and watch. Save one clip with a small mark. English. Your recording stays on your device.</p>
+      <p class="fine" id="caphint">Each clip is up to 90 seconds.</p>
+      <div class="status" id="status"></div>
+      <div class="steps" id="steps" role="status" aria-live="polite">
+        <div class="step" id="s1"><span class="dot"></span><span id="s1t">Getting the tool onto your device</span><small id="s1n"></small><div class="bar"><i id="s1b"></i></div></div>
+        <div class="step" id="s2"><span class="dot"></span><span id="s2t">Finding the moments</span><small id="s2n"></small><div class="bar"><i id="s2b"></i></div></div>
+        <div class="step" id="s3"><span class="dot"></span><span id="s3t">Making the clips</span><small id="s3n"></small><div class="bar"><i id="s3b"></i></div></div>
+      </div>
+      <ol class="moments" id="moments"></ol>
+      <div class="result" id="result">
+        <b id="rtitle">Clips ready</b>
+        <span id="rline"></span>
+        <button class="btn hi" id="saveall" type="button" hidden>Save all clips</button>
+      </div>
+      <button class="btn quiet" id="reset" hidden>Choose a different recording</button>
+    </section>
+
+    <section class="rest">
+      <div class="price" id="price">
+        <div><div class="amt"><span id="amount">$49</span><small id="per">once</small></div><div class="fine">Every clip saved, no mark. No account.</div><div class="fine" id="paytrust">Refund within 14 days.</div></div>
+        <a class="btn hi" id="buy" href="#price" target="_blank" rel="noopener" aria-label="Buy once — $49 (opens the checkout in a new tab)">Buy once — $49</a>
+      </div>
+      <p class="fine" id="pricefine"></p>
+
+      <div id="paidpanel" hidden><h2>Paid version on this device</h2><p class="fine">Your key, in full. Paste it on your own other devices to unlock them too.</p><p class="keyline"><b id="paidkey" class="keyshow"></b><button class="btn primary" id="keycopy" type="button">Copy</button></p><p class="fine" id="keyalso" hidden></p><p class="keyline"><button class="btn quiet" id="removekey" type="button">Remove the key from this device</button></p></div>
+
+      <details>
+        <summary>What it does, and does not</summary>
+        <ul>
+          <li>It finds the parts of a long recording that stand on their own, about a minute each, and ticks the strongest three. You can tick others and move their edges.</li>
+          <li>It makes each one tall (9:16) with the speaker in frame, and writes the captions in. One clip at a time, so a phone has room for it.</li>
+          <li>Each clip is up to 90 seconds. A longer moment ends on the last whole sentence before that.</li>
+          <li>Recordings up to four hours, with a picture. English. It does not guess what an audience will do with a clip.</li>
+          <li>It takes a while: the reading is a fraction of the recording's length, and each clip takes about as long as it plays. No phone has been measured yet.</li>
+        </ul>
+      </details>
+      <details>
+        <summary>Where your recording goes</summary>
+        <p>Nowhere. It all runs in this page, on your device. There is no account and no upload.</p>
+        <p>The tool itself is downloaded the first time you use it, from where it is published. Your recording is not part of that.</p>
+      </details>
+      <details id="afterpay"><summary>After paying: nothing to paste</summary><ul><li>Pay on Polar: card, Apple Pay or Google Pay. Taxes included.</li><li>You come straight back, already unlocked. Nothing to paste.</li><li>Refund within 14 days, no questions.</li></ul></details>
+      <p class="fine" id="keystatus">Already paid? Paste your key here.</p>
+      <div class="key" id="keyrow"><input id="key" placeholder="Paste your key" autocomplete="off" spellcheck="false" aria-label="Your key"><button class="btn primary" id="keygo">Unlock</button></div>
+      <p class="fine" id="keylostline">Lost your key? <a id="keylost" href="https://polar.sh/smaverk/portal" target="_blank" rel="noopener">Get it again</a> with the email you paid with.</p>
+
+      <p class="foot"><a href="mailto:hello@smaverk.com">hello@smaverk.com</a><a href="https://smaverk.com">smaverk.com</a><a href="https://smaverk.com/privacy">Privacy</a><a href="https://smaverk.com/terms">Terms</a><a href="https://clipfinder.smaverk.com/?src=clips">Clip finder</a><a href="https://vertical.smaverk.com/?src=clips">Vertical</a><a href="https://captions.smaverk.com/?src=clips">Captions</a><a href="llms.txt">For automations and agents</a><a id="samplesrc" href="https://images.nasa.gov/details/iss071m261311538_NASA_Astronaut_Matt_Dominick_Talks_with_KMGH_Denver_240510" rel="noopener">Sample: NASA, public domain</a></p>
+    </section>
+  </div>
+</div>
+<script type="module" src="app.js?v=1790364675"></script>
+<script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "91285919879f4672a4342550a4b0b07c"}'></script>
+</body>
+</html>

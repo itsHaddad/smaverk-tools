@@ -1,0 +1,36 @@
+# Clips by Småverk
+
+> AI that turns a long recording into clips ready to post, on your device, in the page at https://clips.smaverk.com: it finds the moments, makes each one 9:16 with the speaker in frame, and writes the captions in. The recording is not uploaded. Free to find the moments and watch the clips, and to save one clip with a small smaverk.com mark. $49 once saves every clip, with no mark. There is no account.
+
+Clips is one of the tools by Småverk; https://smaverk.com lists them all. It runs the other three in a row: Clip finder finds the moments, Vertical frames them, Captions writes the words.
+
+## What it does
+- Input: a video of a podcast, a talk or an interview (mp4, mov, webm), recordings up to four hours, English speech.
+- Output: one mp4 per kept moment: 9:16, the speaker kept in frame, captions burned in, the sound as recorded. Each clip is up to 90 seconds; a longer moment ends on the last whole sentence before that.
+- The strongest three moments are kept by default. It makes one clip at a time, so a phone holds one clip's work in memory, not the recording's.
+- Everything runs in the page, on the device. There is no server that sees the recording, by design.
+
+It does not predict what an audience will do with a clip. Nothing in it measures that.
+
+## Driving it from a script or an agent (browser automation)
+The page exposes `window.__clips` (state) and `window.clips` (actions), and stable element ids.
+
+```js
+await page.goto("https://clips.smaverk.com/");
+await page.setInputFiles("#file", "episode.mp4");
+await page.waitForFunction(() => window.__clips.state === "found", null, { timeout: 3_600_000 });
+await page.evaluate(() => window.clips.make());           // the ticked moments; window.clips.keep(i, true|false) changes the ticks
+await page.waitForFunction(() => window.__clips.state === "made", null, { timeout: 3_600_000 });
+const made = await page.evaluate(() => window.__clips.made); // [{name, seconds, width, height, words, ...}]
+```
+
+- `window.__clips.state` is `sample` / `reading` / `found` / `making` / `made`; `list` holds the moments, `made` the finished clips.
+- A paid key is applied by filling `#key` and clicking `#keygo`; it is kept in `localStorage` under `smaverk.key`, the same name in every Småverk tool. What a key opens is decided by `POST https://unlock.smaverk.com/entitlements` with `{key, rail}`, which answers `{status, tools, expires}`. Coming back from a checkout with `?checkout_id=…` unlocks the page by itself; nothing is pasted.
+
+## The other tools
+- https://clipfinder.smaverk.com — the moments worth posting in a long recording, and timeline files for editing programs.
+- https://vertical.smaverk.com — a wide clip cut to 9:16 with the speaker in frame.
+- https://captions.smaverk.com — captions burned onto a short clip.
+
+## Contact
+hello@smaverk.com
