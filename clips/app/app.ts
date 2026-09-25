@@ -15,8 +15,10 @@ import { Unlock, SAMPLE_KEY, type UnlockState } from "./src/lib/unlock";
 
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 const SANDBOX = new URL(location.href).searchParams.get("rail") === "sandbox";
-// The checkout does not exist yet: clips/LAUNCH.md holds the product to create and where each value goes.
-const RAIL = SANDBOX ? { product: "__SANDBOX_PRODUCT__", link: "__SANDBOX_LINK__" } : { product: "__PRODUCT__", link: "__LINK__" };
+// The checkout: Polar, both rails, created by the lead 2026-09-25. One benefit per rail, mapped in the unlock worker to all four tools (the studio key).
+const RAIL = SANDBOX
+  ? { product: "f55aaf67-7994-4b6c-ae37-47c46df2e947", link: "https://sandbox-api.polar.sh/v1/checkout-links/polar_cl_2xtlOWC5e2giQzLuC0ybMIE1ueKbjlIxpAH9t25imVH/redirect" }
+  : { product: "53db5e82-b793-4550-ba3d-e727befa8674", link: "https://buy.polar.sh/polar_cl_F3V7yz258g1v1W4e2VRDE13ljMAleNLcA8vKl0j1lxg" };
 const ready = (v: string) => !v.startsWith("__");
 
 /** The price, in one place. The owner's number; tests/site.test.ts fails if the page states another. */
@@ -465,8 +467,6 @@ $("keycopy").addEventListener("click", async (e) => {
 });
 $("keygo").addEventListener("click", async () => { if (await unlock.paste($<HTMLInputElement>("key").value)) $<HTMLInputElement>("key").value = ""; });
 $("key").addEventListener("keydown", (e) => { if ((e as KeyboardEvent).key === "Enter") $("keygo").click(); });
-// Until the checkout exists the buy button says so instead of opening nothing.
-$("buy").addEventListener("click", (e) => { if (!ready(RAIL.link)) { e.preventDefault(); say("Buying opens soon. Write to hello@smaverk.com and you will hear first."); } });
 // For rigs that need the paid state without a rail: paints it as a real key would, and stores nothing.
 dbg.setLicensed = (on: boolean) => paintLicense({ on, key: on ? SAMPLE_KEY.clips : "", tools: on ? ["clips"] : [], expires: null, text: on ? "Paid version on this device." : "Already paid? Paste your key here.", tone: on ? "ok" : "", became: "" });
 void unlock.start();

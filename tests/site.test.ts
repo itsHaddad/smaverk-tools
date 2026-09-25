@@ -699,9 +699,13 @@ test("Clips: the price and the cap are each one constant, and the page states th
   for (const m of ["vertical/app/src/detect", "vertical/app/src/fastsave", "vertical/app/src/lib/track", "captions/app/src/draw", "captions/app/src/lib/lines", "clipfinder/app/src/lib/decode"]) expect(make, `make.ts uses ${m}`).toContain(`/${m}"`);
   expect(read("clips/app/finder.ts")).toContain('import "../../clipfinder/app/worker"');
   expect(read("clips/app/listen.ts")).toContain('import "../../captions/app/worker"');
-  // No checkout yet: the placeholders stay placeholders, and the page never sends anyone to them.
-  expect(app, "the checkout is not invented").toMatch(/"__PRODUCT__"[\s\S]*"__LINK__"/);
-  expect(app, "an unset link is not followed").toMatch(/if \(ready\(RAIL\.link\)\)/);
+  // The checkout: the production link in the markup (it works before the script runs) and the same one in the script; no placeholder left.
+  const buy = html.match(/<a [^>]*id="buy"[^>]*>/)?.[0] ?? "";
+  expect(buy, "the buy link goes to the production checkout").toMatch(/href="https:\/\/buy\.polar\.sh\/polar_cl_/);
+  expect(code(app), "the script knows the same checkout").toContain(buy.match(/href="([^"]+)"/)![1]!);
+  expect(code(app), "no placeholder left").not.toMatch(/"__[A-Z_]+__"/);
+  // The studio key: a Clips key opens the three tools it is built from, and the page, llms.txt and the terms say so.
+  for (const [f, t] of [["page", text(html)], ["llms.txt", read("clips/app/dist/llms.txt")], ["terms", text(read(LEGAL[1]!))]] as const) expect(t, `${f} says what else the key opens`).toMatch(/also opens (the three tools Clips is built from: )?Captions, Vertical and Clip finder/);
   // LAUNCH.md stays in the private repository (it names the worker and the rail), so this holds only where it is.
   if (existsSync(join(ROOT, "clips/LAUNCH.md"))) expect(read("clips/LAUNCH.md"), "what to create is written down").toMatch(/__LINK__/);
   // It promises only what it measures.

@@ -9,7 +9,7 @@
 //   3. The free version saves one clip: a second save asks to be paid for and writes nothing.
 //   4. With a key (the unlock worker stubbed), the page says the clips must be made again, and the new ones save.
 //   5. Nothing carrying the recording leaves the page: every host is accounted for, no body over 8 KB.
-//   6. The sandbox rail shows the price constant, and the unset checkout does not open anything.
+//   6. The sandbox rail shows the price constant and buys at the sandbox checkout, in its own tab.
 import { chromium } from "playwright";
 import { spawn, execFileSync } from "node:child_process";
 import { mkdirSync, readFileSync } from "node:fs";
@@ -122,10 +122,10 @@ try {
   await rail.waitForFunction(() => window.__clips?.state === "sample", null, { timeout: 30000 });
   const shown = await rail.evaluate(() => ({ tag: document.getElementById("tag").textContent, amount: document.getElementById("amount").textContent, buy: document.getElementById("buy").getAttribute("href") }));
   if (!shown.tag.includes(PRICE) || shown.amount !== PRICE) fail(`the rail shows "${shown.tag}" / "${shown.amount}", the constant is ${PRICE}`);
-  const opened = railCtx.waitForEvent("page", { timeout: 3000 }).then(() => true).catch(() => false);
-  await rail.click("#buy");
-  if (await opened) fail("the buy button opened a page while the checkout does not exist");
-  else ok(`the sandbox rail states ${PRICE}, and the unset checkout opens nothing ("${(await rail.textContent("#status")).trim()}")`);
+  const target = await rail.getAttribute("#buy", "target");
+  if (!/^https:\/\/sandbox-api\.polar\.sh\/v1\/checkout-links\/polar_cl_/.test(shown.buy ?? "")) fail(`the sandbox rail buys at ${shown.buy}`);
+  else if (target !== "_blank") fail("the checkout does not open in its own tab");
+  else ok(`the sandbox rail states ${PRICE} and buys at the sandbox checkout, in its own tab`);
   await railCtx.close();
 
   if (errs.length) fail(errs.join(" | "));

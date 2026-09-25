@@ -1,6 +1,6 @@
 # Clips by Småverk
 
-> AI that turns a long recording into clips ready to post, on your device, in the page at https://clips.smaverk.com: it finds the moments, makes each one 9:16 with the speaker in frame, and writes the captions in. The recording is not uploaded. Free to find the moments and watch the clips, and to save one clip with a small smaverk.com mark. $49 once saves every clip, with no mark. There is no account.
+> AI that turns a long recording into clips ready to post, on your device, in the page at https://clips.smaverk.com: it finds the moments, makes each one 9:16 with the speaker in frame, and writes the captions in. The recording is not uploaded. Free to find the moments and watch the clips, and to save one clip with a small smaverk.com mark. $49 once saves every clip, with no mark. There is no account. The same key also opens the three tools Clips is built from: Captions, Vertical and Clip finder.
 
 Clips is one of the tools by Småverk; https://smaverk.com lists them all. It runs the other three in a row: Clip finder finds the moments, Vertical frames them, Captions writes the words.
 
