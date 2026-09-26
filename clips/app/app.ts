@@ -214,6 +214,10 @@ function onFinder(m: any) {
   } else if (m.type === "done") {
     state = "found";
     busy(null);
+    // The finder is done with this recording. Ending its worker now hands its memory to the caption engine, which starts
+    // loading below: in the iOS Simulator's Safari the two engines side by side failed with "RangeError: Out of memory"
+    // (webkit workflow, 2026-09-26). A new recording starts a new finder.
+    stopFinding();
     cards = planMoments(m.moments as Moment[]);
     step(2, "done", clock(m.heardS));
     dbg.findMs = m.ms;
@@ -262,7 +266,13 @@ function loadListener(): Promise<void> {
 }
 function warmMaking() { loadListener().catch(() => {}); warmFraming().catch(() => {}); }
 async function listen(audio: Float32Array): Promise<Word[]> {
-  await loadListener();
+  try { await loadListener(); }
+  catch {
+    // Once more in a fresh worker: an engine that could not get memory in one can in a new one, which starts with none
+    // of the failed attempt's. A second failure is the clip's error, shown on its card.
+    listener?.terminate(); listener = null; listenerReady = null;
+    await loadListener();
+  }
   return ask<Word[]>({ type: "run", audio }, [audio.buffer], (m) => (m.type === "result" ? (m.words as Word[]) : undefined));
 }
 
