@@ -2,7 +2,7 @@
 
 > AI turns a landscape video into a vertical (9:16) one that keeps the speaker in frame, on your device, in the page at https://vertical.smaverk.com. Nothing is uploaded. Free with a small corner mark for clips up to 60 seconds; $24 once (founding price) removes it and allows five minutes.
 
-Vertical is one of the tools by Småverk, a one-person studio in Sweden; https://smaverk.com lists every tool. Captions (https://captions.smaverk.com) adds captions to the saved clip, and Clip finder (https://clipfinder.smaverk.com) finds the moments worth posting in a long recording.
+Vertical is one of the tools by Småverk, a one-person studio in Sweden; https://smaverk.com lists every tool. Captions (https://captions.smaverk.com) adds captions to the saved clip, Clip finder (https://clipfinder.smaverk.com) finds the moments worth posting in a long recording, and Clips (https://clips.smaverk.com) makes those moments into tall clips with captions.
 
 ## What it does
 - Input: a video file (mp4, mov, webm). Output: the same clip cut to 9:16 at the source's full height (1920x1080 → 608x1080), the window following the speaker with calm pans; sound copied as it is.

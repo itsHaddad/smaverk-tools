@@ -15,6 +15,7 @@ const SITES = {
   captions: { dist: "captions/app/dist", src: ["captions/app/app.ts", "captions/app/worker.ts"], prices: ["$19"], limits: ["60 seconds", "five minutes"], page: "index.html", host: "captions.smaverk.com", copy: "captions/app/app.ts", savedPrice: true },
   vertical: { dist: "vertical/app/dist", src: ["vertical/app/app.ts", "vertical/app/src/detect.ts", "vertical/app/src/fastsave.ts"], prices: ["$24", "$29"], limits: ["60 seconds", "five minutes"], page: "index.html", host: "vertical.smaverk.com", copy: "vertical/app/app.ts", savedPrice: true },
   clipfinder: { dist: "clipfinder/app/dist", src: ["clipfinder/app/app.ts", "clipfinder/app/worker.ts"], prices: ["$29"], limits: ["30 minutes", "four hours"], page: "index.html", host: "clipfinder.smaverk.com", copy: "clipfinder/app/src/lib/pricing.ts", savedPrice: false },
+  clips: { dist: "clips/app/dist", src: ["clips/app/app.ts", "clips/app/src/make.ts", "clips/app/src/lib/plan.ts"], prices: ["$49"], limits: ["90 seconds", "four hours"], page: "index.html", host: "clips.smaverk.com", copy: "clips/app/app.ts", savedPrice: false },
 } as const;
 const STUDIO = "captions/app/dist/studio.html"; const LEGAL = ["captions/app/dist/privacy.html", "captions/app/dist/terms.html"];
 const read = (p: string) => readFileSync(join(ROOT, p), "utf8");
@@ -85,7 +86,7 @@ test("pages load nothing from other companies except the analytics beacon", () =
 
 test("every outside address the scripts contact is accounted for in the privacy page", () => {
   // Add a host here only after the privacy page says what is sent to it, in plain words.
-  const KNOWN: Record<string, RegExp> = { "api.polar.sh": /Polar/, "sandbox-api.polar.sh": /Polar/, "buy.polar.sh": /Polar/, "unlock.smaverk.com": /small service of ours/, "captions.smaverk.com": /./, "vertical.smaverk.com": /./, "smaverk.com": /./ };
+  const KNOWN: Record<string, RegExp> = { "api.polar.sh": /Polar/, "sandbox-api.polar.sh": /Polar/, "buy.polar.sh": /Polar/, "unlock.smaverk.com": /small service of ours/, "captions.smaverk.com": /./, "vertical.smaverk.com": /./, "clipfinder.smaverk.com": /./, "clips.smaverk.com": /./, "smaverk.com": /./ };
   const privacy = text(read(LEGAL[0]!)); const unknown: string[] = [];
   for (const s of Object.values(SITES)) for (const f of s.src) if (existsSync(join(ROOT, f))) for (const m of code(read(f)).matchAll(/https:\/\/([a-zA-Z0-9.-]+)/g)) { const h = m[1]!; if (!KNOWN[h]) unknown.push(`${f}: ${h}`); else expect(privacy).toMatch(KNOWN[h]!); }
   expect(unknown).toEqual([]);
@@ -122,12 +123,12 @@ test("every limit a tool enforces is stated wherever a searcher can land", () =>
   for (const s of Object.values(SITES)) for (const f of every(s)) { const t = text(read(`${s.dist}/${f}`)) + code(read(s.src[0]!)); for (const limit of s.limits) expect(t, `${s.dist}/${f}: ${limit}`).toMatch(new RegExp(limit, "i")); }
   const terms = text(read(LEGAL[1]!)); expect(terms).toMatch(/60 seconds/); expect(terms).toMatch(/five minutes/); expect(terms).toMatch(/four hours/); expect(terms).not.toMatch(/being finished|estimate/);
   // Every tool is named in both legal pages: one of them described a tool that did not exist yet, once.
-  for (const l of LEGAL) for (const tool of ["Captions", "Vertical", "Clip finder"]) expect(text(read(l)), `${l} names ${tool}`).toContain(tool);
+  for (const l of LEGAL) for (const tool of ["Captions", "Vertical", "Clip finder", "Clips"]) expect(text(read(l)), `${l} names ${tool}`).toContain(tool);
 });
 
 test("each sitemap lists only pages on its own host", () => {
   const check = (file: string, host: string) => { for (const m of read(file).matchAll(/<loc>https:\/\/([^/<]+)/g)) expect(`${file}: ${m[1]}`).toBe(`${file}: ${host}`); };
-  check("captions/app/dist/sitemap.xml", "captions.smaverk.com"); check("captions/app/dist/studio-sitemap.xml", "smaverk.com"); check("clipfinder/app/dist/sitemap.xml", "clipfinder.smaverk.com");
+  check("captions/app/dist/sitemap.xml", "captions.smaverk.com"); check("captions/app/dist/studio-sitemap.xml", "smaverk.com"); check("clipfinder/app/dist/sitemap.xml", "clipfinder.smaverk.com"); check("clips/app/dist/sitemap.xml", "clips.smaverk.com");
 });
 
 test("the tools share one look: every style rule both pages have is identical, apart from the named exceptions", () => {
@@ -244,7 +245,7 @@ test("every studio card shows its tool at work, from the tool's own sample", () 
   // same 16:9 slot — muted, looping, tap to stop — and every file it names exists where build.sh copies it from.
   const studio = read(STUDIO);
   const cards = [...studio.matchAll(/<div class="demo" data-demo="([a-z]+)">([\s\S]*?)<\/div>/g)].map((m) => [m[1]!, m[2]!] as const);
-  expect(cards.map(([n]) => n), "a card without a demo, or a demo without a card").toEqual(["captions", "vertical", "clipfinder"]);
+  expect(cards.map(([n]) => n), "a card without a demo, or a demo without a card").toEqual(["captions", "vertical", "clipfinder", "clips"]);
   expect(studio, "no card is left without a demo").not.toContain("tool nodemo");
   for (const [name, html] of cards) {
     const video = html.match(/<video[^>]*>/)?.[0];
@@ -263,7 +264,7 @@ test("every studio card shows its tool at work, from the tool's own sample", () 
 test("Captions: the defaults keep the words off the speaker's face and the main button on the first screen", () => {
   // Design review 2, 2026-09-19: Big sat at the middle of the frame, over the speaker's mouth (band 0.44 to 0.55 of the height, face 0.19 to 0.47);
   // on a 1440 x 900 screen the stage took 78% of the height and the button sat below the fold (Qa.ts now fails on that too).
-  const app = read("captions/app/app.ts"); const at = app.match(/st === "big" \? ([\d.]+) : st === "bar" \? ([\d.]+) : ([\d.]+)/)!;
+  const app = read("captions/app/src/draw.ts"); const at = app.match(/st === "big" \? ([\d.]+) : st === "bar" \? ([\d.]+) : ([\d.]+)/)!;
   for (const y of at.slice(1).map(Number)) { expect(y).toBeGreaterThanOrEqual(0.68); expect(y).toBeLessThanOrEqual(0.8); } // under a face, above the bottom fifth the apps cover
   const sv = [...read("captions/app/dist/index.html").matchAll(/calc\((\d+)svh \* var\(--ar/g)].map((m) => Number(m[1])); expect(sv.length).toBe(2); for (const v of sv) expect(v).toBeLessThanOrEqual(56);
 });
@@ -275,6 +276,7 @@ test("every host has a sitemap of its own pages, and its robots.txt points at it
     "captions.smaverk.com": { dist: "captions/app/dist", file: "sitemap.xml", hosts: ["captions.smaverk.com", "smaverk.com"] }, // one deployment answers on both hosts
     "smaverk.com": { dist: "captions/app/dist", file: "studio-sitemap.xml", hosts: ["captions.smaverk.com", "smaverk.com"] },
     "clipfinder.smaverk.com": { dist: "clipfinder/app/dist", file: "sitemap.xml", hosts: ["clipfinder.smaverk.com"] },
+    "clips.smaverk.com": { dist: "clips/app/dist", file: "sitemap.xml", hosts: ["clips.smaverk.com"] },
   };
   for (const [host, w] of Object.entries(want)) {
     const xml = read(`${w.dist}/${w.file}`); const locs = [...xml.matchAll(/<loc>https:\/\/([^/<]+)(\/[^<]*)<\/loc>/g)]; expect(locs.length, `${host}: sitemap lists pages`).toBeGreaterThan(0);
@@ -287,8 +289,8 @@ test("every host has a sitemap of its own pages, and its robots.txt points at it
 test("search engines can verify and be told about every host", () => {
   // The principal, 2026-09-19: "isnt seo stuff done before?" It was done for Captions on day one and not carried to Vertical and the studio page.
   // Every page a host serves at "/" carries the Search Console tag; every deployment carries the IndexNow key file that `_tools/indexnow.ts` uses.
-  for (const p of ["captions/app/dist/index.html", "captions/app/dist/studio.html", "vertical/app/dist/index.html", "clipfinder/app/dist/index.html"]) { const h = read(p); expect(h, `${p}: Search Console tag`).toMatch(/<meta name="google-site-verification" content="[\w-]{20,}">/); expect(h, `${p}: canonical`).toMatch(/<link rel="canonical" href="https:\/\/[a-z.]*smaverk\.com\/">/); expect(h, `${p}: description`).toMatch(/<meta name="description" content="[^"]{60,}">/); }
-  for (const d of ["captions/app/dist", "vertical/app/dist", "clipfinder/app/dist"]) { const key = readdirSync(join(ROOT, d)).find((f) => /^[0-9a-f]{32}\.txt$/.test(f)); expect(key, `${d}: IndexNow key file`).toBeTruthy(); expect(read(`${d}/${key}`).trim()).toBe(key!.slice(0, 32)); }
+  for (const p of ["captions/app/dist/index.html", "captions/app/dist/studio.html", "vertical/app/dist/index.html", "clipfinder/app/dist/index.html", "clips/app/dist/index.html"]) { const h = read(p); expect(h, `${p}: Search Console tag`).toMatch(/<meta name="google-site-verification" content="[\w-]{20,}">/); expect(h, `${p}: canonical`).toMatch(/<link rel="canonical" href="https:\/\/[a-z.]*smaverk\.com\/">/); expect(h, `${p}: description`).toMatch(/<meta name="description" content="[^"]{60,}">/); }
+  for (const d of ["captions/app/dist", "vertical/app/dist", "clipfinder/app/dist", "clips/app/dist"]) { const key = readdirSync(join(ROOT, d)).find((f) => /^[0-9a-f]{32}\.txt$/.test(f)); expect(key, `${d}: IndexNow key file`).toBeTruthy(); expect(read(`${d}/${key}`).trim()).toBe(key!.slice(0, 32)); }
 });
 
 test("every page stays inside the word budget at rest", () => {
@@ -502,6 +504,7 @@ const TOOLS = [
   { name: "captions", dist: "captions/app/dist", app: "captions/app/app.ts" },
   { name: "vertical", dist: "vertical/app/dist", app: "vertical/app/app.ts" },
   { name: "clipfinder", dist: "clipfinder/app/dist", app: "clipfinder/app/app.ts" },
+  { name: "clips", dist: "clips/app/dist", app: "clips/app/app.ts" },
 ] as const;
 const SHARED = TOOLS;
 const UNLOCK_SRC = SHARED.map((t) => `${t.app.replace(/app\.ts$/, "")}src/lib/unlock.ts`);
@@ -608,7 +611,7 @@ test("every page tells the same story about unlocking", () => {
     expect(text(read(p)), `${p}: an unenforced device count`).not.toMatch(/\b(one|two|three|four|five|\d+)\s+devices\b/i);
   }
   // Terms and privacy cover every tool that is sold, the clip finder included.
-  for (const p of LEGAL) for (const tool of ["Captions", "Vertical", "Clip finder"]) expect(read(p), `${p}: covers ${tool}`).toContain(tool);
+  for (const p of LEGAL) for (const tool of ["Captions", "Vertical", "Clip finder", "Clips"]) expect(read(p), `${p}: covers ${tool}`).toContain(tool);
 });
 
 // dist/studio-demo/ is GITIGNORED and made only by build.sh, and a Pages deploy uploads dist/ as ONE snapshot —
@@ -616,7 +619,7 @@ test("every page tells the same story about unlocking", () => {
 // the failure where a gate certified an empty card while a different page deployed.
 test("every studio card's data is produced by the build, together", () => {
   const bs = read("captions/app/build.sh");
-  for (const f of ["vertical-sample.mp4", "vertical-track.json", "vertical-poster.jpg", "clipfinder-sample.json"])
+  for (const f of ["vertical-sample.mp4", "vertical-track.json", "vertical-poster.jpg", "clipfinder-sample.json", "clips-strip.mp4", "clips-poster.jpg"])
     expect(bs, `build.sh produces studio-demo/${f}`).toContain(`dist/studio-demo/${f}`);
   expect(bs, "build.sh refuses to finish with a card's data missing").toMatch(/is missing or empty; deploying now would take it off the live page/);
   // The clip finder's card data has to be able to draw, not merely exist: the card is a rail with moments on it.
@@ -641,11 +644,11 @@ test("terms describes the clip finder's two versions, and names no price", () =>
 // The studio page exists to list the tools. A live tool missing from it is the failure this guards.
 test("the studio lists every tool that is live, with its price state", () => {
   const studio = read(STUDIO); const t = text(studio).replace(/\s+/g, " ");
-  for (const [name, host] of [["Captions", "captions"], ["Vertical", "vertical"], ["Clip finder", "clipfinder"]] as const) {
+  for (const [name, host] of [["Captions", "captions"], ["Vertical", "vertical"], ["Clip finder", "clipfinder"], ["Clips", "clips"]] as const) {
     expect(t, `the studio names ${name}`).toContain(name);
     expect(studio, `${name} links to its own host`).toContain(`https://${host}.smaverk.com/?src=studio`);
   }
-  expect((studio.match(/<article class="tool/g) ?? []).length, "one card per live tool").toBe(3);
+  expect((studio.match(/<article class="tool/g) ?? []).length, "one card per tool").toBe(4);
   // Every tool is priced now, and each card says its own: free to try, then once.
   expect(t, "the clip finder's card states its price").toContain("$29 once: up to four hours");
   expect(t, "nothing left from the free-while-new days").not.toMatch(/while it is new/i);
@@ -658,8 +661,98 @@ test("the studio lists every tool that is live, with its price state", () => {
   // "Småverk, Sweden" recruits, would spend a quarter of an hour of his laptop on a 1h40m file before finding out.
   for (const card of studio.split("<article").slice(1)) {
     const name = card.match(/<h3>([^<]+)<\/h3>/)?.[1]; if (!name) continue;
-    const app = ({ Captions: "captions", "Clip finder": "clipfinder" } as Record<string, string>)[name]; if (!app) continue;
+    const app = ({ Captions: "captions", "Clip finder": "clipfinder", Clips: "clips" } as Record<string, string>)[name]; if (!app) continue;
     if (!text(read(`${app}/app/dist/index.html`)).match(/\bEnglish\b/)) continue;
     expect(text(card), `the ${name} card carries the English limit its tool page states`).toMatch(/\bEnglish\b/);
   }
+});
+
+// ---------------------------------------------------------------------------------------------------------
+// Clips. It is in SITES, so everything above applies to it; what is left is what is true of this tool only: it is
+// the other three tools' own code in a row, its price is one constant, its cap is one constant, and it has no
+// checkout yet, so the placeholders must not look like one.
+// ---------------------------------------------------------------------------------------------------------
+test("Clips wears the studio's clothes: every style rule Captions also has is identical", () => {
+  const ALLOWED = new Set([".demo", ".chips", ".chip", ".chip canvas", ".chip span", ".result", ".caplabel", ".caplabel b", "details p", "input,textarea"]); // the clip finder's own shapes, which Clips takes over
+  const rules = (file: string) => {
+    const css = [...read(file).matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].map((m) => m[1]).join("\n").replace(/@media[^{]+\{([\s\S]*?\})\s*\}/g, " ");
+    const out = new Map<string, string>();
+    for (const r of css.matchAll(/([^{}@]+)\{([^{}]*)\}/g)) for (const sel of r[1]!.split(",")) out.set(sel.trim(), r[2]!.trim().replace(/;$/, ""));
+    return out;
+  };
+  const a = rules("captions/app/dist/index.html"), b = rules("clips/app/dist/index.html");
+  const drift: string[] = []; let shared = 0;
+  for (const [sel, body] of a) if (b.has(sel)) { shared++; if (b.get(sel) !== body && !ALLOWED.has(sel)) drift.push(sel); }
+  expect(shared).toBeGreaterThan(50);
+  expect(drift).toEqual([]);
+});
+
+test("Clips: the price and the cap are each one constant, and the page states the same ones", () => {
+  const app = read("clips/app/app.ts"), plan = read("clips/app/src/lib/plan.ts"), html = read("clips/app/dist/index.html");
+  expect(app).toContain('export const PRICE = "$49"');
+  expect([...new Set(code(app).match(/\$\d+/g) ?? [])], "no second price in the script").toEqual(["$49"]);
+  expect(plan, "the cap").toMatch(/export const MAX_CLIP_S = 90;/);
+  expect(text(html), "the page states the cap").toMatch(/up to 90 seconds/);
+  expect(text(read("clips/app/dist/llms.txt"))).toMatch(/up to 90 seconds/);
+  // The clips are the other tools' own code, imported, not copied.
+  const make = read("clips/app/src/make.ts");
+  for (const m of ["vertical/app/src/detect", "vertical/app/src/fastsave", "vertical/app/src/lib/track", "captions/app/src/draw", "captions/app/src/lib/lines", "clipfinder/app/src/lib/decode"]) expect(make, `make.ts uses ${m}`).toContain(`/${m}"`);
+  expect(read("clips/app/finder.ts")).toContain('import "../../clipfinder/app/worker"');
+  expect(read("clips/app/listen.ts")).toContain('import "../../captions/app/worker"');
+  // The checkout: the production link in the markup (it works before the script runs) and the same one in the script; no placeholder left.
+  const buy = html.match(/<a [^>]*id="buy"[^>]*>/)?.[0] ?? "";
+  expect(buy, "the buy link goes to the production checkout").toMatch(/href="https:\/\/buy\.polar\.sh\/polar_cl_/);
+  expect(code(app), "the script knows the same checkout").toContain(buy.match(/href="([^"]+)"/)![1]!);
+  expect(code(app), "no placeholder left").not.toMatch(/"__[A-Z_]+__"/);
+  // The studio key: a Clips key opens the three tools it is built from, and the page, llms.txt and the terms say so.
+  for (const [f, t] of [["page", text(html)], ["llms.txt", read("clips/app/dist/llms.txt")], ["terms", text(read(LEGAL[1]!))]] as const) expect(t, `${f} says what else the key opens`).toMatch(/also opens (the three tools Clips is built from: )?Captions, Vertical and Clip finder/);
+  // LAUNCH.md stays in the private repository (it names the worker and the rail), so this holds only where it is.
+  if (existsSync(join(ROOT, "clips/LAUNCH.md"))) expect(read("clips/LAUNCH.md"), "what to create is written down").toMatch(/__LINK__/);
+  // It promises only what it measures.
+  const both = text(html) + read("clips/app/dist/llms.txt");
+  for (const claim of [/\bviral/i, /best moments/i, /will perform/i, /\bengagement\b/i, /\bguarantee/i]) expect(both).not.toMatch(claim);
+  expect(both).toMatch(/does not (guess|predict)/i);
+  // The sample is the NASA recording the clip finder uses, credited where it shows.
+  expect(html).toContain("https://images.nasa.gov/details/iss071m261311538_NASA_Astronaut_Matt_Dominick_Talks_with_KMGH_Denver_240510");
+});
+
+// The cold user (2026-09-25) found the sample clips stopping at 20 s while their cards said about a minute.
+test("Clips: the sample clips are as long as their cards say", () => {
+  // An mp4's length, from its movie header: [size][mvhd][version][flags] then v0: 4+4 bytes of dates, v1: 8+8.
+  const mp4Seconds = (file: string) => {
+    const b = readFileSync(join(ROOT, file)); const at = b.indexOf("mvhd"); expect(at, `${file}: an mp4 movie header`).toBeGreaterThan(0);
+    const v1 = b[at + 4] === 1, p = at + 8 + (v1 ? 16 : 8), scale = b.readUInt32BE(p);
+    return (v1 ? Number(b.readBigUInt64BE(p + 4)) : b.readUInt32BE(p + 4)) / scale;
+  };
+  const s = JSON.parse(read("clips/app/dist/sample.json"));
+  expect(s.moments.length).toBe(3);
+  for (const m of s.moments) {
+    expect(m.lengthS, `${m.clip}: the card's length is the moment's`).toBeCloseTo(m.endS - m.startS, 0);
+    expect(Math.abs(mp4Seconds(`clips/app/dist/${m.clip}`) - m.lengthS), `${m.clip} plays as long as its card says`).toBeLessThan(0.5);
+  }
+});
+
+// The same round found no word anywhere on what size a clip comes out. The size is Vertical's outputSize: the
+// recording's full height, 9:16, not enlarged. Every place that states it names the same numbers, and they are that function's.
+test("Clips: what comes out is stated the same everywhere, and is what the save writes", async () => {
+  const { outputSize } = await import("../vertical/app/src/lib/track");
+  expect(outputSize(1920, 1080), "a 1080p recording").toEqual({ width: 608, height: 1080 });
+  expect(outputSize(1280, 720), "a 720p recording").toEqual({ width: 406, height: 720 });
+  const html = read("clips/app/dist/index.html");
+  const ld = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)![1]!;
+  const meta = (p: string) => html.match(new RegExp(`<meta (?:name|property)="${p}" content="([^"]*)"`))?.[1] ?? "";
+  const card = read(STUDIO).split("<article").find((a) => /<h3>Clips<\/h3>/.test(a)) ?? "";
+  const terms = text(read(LEGAL[1]!)).replace(/\s+/g, " ");
+  const places: [string, string][] = [
+    ["the page, under the tool", html.match(/<p class="fine" id="caphint">([^<]*)</)?.[1] ?? ""],
+    ["the page, in the price box", html.match(/<div class="price"[\s\S]*?<\/div><\/div>/)?.[0] ?? ""],
+    ["the page, what it does", html.match(/<summary>What it does[\s\S]*?<\/details>/)?.[0] ?? ""],
+    ["description", meta("description")], ["og:description", meta("og:description")], ["twitter:description", meta("twitter:description")],
+    ["JSON-LD", JSON.parse(ld).description], ["llms.txt", read("clips/app/dist/llms.txt")],
+    ["terms", terms.match(/In Clips [^.]*\./)?.[0] ?? ""], ["the studio card", text(card)],
+  ];
+  for (const [where, t] of places) expect(t, `${where} states the size of a clip from a 1080p recording`).toContain("608×1080");
+  for (const [where, t] of places) expect(t, `${where}: no size a clip does not come out at`).not.toMatch(/1080\s*[×x]\s*1920|\b4K\b/);
+  // The finished-clip line says the size of the clip actually made, not a stated one.
+  expect(code(read("clips/app/app.ts"))).toMatch(/MP4, 9:16, \$\{[^}]*\.width\}×\$\{[^}]*\.height\}/);
 });

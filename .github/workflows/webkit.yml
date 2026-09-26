@@ -1,0 +1,175 @@
+# webkit: a page in the engines an iPhone uses, driven by a script that runs inside the page (tests/webkit/check.mjs).
+# Three rows: Playwright WebKit on Linux as a desktop, the same engine with an iPhone's profile (the page takes its
+# iPhone paths), and Mobile Safari itself in the iOS Simulator on a Mac. Each row reports time, the web process's peak
+# memory from outside, page errors, and every file the driver hands back; the report job reads those with ffprobe.
+#
+# It is generic: a page (an app directory to build and serve, or a live URL), a driver script, and a command that
+# writes the fixtures. The defaults are Clips making clips from the product gate's recording. A camera page adds
+# tests/webkit/camera-shim.js as the first driver (drivers are space-separated and run in order). From another
+# workflow: `uses: ./.github/workflows/webkit.yml` with the same inputs.
+#
+# It runs on a push to the `webkit-check` branch with the defaults: a dispatch needs the workflow on the default branch.
+name: webkit
+on:
+  push:
+    branches: [webkit-check]
+    paths: ["tests/webkit/**", "clips/app/**", ".github/workflows/webkit.yml"]
+  workflow_dispatch:
+    inputs:
+      app: { description: "App directory: `bun run build` makes its dist/, which is served", default: clips/app }
+      url: { description: "Or a live page to proxy instead of building (leave empty to build the app)", default: "" }
+      driver: { description: "In-page scripts, space-separated, run in order", default: clips/app/tests/e2e/webkit-make.js }
+      prepare: { description: "Command given a directory to write fixtures into ('none' for no fixtures)", default: clips/app/tests/e2e/webkit-fixtures.sh }
+      params: { description: "k=v pairs for the driver, space-separated", default: "" }
+      ignore: { description: "Page errors matching this regex are reported but do not fail", default: '^console: \[WARNING\]' }
+      minutes: { description: "How long the driver may take", default: "45" }
+      simulator: { description: "Run the iOS Simulator row (yes/no)", default: "yes" }
+  workflow_call:
+    inputs:
+      app: { type: string, default: clips/app }
+      url: { type: string, default: "" }
+      driver: { type: string, default: clips/app/tests/e2e/webkit-make.js }
+      prepare: { type: string, default: clips/app/tests/e2e/webkit-fixtures.sh }
+      params: { type: string, default: "" }
+      ignore: { type: string, default: '^console: \[WARNING\]' }
+      minutes: { type: string, default: "45" }
+      simulator: { type: string, default: "yes" }
+
+permissions:
+  contents: read
+concurrency:
+  group: webkit-${{ github.ref }}-${{ inputs.app || 'clips/app' }}
+  cancel-in-progress: true
+
+env:
+  APP: ${{ inputs.app || 'clips/app' }}
+  URL: ${{ inputs.url }}
+  DRIVER: ${{ inputs.driver || 'clips/app/tests/e2e/webkit-make.js' }}
+  PREPARE: ${{ inputs.prepare || 'clips/app/tests/e2e/webkit-fixtures.sh' }}
+  PARAMS: ${{ inputs.params }}
+  IGNORE: ${{ inputs.ignore || '^console: \[WARNING\]' }}
+  MINUTES: ${{ inputs.minutes || '45' }}
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.2
+      - name: ffmpeg
+        run: command -v ffmpeg >/dev/null || { sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg; }
+      - name: Build
+        if: env.URL == ''
+        run: cd "$APP" && bun install --frozen-lockfile && bun run build && mkdir -p "$GITHUB_WORKSPACE/pack" && cp -r dist "$GITHUB_WORKSPACE/pack/dist"
+      - name: Fixtures
+        run: mkdir -p pack/fixtures && if [ "$PREPARE" != none ]; then bash $PREPARE "$GITHUB_WORKSPACE/pack/fixtures"; fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: webkit-pack
+          path: pack
+          retention-days: 1
+
+  webkit:
+    needs: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - row: desktop
+            device: ""
+          - row: iphone
+            device: iPhone 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/download-artifact@v4
+        with:
+          name: webkit-pack
+          path: pack
+      - name: Machine
+        run: echo "$(nproc) cores, $(free -m | awk '/Mem:/{print $2}') MB"
+      - name: WebKit
+        run: cd tests/webkit && bun install --frozen-lockfile && bunx playwright install --with-deps webkit
+      - name: ffprobe
+        run: command -v ffprobe >/dev/null || { sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg; }
+      - name: Check
+        env:
+          DEVICE: ${{ matrix.device }}
+          ROW: ${{ matrix.row }}
+        run: |
+          args=(); for d in $DRIVER; do args+=(--driver "$d"); done
+          for f in pack/fixtures/*; do [ -f "$f" ] && args+=(--fixture "$f"); done
+          for p in $PARAMS; do args+=(--param "$p"); done
+          if [ -n "$URL" ]; then args+=(--url "$URL"); else args+=(--serve pack/dist); fi
+          [ -n "$DEVICE" ] && args+=(--device "$DEVICE")
+          node tests/webkit/check.mjs "${args[@]}" --engine webkit --ignore "$IGNORE" --minutes "$MINUTES" --out "out/$ROW"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: webkit-out-${{ matrix.row }}
+          path: out
+          retention-days: 7
+          if-no-files-found: warn
+
+  simulator:
+    needs: prepare
+    if: inputs.simulator != 'no'
+    runs-on: macos-latest
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/download-artifact@v4
+        with:
+          name: webkit-pack
+          path: pack
+      - name: Machine
+        run: sw_vers; sysctl -n hw.ncpu hw.memsize; xcodebuild -version; xcrun simctl list runtimes
+      - name: Check
+        run: |
+          args=(); for d in $DRIVER; do args+=(--driver "$d"); done
+          for f in pack/fixtures/*; do [ -f "$f" ] && args+=(--fixture "$f"); done
+          for p in $PARAMS; do args+=(--param "$p"); done
+          if [ -n "$URL" ]; then args+=(--url "$URL"); else args+=(--serve pack/dist); fi
+          node tests/webkit/check.mjs "${args[@]}" --engine simulator --device iPhone --ignore "$IGNORE" --minutes "$MINUTES" --out out/simulator
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: webkit-out-simulator
+          path: out
+          retention-days: 7
+          if-no-files-found: warn
+
+  report:
+    needs: [webkit, simulator]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: webkit-out-*
+          merge-multiple: true
+          path: out
+      - name: ffprobe
+        run: command -v ffprobe >/dev/null || { sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg; }
+      - name: Summary
+        run: node tests/webkit/summary.mjs out | tee -a "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: webkit-report
+          path: out/summary.json
+          retention-days: 30

@@ -9,15 +9,15 @@
 <link rel="canonical" href="https://smaverk.com/">
 <meta name="google-site-verification" content="_eN1ywvXp9R-hebN0pJSivwAN8J8DuuaNGwfr_QqmnU">
 <meta property="og:title" content="Småverk — small AI tools that run on your device">
-<meta property="og:description" content="Three tools, one job each, in your browser. Nothing uploaded. Free to try, pay once per tool.">
+<meta property="og:description" content="Four tools, one job each, in your browser. Nothing uploaded. Free to try, pay once per tool.">
 <meta property="og:url" content="https://smaverk.com/"><meta property="og:type" content="website"><meta property="og:site_name" content="Småverk">
-<meta property="og:image" content="https://smaverk.com/studio-demo/vertical-poster.jpg?v=1790177158">
+<meta property="og:image" content="https://smaverk.com/studio-demo/vertical-poster.jpg?v=1790177474">
 <meta name="twitter:card" content="summary"><meta name="twitter:title" content="Småverk — small AI tools that run on your device"><meta name="twitter:description" content="Each tool does one job in your browser. Nothing uploaded. Pay once per tool.">
 <link rel="preload" href="fonts/bricolage-grotesque-latin.woff2" as="font" type="font/woff2" crossorigin>
 <style>@font-face{font-family:"Bricolage Grotesque";font-style:normal;font-weight:200 800;font-stretch:100%;font-display:swap;src:url(fonts/bricolage-grotesque-latin.woff2) format("woff2")}</style>
 <link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="icon" type="image/png" sizes="64x64" href="/icon-64.png">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%277%27 fill=%27%23FFD84D%27/%3E%3Crect x=%277%27 y=%2720%27 width=%2718%27 height=%275%27 rx=%272.5%27 fill=%27%2316141D%27/%3E%3C/svg%3E">
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"Småverk","url":"https://smaverk.com","email":"hello@smaverk.com","description":"Three small browser tools that run on the user's device: Captions, Vertical and Clip finder. Nothing uploaded. Free to try, and pay once per tool."}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"Småverk","url":"https://smaverk.com","email":"hello@smaverk.com","description":"Four small browser tools that run on the user's device: Captions, Vertical, Clip finder and Clips. Nothing uploaded. Free to try, and pay once per tool."}</script>
 <style>
 :root{color-scheme:light dark;
   --ground:light-dark(#F3F2F7,#0E0D12);--surface:light-dark(#FFFFFF,#18161F);--ink:light-dark(#16141D,#F2F0F7);--muted:light-dark(#67637A,#9D99AE);
@@ -69,6 +69,8 @@ p{margin:0 0 12px;text-wrap:pretty;overflow-wrap:anywhere}
 /* The Captions sample is a close vertical shot; a 16:9 cut of it would put the words over his mouth. The card shows the middle of the
    clip at its own width on the card's dark ground, with the words kept inside the picture. */
 .tool.nodemo{justify-content:flex-start}.tool.nodemo h3{margin-top:0}.demo[data-demo="captions"] video{width:64%;margin-inline:auto;object-position:center 27%}
+/* The Clips card: three tall clips side by side is nearly 16:9 already, so the whole strip shows, not a crop of it. */
+.demo[data-demo="clips"] video{object-fit:contain}
 .demo[data-demo="captions"] .cap{left:19%;right:19%;bottom:9%;font-size:clamp(15px,3.9vw,18px);text-wrap:balance}
 .demo .cap{position:absolute;left:5%;right:5%;bottom:11%;margin:0;text-align:center;font:800 clamp(19px,5.4vw,27px)/1.15 var(--display);color:#fff;text-shadow:0 2px 10px rgba(0,0,0,.75),0 0 2px rgba(0,0,0,.6);letter-spacing:-.01em}
 .demo .cap b{color:var(--hi);font-weight:800}
@@ -103,12 +105,12 @@ footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--line);color:v
 <main class="wrap">
   <div class="brand"><i></i>Småverk</div>
   <h1>Small AI tools that run on <mark>your</mark> device.</h1>
-  <p class="sub">Three tools, one job each, in your browser. Nothing leaves your device.</p>
+  <p class="sub">Four tools, one job each, in your browser. Nothing leaves your device.</p>
 
   <section class="tools" aria-label="Tools">
     <article class="tool">
       <div class="demo" data-demo="captions">
-        <video src="sample.mp4?v=1790177158" poster="poster.webp?v=1790177158" muted loop playsinline preload="metadata" aria-label="A sample clip. Captions appear on it as each word is spoken."></video>
+        <video src="sample.mp4?v=1790177474" poster="poster.webp?v=1790177474" muted loop playsinline preload="metadata" aria-label="A sample clip. Captions appear on it as each word is spoken."></video>
         <p class="cap" aria-hidden="true"></p>
         <button class="dtap" type="button" aria-label="Play or pause the Captions demo"></button>
         <button class="sound" type="button" aria-pressed="false" aria-label="Sound is off. Turn it on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10v4h4l5 4V6L8 10H4z"/><path class="wave" d="M16.5 9a4 4 0 0 1 0 6M19 6.5a8 8 0 0 1 0 11"/><path class="mute" d="M17 9.5l4.5 5M21.5 9.5l-4.5 5"/></svg></button>
@@ -120,20 +122,20 @@ footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--line);color:v
     </article>
     <article class="tool">
       <div class="demo" data-demo="vertical">
-        <video src="studio-demo/vertical-sample.mp4?v=1790177158" poster="studio-demo/vertical-poster.jpg?v=1790177158" muted loop playsinline preload="none" aria-label="A landscape sample clip of a soccer coach talking as he moves across a field. A yellow window follows him, and the small picture shows the vertical result."></video>
+        <video src="studio-demo/vertical-sample.mp4?v=1790177474" poster="studio-demo/vertical-poster.jpg?v=1790177474" muted loop playsinline preload="none" aria-label="A landscape sample clip of a soccer coach talking as he moves across a field. A yellow window follows him, and the small picture shows the vertical result."></video>
         <i class="dim" data-side="l"></i><i class="dim" data-side="r"></i><i class="win"></i>
         <canvas class="inset" width="180" height="320" aria-hidden="true"></canvas>
         <button class="dtap" type="button" aria-label="Play or pause the Vertical demo"></button>
         <button class="sound" data-for="vertical-sound" type="button" aria-pressed="false" aria-label="Sound is off. Turn it on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10v4h4l5 4V6L8 10H4z"/><path class="wave" d="M16.5 9a4 4 0 0 1 0 6M19 6.5a8 8 0 0 1 0 11"/><path class="mute" d="M17 9.5l4.5 5M21.5 9.5l-4.5 5"/></svg></button>
       </div>
       <h3>Vertical</h3>
-      <p>A sideways clip made tall for Reels, TikTok and Shorts. AI keeps the speaker in the picture. The yellow window is what gets saved.</p>
+      <p>A sideways clip made tall for Reels, TikTok and Shorts. AI keeps the speaker in the picture.</p>
       <p class="price">Free: clips up to 60 seconds, with a small smaverk.com mark. $24 once: clips up to five minutes, no mark.</p>
       <a class="btn" href="https://vertical.smaverk.com/?src=studio">Open Vertical</a>
     </article>
     <article class="tool">
       <div class="demo" data-demo="clipfinder">
-        <video src="studio-demo/clipfinder-sample.mp4?v=1790177158" poster="studio-demo/clipfinder-poster.jpg?v=1790177158" muted loop playsinline preload="none" aria-label="Four moments the Clip finder picked from a 15-minute interview with an astronaut on the space station, each played from its opening. A band along the bottom shows where each one sits in the whole recording, and why it was picked."></video>
+        <video src="studio-demo/clipfinder-sample.mp4?v=1790177474" poster="studio-demo/clipfinder-poster.jpg?v=1790177474" muted loop playsinline preload="none" aria-label="Four moments the Clip finder picked from a 15-minute interview with an astronaut on the space station, each played from its opening. A band along the bottom shows where each one sits in the whole recording, and why it was picked."></video>
         <canvas class="band" aria-hidden="true"></canvas>
         <button class="dtap" type="button" aria-label="Play or pause the Clip finder demo"></button>
         <button class="sound" type="button" aria-pressed="false" aria-label="Sound is off. Turn it on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10v4h4l5 4V6L8 10H4z"/><path class="wave" d="M16.5 9a4 4 0 0 1 0 6M19 6.5a8 8 0 0 1 0 11"/><path class="mute" d="M17 9.5l4.5 5M21.5 9.5l-4.5 5"/></svg></button>
@@ -143,14 +145,24 @@ footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--line);color:v
       <p class="price">Free: recordings up to 30 minutes, every moment shown. $29 once: up to four hours, and every export.</p>
       <a class="btn" href="https://clipfinder.smaverk.com/?src=studio">Open Clip finder</a>
     </article>
+    <article class="tool">
+      <div class="demo" data-demo="clips">
+        <video src="studio-demo/clips-strip.mp4?v=1790177474" poster="studio-demo/clips-poster.jpg?v=1790177474" muted loop playsinline preload="none" aria-label="Three tall clips Clips made from a 15-minute interview with an astronaut on the space station, side by side, each with the speaker in frame and captions written in."></video>
+        <button class="dtap" type="button" aria-label="Play or pause the Clips demo"></button>
+      </div>
+      <h3>Clips</h3>
+      <p>The three tools in a row: a long recording in, tall clips with captions out, 608×1080 from 1080p video. English.</p>
+      <p class="price">Free: find and watch every clip, save one with a small smaverk.com mark. $49 once: save every clip, no mark.</p>
+      <a class="btn" href="https://clips.smaverk.com/?src=studio">Open Clips</a>
+    </article>
   </section>
 
   <h2>How they work</h2>
   <ul class="how">
-    <li><b>Runs in this page.</b> The tool loads once, then works offline.</li>
-    <li><b>Nothing uploaded.</b> Your video stays on your device. No account.</li>
-    <li><b>Pay once per tool.</b> Paid through Polar, a checkout company. Taxes included. <span class="nb">Refund within 14 days.</span></li>
-    <li><b>Nothing to set up.</b> You come back to it already unlocked. Your key is on screen and in your email.</li>
+    <li><b>Runs in this page,</b> then works offline.</li>
+    <li><b>Nothing uploaded.</b> No account.</li>
+    <li><b>Pay once,</b> through Polar. A Clips key opens all four. <span class="nb">Refund within 14 days.</span></li>
+    <li><b>Nothing to paste.</b> You come back already unlocked.</li>
   </ul>
 
   <footer>
@@ -171,7 +183,7 @@ for (const box of document.querySelectorAll(".demo")) {
   const v = box.querySelector("video"), tap = box.querySelector(".dtap"); let paint = () => {};
   if (box.dataset.demo === "captions") {
     const cap = box.querySelector(".cap"); let lines = [];
-    fetch("sample-words.json?v=1790177158").then((r) => r.json()).then((w) => { const marked = w.some((x) => x.br); let cur = []; for (const x of w) { cur.push(x); const end = /[.!?]$/.test(x.text), comma = /,$/.test(x.text); if (x.br || end || (!marked && ((comma && cur.length >= 3) || cur.length >= 5))) { lines.push(cur); cur = []; } } if (cur.length) lines.push(cur); paint(); }).catch(() => {});
+    fetch("sample-words.json?v=1790177474").then((r) => r.json()).then((w) => { const marked = w.some((x) => x.br); let cur = []; for (const x of w) { cur.push(x); const end = /[.!?]$/.test(x.text), comma = /,$/.test(x.text); if (x.br || end || (!marked && ((comma && cur.length >= 3) || cur.length >= 5))) { lines.push(cur); cur = []; } } if (cur.length) lines.push(cur); paint(); }).catch(() => {});
     let shown = "";
     paint = () => { const t = v.currentTime; const line = lines.find((l) => t >= l[0].start - 0.05 && t <= l[l.length - 1].end + 0.35) ?? (t < (lines[0]?.[0].start ?? 0) ? lines[0] : null);
       const key = line ? line[0].start + ":" + line.findIndex((x) => t >= x.start && t < x.end + 0.05) : ""; if (key === shown) return; shown = key;
@@ -179,7 +191,7 @@ for (const box of document.querySelectorAll(".demo")) {
   } else if (box.dataset.demo === "clipfinder") {
     // The tool's own answer for this recording (its sample.json, the one-minute set), drawn over the moments it picked.
     const band = box.querySelector(".band"), g = band.getContext("2d"); let s = null;
-    fetch("studio-demo/clipfinder-sample.json?v=1790177158").then((r) => r.json()).then((j) => { s = j; paint(); }).catch(() => {});
+    fetch("studio-demo/clipfinder-sample.json?v=1790177474").then((r) => r.json()).then((j) => { s = j; paint(); }).catch(() => {});
     const clock = (x) => { const r = Math.round(x); return `${Math.floor(r / 60)}:${String(r % 60).padStart(2, "0")}`; }; // rounded the way the tool rounds, so the card and the tool name the same second
     paint = () => { if (!s) return; const set = s.sets["60"] ?? []; const t = v.currentTime; const i = Math.max(0, set.findIndex((m) => t >= m.clipStartS && t < m.clipEndS));
       const d = devicePixelRatio || 1, W = Math.round(band.clientWidth * d), H = Math.round(band.clientHeight * d); if (band.width !== W || band.height !== H) { band.width = W; band.height = H; }
@@ -188,9 +200,11 @@ for (const box of document.querySelectorAll(".demo")) {
       set.forEach((m, k) => { const x = pad + (m.startS / s.durationS) * bw, w = Math.max(4 * d, ((m.endS - m.startS) / s.durationS) * bw); g.fillStyle = k === i ? "#FFD84D" : "rgba(255,255,255,.8)"; g.fillRect(x, y - (k === i ? 3 : 1) * d, w, (k === i ? 10 : 6) * d); });
       const m = set[i]; if (!m) return; g.font = `700 ${14 * d}px "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif`; g.fillStyle = "#fff"; g.shadowColor = "rgba(0,0,0,.7)"; g.shadowBlur = 6 * d;
       g.fillText(`${clock(m.startS)} · ${m.why?.[0] ?? ""}`, pad, y - 10 * d, bw); g.shadowBlur = 0; };
+  } else if (box.dataset.demo === "clips") {
+    // The clips are the tool's own output with the captions already in them: nothing to draw over them.
   } else {
     const win = box.querySelector(".win"), L = box.querySelector("[data-side=l]"), R = box.querySelector("[data-side=r]"), inset = box.querySelector(".inset"), g = inset.getContext("2d"); let track = [];
-    fetch("studio-demo/vertical-track.json?v=1790177158").then((r) => r.json()).then((t) => { track = t; paint(); }).catch(() => {});
+    fetch("studio-demo/vertical-track.json?v=1790177474").then((r) => r.json()).then((t) => { track = t; paint(); }).catch(() => {});
     paint = () => { if (!track.length) return; const t = v.currentTime; let i = track.findIndex((p) => p.t > t); if (i < 0) i = track.length - 1; const a = track[Math.max(0, i - 1)], b = track[i]; const cx = b.t > a.t ? lerp(a.cx, b.cx, Math.min(1, Math.max(0, (t - a.t) / (b.t - a.t)))) : a.cx;
       const W = v.videoWidth || 1280, H = v.videoHeight || 720, w = Math.min(1, (H * 9 / 16) / W), left = Math.min(1 - w, Math.max(0, cx - w / 2));
       win.style.left = left * 100 + "%"; win.style.width = w * 100 + "%"; L.style.left = "0"; L.style.width = left * 100 + "%"; R.style.left = (left + w) * 100 + "%"; R.style.right = "0";

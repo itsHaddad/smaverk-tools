@@ -32,6 +32,7 @@ const moments = await page.evaluate(() => window.__cf.list);  // [{startS, endS,
 ## The other tools
 - https://vertical.smaverk.com — a wide clip cut to 9:16 with the speaker in frame.
 - https://captions.smaverk.com — captions burned onto a short clip.
+- https://clips.smaverk.com — the three tools in a row: a long recording in, tall clips with captions out.
 
 ## Contact
 hello@smaverk.com

@@ -1,0 +1,42 @@
+{
+ "title": "Astronaut interview from space, 15 min",
+ "credit": "NASA, 10 May 2024 — public domain",
+ "url": "https://images.nasa.gov/details/iss071m261311538_NASA_Astronaut_Matt_Dominick_Talks_with_KMGH_Denver_240510",
+ "durationS": 927.4,
+ "poster": "poster.jpg",
+ "moments": [
+  {
+   "startS": 722.7,
+   "endS": 779.6,
+   "why": [
+    "Needs a line of setup first",
+    "Sets something up and comes back to it"
+   ],
+   "opening": "There's so many really important jobs, too, on the…",
+   "clip": "sample-1.mp4",
+   "lengthS": 56.91
+  },
+  {
+   "startS": 482.8,
+   "endS": 544.2,
+   "why": [
+    "Needs a line of setup first",
+    "Sets something up and comes back to it"
+   ],
+   "opening": "So the other day I was literally trying to…",
+   "clip": "sample-2.mp4",
+   "lengthS": 61.41
+  },
+  {
+   "startS": 305.7,
+   "endS": 369.2,
+   "why": [
+    "Opens on the question it answers",
+    "One subject across 2 turns"
+   ],
+   "opening": "So when did you get to space and when…",
+   "clip": "sample-3.mp4",
+   "lengthS": 63.52
+  }
+ ]
+}
