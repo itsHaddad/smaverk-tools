@@ -49,16 +49,21 @@
     const v = document.getElementById("savedvideo");
     const blob = await (await fetch(v.src)).blob();
     await c.put(`take.${o.recorder.saved.ext}`, blob);
-    // It plays: the end screen's own player, from the start, past 2 s.
-    v.muted = true; v.currentTime = 0;
-    await v.play().catch((e) => c.log(`play(): ${e.message}`));
-    await c.waitFor(() => v.currentTime > 2, 30_000, "the saved video playing past 2 s");
-    const played = +v.currentTime.toFixed(2); v.pause();
+    // It plays: the end screen's own player, from the start, past 2 s. Playwright's WebKit for Linux is built without an
+    // H.264 decoder (its media comes from the system's GStreamer): there the file is only read by ffprobe, and it says so.
+    const h264 = v.canPlayType('video/mp4; codecs="avc1.640028"');
+    let played = null;
+    if (h264) {
+      v.muted = true; v.currentTime = 0;
+      await v.play().catch((e) => c.log(`play(): ${e.message}`));
+      await c.waitFor(() => v.currentTime > 2, 30_000, "the saved video playing past 2 s");
+      played = +v.currentTime.toFixed(2); v.pause();
+    } else c.log("this engine build cannot decode H.264 (canPlayType is empty): the take is checked by ffprobe only");
     clearInterval(watch);
     c.done({
       features: features(), cameraS: +cameraS.toFixed(1), firstFaceS: +faceS.toFixed(1), recordedS: +recS.toFixed(1),
       look: o.look, people: { finder: o.people.finder, where: o.people.where }, describer: o.memory.describer, during,
-      recorder: o.recorder, stills: o.stills, played, videoSize: [v.videoWidth, v.videoHeight], camera: o.camera, pageErrors: o.errors,
+      recorder: o.recorder, stills: o.stills, played, h264: h264 || "no decoder in this build", videoSize: [v.videoWidth, v.videoHeight], camera: o.camera, pageErrors: o.errors,
     });
   };
   const go = () => run().catch((e) => { clearInterval(watch); c.fail(e, { at: op()?.state, line: op()?.line, look: op()?.look, errors: op()?.errors }); });
