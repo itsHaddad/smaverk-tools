@@ -35,6 +35,11 @@
     b.click(); // Open the camera
     await c.waitFor(() => op().state === "live", openMs, "the camera opening");
     const cameraS = (now() - t0) / 1000;
+    // Whether the camera picture has anything in it (a paused fixture video gives a black or frozen picture): its mean
+    // brightness and how much it changes, every 20 s, until a face is found.
+    const probe = document.createElement("canvas"); probe.width = 64; probe.height = 36; const pg = probe.getContext("2d", { willReadFrequently: true });
+    let lastMean = -1; const seeIt = () => { const el = [...document.querySelectorAll("video")].find((x) => x.srcObject); if (!el || !pg) return "no camera video"; pg.drawImage(el, 0, 0, 64, 36); const d = pg.getImageData(0, 0, 64, 36).data; let m = 0; for (let i = 0; i < d.length; i += 4) m += (d[i] + d[i + 1] + d[i + 2]) / 3; m /= d.length / 4; const moved = lastMean < 0 ? "" : ` (${Math.abs(m - lastMean).toFixed(1)} since the last)`; lastMean = m; return `camera picture ${el.videoWidth}x${el.videoHeight}, mean ${m.toFixed(1)}${moved}, video ${el.paused ? "paused" : "playing"}, fixture ${window.__camera?.name} ${document.querySelector("video[style*='opacity:0.01']")?.paused ? "paused" : "playing"}`; };
+    c.log(seeIt()); const seeing = setInterval(() => { if (op().confirmed < 1) c.log(seeIt()); else clearInterval(seeing); }, 20_000);
     await c.waitFor(() => op().confirmed >= 1, openMs, "a face found (the face finder loaded and ran)");
     const faceS = (now() - t0) / 1000;
     c.log(`camera ${cameraS.toFixed(1)} s, first face ${faceS.toFixed(1)} s, looks at ${op().look.avgMs} ms (${op().look.where})`);
