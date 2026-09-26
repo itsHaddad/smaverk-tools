@@ -25,6 +25,7 @@ on:
       ignore: { description: "Page errors matching this regex are reported but do not fail", default: '^console: [[]WARNING]' }
       minutes: { description: "How long the driver may take", default: "45" }
       simulator: { description: "Run the iOS Simulator row (yes/no)", default: "yes" }
+      sim_minutes: { description: "How long the Simulator row may take (the Simulator is far slower than a phone at making video)", default: "100" }
   workflow_call:
     inputs:
       app: { type: string, default: clips/app }
@@ -35,6 +36,7 @@ on:
       ignore: { type: string, default: '^console: [[]WARNING]' }
       minutes: { type: string, default: "45" }
       simulator: { type: string, default: "yes" }
+      sim_minutes: { type: string, default: "100" }
 
 permissions:
   contents: read
@@ -50,6 +52,7 @@ env:
   PARAMS: ${{ inputs.params }}
   IGNORE: "${{ inputs.ignore || '^console: [[]WARNING]' }}"
   MINUTES: ${{ inputs.minutes || '45' }}
+  SIM_MINUTES: ${{ inputs.sim_minutes || '100' }}
 
 jobs:
   prepare:
@@ -132,7 +135,7 @@ jobs:
     needs: prepare
     if: inputs.simulator != 'no'
     runs-on: macos-latest
-    timeout-minutes: 75
+    timeout-minutes: 130
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -150,7 +153,7 @@ jobs:
           for f in pack/fixtures/*; do [ -f "$f" ] && args+=(--fixture "$f"); done
           for p in $PARAMS; do args+=(--param "$p"); done
           if [ -n "$URL" ]; then args+=(--url "$URL"); else args+=(--serve pack/dist); fi
-          node tests/webkit/check.mjs "${args[@]}" --engine simulator --device iPhone --ignore "$IGNORE" --minutes "$MINUTES" --out out/simulator
+          node tests/webkit/check.mjs --param clips=1 "${args[@]}" --engine simulator --device iPhone --ignore "$IGNORE" --minutes "$SIM_MINUTES" --out out/simulator
       - uses: actions/upload-artifact@v4
         if: always()
         with:

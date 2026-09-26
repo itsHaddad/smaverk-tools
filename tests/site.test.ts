@@ -756,3 +756,15 @@ test("Clips: what comes out is stated the same everywhere, and is what the save 
   // The finished-clip line says the size of the clip actually made, not a stated one.
   expect(code(read("clips/app/app.ts"))).toMatch(/MP4, 9:16, \$\{[^}]*\.width\}×\$\{[^}]*\.height\}/);
 });
+
+// The page said a clip took "about as long as it plays". Measured 2026-09-26 (.github/workflows/webkit.yml, the Chromium
+// row on a four-core runner): two 1080p clips of 61 and 65 s in 67 s, and five minutes read in 37 s; the cold user's
+// 18:57 read in 2:16. So the page and llms.txt state those, and no longer the old line.
+test("Clips: the time it takes is the measured one, the same on the page and in llms.txt", () => {
+  for (const [f, t] of [["page", text(read("clips/app/dist/index.html"))], ["llms.txt", read("clips/app/dist/llms.txt")]] as const) {
+    expect(t, `${f}: the old claim`).not.toMatch(/about as long as it plays/);
+    expect(t, `${f}: the reading time`).toMatch(/an hour of recording (in|is read in) about 7 minutes/);
+    expect(t, `${f}: the clip time`).toMatch(/each clip takes about half as long as it plays/);
+    expect(t, `${f}: the phone limit`).toMatch(/iPhone.*(small screen|small-screen)/);
+  }
+});

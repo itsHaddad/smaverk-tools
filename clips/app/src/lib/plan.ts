@@ -103,3 +103,29 @@ export const mayFreeSave = (licensed: boolean, freeSaved: number) => licensed ||
 
 /** The line under a finished clip. */
 export const madeLine = (lengthS: number, fromS: number, capped: boolean) => `${spoken(lengthS)} from ${clock(fromS)}.${capped ? " Cut to 90 seconds." : ""}`;
+
+/**
+ * A phone that may not have room for this recording. Measured 2026-09-26 in WebKit and in the iOS Simulator's Safari
+ * (tests/webkit, .github/workflows/webkit.yml): making a clip from a 1080p recording takes the page to 1.4–1.5 GB, while
+ * it finds the speaker in the cut, and the size follows the picture, not the recording's length. An iPhone with 3 GB
+ * stops an app at about 1.4 GB (iPhone X) to 1.8 GB (XR); newer ones at about 2 GB. Safari tells a page nothing about
+ * memory, so the iPhones warned are the small-screen ones (375×667 points: the SE and the 6 to 8), where the 3 GB
+ * models are. The mini's screen is taller and it has 4 GB.
+ */
+export function tightPhone(d: { iOS: boolean; screenW: number; screenH: number }, sourceHeight: number): boolean {
+  return d.iOS && Math.min(d.screenW, d.screenH) <= 375 && Math.max(d.screenW, d.screenH) <= 667 && sourceHeight >= 1080;
+}
+
+/** What the page is doing, kept in the tab's session storage while it works, so a page that starts again can say why. */
+export const BUSY_KEY = "smaverk.clips.busy";
+export type Busy = "reading" | "making";
+
+/**
+ * The line for a page that loads while its own tab says it was working. Safari starts a page again when the phone
+ * runs out of memory for it, and says nothing; without this line the person sees the sample, as if nothing had begun.
+ */
+export function afterReload(busy: string | null): string {
+  const doing = busy === "reading" ? "reading the recording" : busy === "making" ? "making the clips" : "";
+  if (!doing) return "";
+  return `The page started again while it was ${doing}. That usually means the phone ran out of memory for it. A computer has more room, and a 720p copy of the recording needs less.`;
+}

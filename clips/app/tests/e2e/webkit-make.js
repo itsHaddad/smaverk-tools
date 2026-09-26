@@ -24,7 +24,16 @@
   const shown = () => `${window.__clips.state} heard=${Math.round(window.__clips.heardS || 0)}s made=${(window.__clips.made || []).length} | ${document.getElementById("steps").innerText.replace(/\s+/g, " ").trim()} | ${document.getElementById("status").textContent}`;
   let last = "", since = now(), stalled = "";
   const watch = () => { const s = shown(); if (s !== last) { c.log(s); last = s; since = now(); } else if (now() - since > stall) stalled = s; };
-  const until = (fn, ms, what) => c.waitFor(() => { if (stalled) throw new Error(`the page showed the same thing for ${stall / 60_000} min: ${stalled}`); return fn(); }, ms, what);
+  // Its own loop, not __check.waitFor: that one treats a throwing condition as "not yet", which would swallow the stall.
+  const until = async (fn, ms, what) => {
+    const end = now() + ms;
+    for (;;) {
+      if (stalled) throw new Error(`the page showed the same thing for ${stall / 60_000} min: ${stalled}`);
+      if (fn()) return;
+      if (now() > end) throw new Error(`${what} did not happen in ${Math.round(ms / 1000)} s`);
+      await new Promise((r) => setTimeout(r, 1000));
+    }
+  };
 
   const run = async () => {
     await c.waitFor(() => window.clips && window.__clips && document.getElementById("file"), 60_000, "the page's own script");

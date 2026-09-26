@@ -7,7 +7,8 @@ Clips is one of the tools by Småverk; https://smaverk.com lists them all. It ru
 ## What it does
 - Input: a video of a podcast, a talk or an interview (mp4, mov, webm), recordings up to four hours, English speech.
 - Output: one mp4 per kept moment: 9:16 at the recording's full height, not enlarged (608×1080 from a 1920×1080 recording, 406×720 from 1280×720), the speaker kept in frame, captions burned in, the sound as recorded. Each clip is up to 90 seconds; a longer moment ends on the last whole sentence before that.
-- The strongest three moments are kept by default. It makes one clip at a time, so a phone holds one clip's work in memory, not the recording's.
+- The strongest three moments are kept by default. It makes one clip at a time, so a phone holds one clip's work in memory, not the recording's. Making a clip from a 1080p recording still needs about 1.5 GB in the page, so an iPhone with 3 GB (the small-screen ones) may stop partway; the page warns before and explains after.
+- Time, measured in a browser on a four-core computer: an hour of recording is read in about 7 minutes, and each clip takes about half as long as it plays. Phones are slower and have not been timed on a real device.
 - Everything runs in the page, on the device. There is no server that sees the recording, by design.
 
 It does not predict what an audience will do with a clip. Nothing in it measures that.
