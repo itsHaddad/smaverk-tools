@@ -35,6 +35,19 @@
       for await (const p of sink.packets()) { if (p.timestamp > 2) break; await acopy.add(p.clone({ timestamp: Math.max(0, p.timestamp) }), meta); n++; }
       return n;
     });
+    // Each half alone, and the encoder with other settings, so a stall can be put on the decoder or the encoder.
+    const soft = async (what, ms, fn) => { try { await step(what, ms, fn); } catch { /* recorded in steps; the next check still runs */ } };
+    await soft("decode 2 s alone", 90_000, async () => { let n = 0; for await (const s of new mb.VideoSampleSink(vt).samples(0, 2)) { s.close(); n++; } return n; });
+    for (const [name, opts] of [["default", {}], ["realtime", { latencyMode: "realtime" }], ["software", { hardwareAcceleration: "prefer-software" }]]) {
+      await soft(`encode 60 drawn frames alone, ${name}`, 90_000, async () => {
+        const o2 = new mb.Output({ format: new mb.Mp4OutputFormat({ fastStart: "in-memory" }), target: new mb.BufferTarget() });
+        const cv = document.createElement("canvas"); cv.width = W; cv.height = H; const g = cv.getContext("2d", { alpha: false });
+        const src = new mb.CanvasSource(cv, { codec, bitrate: 4e6, keyFrameInterval: 2, latencyMode: "quality", hardwareAcceleration: "no-preference", ...opts });
+        o2.addVideoTrack(src, { frameRate: 30 }); await o2.start();
+        for (let n = 0; n < 60; n++) { g.fillStyle = `hsl(${n * 6} 60% 50%)`; g.fillRect(0, 0, W, H); await src.add(n / 30, 1 / 30); }
+        await o2.finalize(); return o2.target.buffer.byteLength;
+      });
+    }
     const sink = new mb.VideoSampleSink(vt);
     const it = sink.samples(0, 2)[Symbol.asyncIterator]();
     const first = await step("decode the first frame", 60_000, () => it.next());
