@@ -21,7 +21,7 @@ on:
       driver: { description: "In-page scripts, space-separated, run in order", default: clips/app/tests/e2e/webkit-make.js }
       prepare: { description: "Command given a directory to write fixtures into ('none' for no fixtures)", default: clips/app/tests/e2e/webkit-fixtures.sh }
       params: { description: "k=v pairs for the driver, space-separated", default: "" }
-      ignore: { description: "Page errors matching this regex are reported but do not fail", default: '^console: \[WARNING\]' }
+      ignore: { description: "Page errors matching this regex are reported but do not fail", default: '^console: [[]WARNING]' }
       minutes: { description: "How long the driver may take", default: "45" }
       simulator: { description: "Run the iOS Simulator row (yes/no)", default: "yes" }
   workflow_call:
@@ -31,7 +31,7 @@ on:
       driver: { type: string, default: clips/app/tests/e2e/webkit-make.js }
       prepare: { type: string, default: clips/app/tests/e2e/webkit-fixtures.sh }
       params: { type: string, default: "" }
-      ignore: { type: string, default: '^console: \[WARNING\]' }
+      ignore: { type: string, default: '^console: [[]WARNING]' }
       minutes: { type: string, default: "45" }
       simulator: { type: string, default: "yes" }
 
@@ -47,7 +47,7 @@ env:
   DRIVER: ${{ inputs.driver || 'clips/app/tests/e2e/webkit-make.js' }}
   PREPARE: ${{ inputs.prepare || 'clips/app/tests/e2e/webkit-fixtures.sh' }}
   PARAMS: ${{ inputs.params }}
-  IGNORE: ${{ inputs.ignore || '^console: \[WARNING\]' }}
+  IGNORE: "${{ inputs.ignore || '^console: [[]WARNING]' }}"
   MINUTES: ${{ inputs.minutes || '45' }}
 
 jobs:
