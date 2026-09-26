@@ -127,5 +127,5 @@ export type Busy = "reading" | "making";
 export function afterReload(busy: string | null): string {
   const doing = busy === "reading" ? "reading the recording" : busy === "making" ? "making the clips" : "";
   if (!doing) return "";
-  return `The page started again while it was ${doing}. That usually means the phone ran out of memory for it. A computer has more room, and a 720p copy of the recording needs less.`;
+  return `The page started again while it was ${doing}, most likely because this device ran out of memory. Try again on a computer, or with a 720p copy of the recording.`;
 }

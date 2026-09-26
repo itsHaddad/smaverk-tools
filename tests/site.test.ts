@@ -673,7 +673,7 @@ test("the studio lists every tool that is live, with its price state", () => {
 // checkout yet, so the placeholders must not look like one.
 // ---------------------------------------------------------------------------------------------------------
 test("Clips wears the studio's clothes: every style rule Captions also has is identical", () => {
-  const ALLOWED = new Set([".demo", ".chips", ".chip", ".chip canvas", ".chip span", ".result", ".caplabel", ".caplabel b", "details p", "input,textarea"]); // the clip finder's own shapes, which Clips takes over
+  const ALLOWED = new Set([".demo", ".chips", ".chip", ".chip canvas", ".chip span", ".result", ".caplabel", ".caplabel b", "details p", "input,textarea", ".step"]); // the clip finder's own shapes, which Clips takes over; and .step, whose notes in Clips ("clip 1 of 3: finding the speaker 45%") are long enough to squeeze the label to one letter a line in Captions' three columns (design review 3, B6)
   const rules = (file: string) => {
     const css = [...read(file).matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].map((m) => m[1]).join("\n").replace(/@media[^{]+\{([\s\S]*?\})\s*\}/g, " ");
     const out = new Map<string, string>();

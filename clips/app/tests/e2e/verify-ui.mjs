@@ -138,11 +138,55 @@ try {
   await p.waitForFunction(() => window.__clips?.state === "making", null, { timeout: 20000 });
   await p.waitForTimeout(3000);
   await snap("4-making");
+  // B6 (design review 3): the step labels keep whole words while the longest note sits beside them. The label was squeezed to
+  // one letter per line on a phone, because the note column took its full width and letters were allowed to split.
+  {
+    const words = () => p.evaluate(() => {
+      const split = [];
+      for (const el of document.querySelectorAll("#steps .step > span, #steps .step small")) {
+        const t = el.firstChild; if (!t || t.nodeType !== 3) continue;
+        for (const m of t.textContent.matchAll(/\S+/g)) { const r = document.createRange(); r.setStart(t, m.index); r.setEnd(t, m.index + m[0].length); if (r.getClientRects().length > 1) split.push(m[0]); }
+      }
+      const s3 = document.getElementById("s3t"); const lh = parseFloat(getComputedStyle(s3).lineHeight) || 20;
+      return { split, h: Math.round(s3.getBoundingClientRect().height), lh: Math.round(lh) };
+    });
+    let w = await words();
+    check(!w.split.length && w.h <= 2 * w.lh, `making: the step labels keep whole words (label ${w.h} px for a ${w.lh} px line${w.split.length ? `; split: ${w.split.join(", ")}` : ""})`);
+    await p.evaluate(() => { document.getElementById("s3n").textContent = "clip 10 of 10: finding the speaker 100%"; });
+    w = await words();
+    check(!w.split.length && w.h <= 2 * w.lh, `making, the longest note: the step labels keep whole words (label ${w.h} px${w.split.length ? `; split: ${w.split.join(", ")}` : ""})`);
+  }
   await p.waitForFunction(() => window.__clips?.state === "made", null, { timeout: 1_200_000, polling: 1000 });
   await p.waitForTimeout(600);
   await snap("5-made");
   await taps("5-made");
   check(await p.isVisible(".moment .save"), "a finished clip has its own Save button");
+  // B7 (design review 3): on the small iPhone the memory messages are for, both sit on the first screen, above the stage.
+  {
+    const se = await b.newContext({ viewport: { width: 375, height: 667 }, screen: { width: 375, height: 667 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true,
+      userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 26_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Mobile/15E148 Safari/604.1" });
+    await se.route(/cloudflareinsights\.com/, (r) => (r.request().method() === "GET" ? r.continue() : r.fulfill({ status: 204, body: "" })));
+    const q = await se.newPage();
+    const where = () => q.evaluate(() => { const el = document.getElementById("notice"); const r = el.getBoundingClientRect(); return { hidden: el.hidden, text: el.textContent, top: Math.round(r.top), bottom: Math.round(r.bottom), vh: innerHeight }; });
+    await q.goto(url, { waitUntil: "load" });
+    await q.waitForFunction(() => window.__clips?.state === "sample", null, { timeout: 30000 });
+    await q.evaluate(() => sessionStorage.setItem("smaverk.clips.busy", "making"));
+    await q.reload({ waitUntil: "load" });
+    await q.waitForFunction(() => window.__clips?.state === "sample", null, { timeout: 30000 });
+    let n = await where();
+    check(!n.hidden && /started again/.test(n.text) && n.top >= 0 && n.bottom <= n.vh, `375x667, a page started again mid-make: the notice is on the first screen (${n.top}-${n.bottom} of ${n.vh}): "${n.text.slice(0, 60)}"`);
+    await q.screenshot({ path: join(out, "6-restarted-se.png") });
+    await q.setInputFiles("#file", fixture);
+    await q.waitForFunction(() => window.__clips?.state === "reading" && window.__clips.sourceHeight, null, { timeout: 30000 });
+    await q.waitForTimeout(300);
+    n = await where();
+    check(!n.hidden && /enough memory/.test(n.text) && n.top >= 0 && n.bottom <= n.vh, `375x667, a 1080p recording picked: the warning is on the first screen (${n.top}-${n.bottom} of ${n.vh}): "${n.text.slice(0, 60)}"`);
+    await q.screenshot({ path: join(out, "7-warned-se.png") });
+    await q.waitForFunction(() => window.__clips?.state === "found", null, { timeout: 1_200_000, polling: 1000 });
+    n = await where();
+    check(!n.hidden && /enough memory/.test(n.text), `375x667: the warning is still there when the moments are found ("${n.text.slice(0, 40)}")`);
+    await se.close();
+  }
   if (errs.length) check(false, errs.join(" | "));
 } catch (e) {
   check(false, String(e?.stack ?? e?.message ?? e));

@@ -62,6 +62,8 @@ const mark = () => {
 const say = (msg: string, kind: "" | "err" | "ok" = "") => { $("status").textContent = msg; $("status").className = "status" + (kind ? ` ${kind}` : ""); };
 // Kept while the page works, so a page Safari starts again for lack of memory can say so (plan.ts, afterReload).
 const busy = (what: Busy | null) => { try { if (what) sessionStorage.setItem(BUSY_KEY, what); else sessionStorage.removeItem(BUSY_KEY); } catch { /* storage blocked: the reload goes unexplained, nothing else changes */ } };
+// The memory messages go above the stage, where a small phone shows them without scrolling (design review 3, B7).
+const notice = (msg: string, kind: "" | "err" = "") => { const el = $("notice"); el.textContent = msg; el.className = "notice" + (kind ? ` ${kind}` : ""); el.hidden = !msg; };
 
 // ---------------------------------------------------------------------------------------------
 // The free save: one per device
@@ -214,6 +216,10 @@ function onFinder(m: any) {
   } else if (m.type === "done") {
     state = "found";
     busy(null);
+    // The finder is done with this recording. Ending its worker now hands its memory to the caption engine, which starts
+    // loading below: in the iOS Simulator's Safari the two engines side by side failed with "RangeError: Out of memory"
+    // (webkit workflow, 2026-09-26). A new recording starts a new finder.
+    stopFinding();
     cards = planMoments(m.moments as Moment[]);
     step(2, "done", clock(m.heardS));
     dbg.findMs = m.ms;
@@ -262,7 +268,13 @@ function loadListener(): Promise<void> {
 }
 function warmMaking() { loadListener().catch(() => {}); warmFraming().catch(() => {}); }
 async function listen(audio: Float32Array): Promise<Word[]> {
-  await loadListener();
+  try { await loadListener(); }
+  catch {
+    // Once more in a fresh worker: an engine that could not get memory in one can in a new one, which starts with none
+    // of the failed attempt's. A second failure is the clip's error, shown on its card.
+    listener?.terminate(); listener = null; listenerReady = null;
+    await loadListener();
+  }
   return ask<Word[]>({ type: "run", audio }, [audio.buffer], (m) => (m.type === "result" ? (m.words as Word[]) : undefined));
 }
 
@@ -285,6 +297,7 @@ input.addEventListener("change", () => {
   if (mediaUrl) URL.revokeObjectURL(mediaUrl);
   file = picked;
   mediaUrl = URL.createObjectURL(picked);
+  notice(""); // a new recording: an earlier warning or restart notice was about another one
   reel.pause();
   reel.removeAttribute("poster");
   // The visitor's own recording goes on the stage at once. Removing the src alone kept the sample's finished clip
@@ -295,7 +308,7 @@ input.addEventListener("change", () => {
   stopAt = Infinity;
   // A small source makes small clips: say so now, not after the work (S7).
   reel.addEventListener("loadedmetadata", () => { if (reel.videoHeight && reel.videoHeight < 480 && state === "reading") say(`This recording is small (${reel.videoHeight} px tall), so the clips will be small too.`);
-    if (state === "reading" && tightPhone({ iOS: isIOS, screenW: screen.width, screenH: screen.height }, reel.videoHeight)) say("This iPhone may not have enough memory for a recording this sharp. If the page starts again partway, use a computer or a 720p copy."); dbg.sourceHeight = reel.videoHeight; }, { once: true });
+    if (state === "reading" && tightPhone({ iOS: isIOS, screenW: screen.width, screenH: screen.height }, reel.videoHeight)) notice("This iPhone may not have enough memory for a recording this sharp. If the page starts again partway, use a computer or a 720p copy."); dbg.sourceHeight = reel.videoHeight; }, { once: true });
   cards = [];
   current = -1;
   state = "reading";
@@ -317,6 +330,7 @@ input.addEventListener("change", () => {
 
 $("reset").addEventListener("click", () => {
   stopFinding();
+  notice("");
   file = null;
   state = "sample";
   showSteps(false);
@@ -335,6 +349,7 @@ async function makeAll() {
   stopFinding(); // the finder's engine is not needed again for this recording, and its memory is the clips' now
   busy("making");
   state = "making";
+  say(""); // "Read 5:00 in 0:43." is about the reading, which is over (design review 3, S18)
   action.textContent = "Making the clips…";
   for (const c of cards) { if (c.made) URL.revokeObjectURL(c.made.url); c.made = undefined; c.error = undefined; }
   render();
@@ -513,4 +528,4 @@ void unlock.start();
 say("");
 $("trust").textContent = TRUST_FREE;
 // A page that starts while its tab says it was working was started again by the browser, most likely for memory.
-{ let was: string | null = null; try { was = sessionStorage.getItem(BUSY_KEY); } catch { /* blocked */ } busy(null); const why = afterReload(was); if (why) { say(why, "err"); dbg.reloadedWhile = was; } }
+{ let was: string | null = null; try { was = sessionStorage.getItem(BUSY_KEY); } catch { /* blocked */ } busy(null); const why = afterReload(was); if (why) { try { history.scrollRestoration = "manual"; } catch { /* read-only here: the notice still shows */ } scrollTo(0, 0); notice(why, "err"); dbg.reloadedWhile = was; } }
