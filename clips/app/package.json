@@ -1,0 +1,24 @@
+{
+  "name": "clips",
+  "module": "app.ts",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest",
+    "playwright": "1.63.0"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "mediabunny": "^1.58.1"
+  },
+  "scripts": {
+    "build": "./build.sh",
+    "test": "bun test",
+    "smoke": "bun tests/smoke.mjs",
+    "test:make": "bun tests/e2e/verify-make.mjs",
+    "test:ui": "bun tests/e2e/verify-ui.mjs",
+    "serve": "bun serve.ts 8821"
+  }
+}

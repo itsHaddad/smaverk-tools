@@ -10,7 +10,7 @@ export type PaintOver = (c: CanvasRenderingContext2D, W: number, H: number, t: n
 export type Timing = { decode: number; draw: number; paint: number; encode: number; finalize: number };
 export type Saved = { blob: Blob; ext: "mp4"; codec: string; audio: "copied" | "encoded" | "none"; seconds: number; frames: number; ms: number; timing: Timing; width: number; height: number };
 export type FastOpts = Partial<{ latencyMode: "quality" | "realtime"; hardwareAcceleration: "no-preference" | "prefer-hardware" | "prefer-software"; bitrate: number; keyFrameInterval: number; codecs: ("avc" | "hevc" | "av1" | "vp9")[]; minSpeed: number }>;
-export type SaveJob = { file: File; maxSeconds: number; output: (srcW: number, srcH: number) => { width: number; height: number }; drawFrame: DrawFrame; paintOver?: PaintOver; onProgress: (done: number, total: number) => void; opts?: FastOpts };
+export type SaveJob = { file: File; maxSeconds: number; from?: number; output: (srcW: number, srcH: number) => { width: number; height: number }; drawFrame: DrawFrame; paintOver?: PaintOver; onProgress: (done: number, total: number) => void; opts?: FastOpts };
 
 export class TooSlow extends Error { constructor(speed: number, public timing: Timing) { super(`fast save is running at ${speed.toFixed(2)}× real time here`); } }
 export function canFastSave(): boolean { return typeof VideoEncoder !== "undefined" && typeof VideoDecoder !== "undefined"; }
@@ -25,7 +25,9 @@ export async function fastSave(job: SaveJob): Promise<Saved> {
     const at = await input.getPrimaryAudioTrack();
     const srcW = await vt.getDisplayWidth(), srcH = await vt.getDisplayHeight(); const { width: W, height: H } = job.output(srcW, srcH);
     const fps = snapFps((await vt.computePacketStats(200)).averagePacketRate);
-    const first = await input.getFirstTimestamp(); const total = Math.min(maxSeconds, (await input.computeDuration()) - first);
+    // `from`: where the saved clip starts, on the file's clock. Vertical leaves it out and saves from the first frame; Clips passes 0
+    // because its cuts are copied from the key frame before the moment, and that lead-in is not part of the clip.
+    const first = job.from ?? (await input.getFirstTimestamp()); const total = Math.min(maxSeconds, (await input.computeDuration()) - first);
     const codec = await mb.getFirstEncodableVideoCodec(o.codecs ?? ["avc", "hevc", "av1", "vp9"], { width: W, height: H });
     if (!codec) throw new Error("no video encoder for this size");
     const canvas = document.createElement("canvas"); canvas.width = W; canvas.height = H;
@@ -41,7 +43,7 @@ export async function fastSave(job: SaveJob): Promise<Saved> {
     await out.start();
     if (at && acopy) {
       const sink = new mb.EncodedPacketSink(at); const meta = { decoderConfig: (await at.getDecoderConfig()) ?? undefined };
-      for await (const p of sink.packets()) { const ts = p.timestamp - first; if (ts > total) break; await acopy.add(p.clone({ timestamp: Math.max(0, ts) }), meta as any); }
+      for await (const p of sink.packets()) { const ts = p.timestamp - first; if (ts > total) break; if (ts + p.duration <= 0) continue; await acopy.add(p.clone({ timestamp: Math.max(0, ts) }), meta as any); }
     } else if (at && aenc) {
       const sink = new mb.AudioSampleSink(at);
       for await (const s of sink.samples(first, first + total)) { s.setTimestamp(Math.max(0, s.timestamp - first)); await aenc.add(s); s.close(); }

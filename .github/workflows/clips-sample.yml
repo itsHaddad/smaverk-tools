@@ -1,0 +1,85 @@
+# Clips, end to end on a real recording: the built page in Chromium on a runner, a 15-minute NASA interview in, the
+# three strongest moments out as 9:16 clips with captions and sound, each checked with ffprobe, and the browser's peak
+# memory measured from outside. Two rows: the small copy clipfinder-sample.yml reads (the proof the brief names), and
+# the 720p copy, which also writes the page's sample (the tool's own output) for whoever ran it to commit.
+# Nothing here writes to the repository. It runs on a push to the `clips` branch, where the new tool is built: a
+# dispatch needs the workflow on the default branch, which work on a branch does not touch.
+name: clips-sample
+
+on:
+  push:
+    branches: [clips]
+    paths: ["clips/app/**", "captions/app/src/**", "captions/app/worker.ts", "vertical/app/src/**", "clipfinder/app/src/**", "clipfinder/app/worker.ts", ".github/workflows/clips-sample.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: clips-sample-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - copy: mobile
+            sample: "no"
+          - copy: medium
+            sample: "yes"
+    defaults:
+      run:
+        working-directory: clips/app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Machine
+        run: echo "$(nproc) cores, $(free -m | awk '/Mem:/{print $2}') MB"
+      - name: ffmpeg
+        run: command -v ffmpeg >/dev/null || { sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg; }
+      - run: bun install --frozen-lockfile
+      - name: Chromium
+        run: bunx playwright install --with-deps chromium
+      - name: Build
+        run: ./build.sh
+      - name: The recording
+        env:
+          VIDEO: https://images-assets.nasa.gov/video/iss071m261311538_NASA_Astronaut_Matt_Dominick_Talks_with_KMGH_Denver_240510/iss071m261311538_NASA_Astronaut_Matt_Dominick_Talks_with_KMGH_Denver_240510~${{ matrix.copy }}.mp4
+        run: |
+          set -euo pipefail
+          curl -fsSL --retry 5 --retry-all-errors --retry-delay 5 --max-time 1800 -o recording.mp4 "$VIDEO"
+          bytes=$(stat -c%s recording.mp4); secs=$(ffprobe -v error -show_entries format=duration -of csv=p=0 recording.mp4 | cut -d. -f1)
+          echo "$bytes bytes, ${secs}s"
+          [ "$secs" -gt 600 ] || { echo "::error::decoded duration is ${secs}s — the wrong file, or a truncated one"; exit 1; }
+      - name: Find, make, check
+        env:
+          SAMPLE: ${{ matrix.sample }}
+        run: node tools/sample.mjs --video recording.mp4 --out out/proof $([ "$SAMPLE" = yes ] && echo --sample)
+      - name: Summary
+        if: always()
+        run: |
+          [ -f out/proof/report.json ] || exit 0
+          bun -e 'const r=JSON.parse(await Bun.file("out/proof/report.json").text());
+            console.log(`find ${r.find?.seconds}s, make ${r.make?.seconds}s, memory peak ${r.memory.peakTotalMB} MB (one process ${r.memory.peakOneProcessMB} MB)`);
+            for (const c of r.clips ?? []) console.log(`${c.name}: ${c.width}x${c.height}, ${c.audio}, ${c.ffprobeS}s vs ${c.wantS}s, ${c.words} words`);
+            if (r.fails.length) console.log("FAILS: " + r.fails.join(" | "));' | tee -a "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: clips-proof-${{ matrix.copy }}
+          path: |
+            clips/app/out/proof
+            clips/app/dist/sample.json
+            clips/app/dist/sample-*.mp4
+            clips/app/dist/poster.jpg
+          retention-days: 7
+          if-no-files-found: warn

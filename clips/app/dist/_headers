@@ -1,0 +1,34 @@
+/*
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Embedder-Policy: credentialless
+  X-Content-Type-Options: nosniff
+/
+  Cache-Control: no-cache
+/index.html
+  Cache-Control: no-cache
+/app.js
+  Cache-Control: no-cache
+/finder.js
+  Cache-Control: no-cache
+/listen.js
+  Cache-Control: no-cache
+/sample.json
+  Cache-Control: no-cache
+/llms.txt
+  Cache-Control: no-cache
+/sample-1.mp4
+  Cache-Control: public, max-age=86400
+/sample-2.mp4
+  Cache-Control: public, max-age=86400
+/sample-3.mp4
+  Cache-Control: public, max-age=86400
+/sample-strip.mp4
+  Cache-Control: public, max-age=86400
+/poster.jpg
+  Cache-Control: public, max-age=86400
+/fonts/bricolage-grotesque-latin.woff2
+  Cache-Control: public, max-age=86400
+/mediapipe/*
+  Cache-Control: public, max-age=31536000, immutable
+/models/*
+  Cache-Control: public, max-age=31536000, immutable

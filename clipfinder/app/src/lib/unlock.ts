@@ -1,5 +1,5 @@
-// unlock.ts: how a Småverk tool becomes the paid version. The same file in every tool — captions/app, vertical/app
-// and clipfinder/app each carry a copy, and tests/site.test.ts fails if the copies differ, because three tools that
+// unlock.ts: how a Småverk tool becomes the paid version. The same file in every tool — captions/app, vertical/app,
+// clipfinder/app and clips/app each carry a copy, and tests/site.test.ts fails if the copies differ, because tools that
 // each invented their own unlocking is how one of them ended up hiding its key box inside a shut fold-out and
 // another locked a paying customer out when the network was off.
 //
@@ -13,7 +13,7 @@
 // No media ever goes near any of this. The only requests here are about the key: one to our unlock worker, at
 // page load and when a key is pasted. The work the tool does still makes none.
 
-export type Tool = "captions" | "vertical" | "clipfinder";
+export type Tool = "captions" | "vertical" | "clipfinder" | "clips";
 
 /** Where the key questions go. The pages talk to this and to nothing else about unlocking. */
 const UNLOCK = "https://unlock.smaverk.com";
@@ -22,10 +22,10 @@ const PORTAL = (sandbox: boolean) => (sandbox ? "https://sandbox.polar.sh/smaver
 /** One name on every tool, so the code is the same everywhere. Each site has its own storage; the key is what travels. */
 const STORE = "smaverk.key";
 /** The names the old per-tool storage used, read once so nobody who already paid has to paste again. */
-const OLD_STORE: Record<Tool, string> = { captions: "smaverk.captions.key", vertical: "smaverk.vertical.key", clipfinder: "smaverk.clipfinder.key" };
+const OLD_STORE: Record<Tool, string> = { captions: "smaverk.captions.key", vertical: "smaverk.vertical.key", clipfinder: "smaverk.clipfinder.key", clips: "smaverk.clips.key" };
 /** What each tool is called in a sentence, and where it lives. */
-export const TOOL_NAME: Record<Tool, string> = { captions: "Captions", vertical: "Vertical", clipfinder: "Clip finder" };
-const TOOL_HOST: Record<Tool, string> = { captions: "https://captions.smaverk.com", vertical: "https://vertical.smaverk.com", clipfinder: "https://clipfinder.smaverk.com" };
+export const TOOL_NAME: Record<Tool, string> = { captions: "Captions", vertical: "Vertical", clipfinder: "Clip finder", clips: "Clips" };
+const TOOL_HOST: Record<Tool, string> = { captions: "https://captions.smaverk.com", vertical: "https://vertical.smaverk.com", clipfinder: "https://clipfinder.smaverk.com", clips: "https://clips.smaverk.com" };
 /** A dated key keeps working this long after its date, so a failed card renewal does not stop work mid-clip. Nothing
  *  issues a dated key today; this is what a subscription would land on. */
 const GRACE_DAYS = 7;
@@ -42,6 +42,7 @@ export const SAMPLE_KEY: Record<Tool, string> = {
   captions: "SMV-60B88CE3-46C6-4FFC-83CE-AFDD6BA1A5BE",
   vertical: "VRT-564BA4A7-F187-49F7-AF0E-B53A520F8173",
   clipfinder: "SMVCF-7A1D9E02-4C88-4B3F-9E1A-D06F2B5C83",
+  clips: "SMVCL-3E9B61C4-8D27-4F05-A6B3-1C7E4D92F0A8",
 };
 
 export type UnlockState = {
@@ -226,7 +227,7 @@ export class Unlock {
       if (!r.ok) return "unreachable";
       const j: any = await r.json();
       if (typeof j?.status !== "string") return "unreachable";
-      const tools = Array.isArray(j.tools) ? (j.tools.filter((t: unknown): t is Tool => t === "captions" || t === "vertical" || t === "clipfinder") as Tool[]) : [];
+      const tools = Array.isArray(j.tools) ? (j.tools.filter((t: unknown): t is Tool => t === "captions" || t === "vertical" || t === "clipfinder" || t === "clips") as Tool[]) : [];
       return { status: j.status, tools, expires: typeof j.expires === "string" ? j.expires : null };
     } catch {
       return "unreachable";
