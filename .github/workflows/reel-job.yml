@@ -43,9 +43,10 @@ jobs:
       - name: Fetch the job
         run: |
           mkdir -p /tmp/job && gh release download reel-jobs -R "$GITHUB_REPOSITORY" -p "$ASSET" -O /tmp/job.bin
-          openssl enc -d -aes-256-cbc -pbkdf2 -pass env:KEY -in /tmp/job.bin | tar -xz -C /tmp/job
+          openssl enc -d -aes-256-cbc -pbkdf2 -pass env:KEY -in /tmp/job.bin | tar -x -C /tmp/job
       - name: Run
         working-directory: /tmp/job
+        # Plain tar both ways: the payload is mostly mp4/wav, which gzip only slows down.
         # The tools' output goes into the encrypted result, not the public log; only the exit status shows here.
         run: |
           echo "$(nproc) cores, $(free -m | awk '/Mem:/{print $2}') MB"
@@ -55,7 +56,7 @@ jobs:
       - name: Pack the result
         if: always()
         run: |
-          mkdir -p /tmp/job/out && tar -czf - -C /tmp/job/out . | openssl enc -aes-256-cbc -pbkdf2 -salt -pass env:KEY -out /tmp/result.bin
+          mkdir -p /tmp/job/out && tar -cf - -C /tmp/job/out . | openssl enc -aes-256-cbc -pbkdf2 -salt -pass env:KEY -out /tmp/result.bin
       - uses: actions/upload-artifact@v4
         if: always()
         with:
