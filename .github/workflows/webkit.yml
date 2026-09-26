@@ -47,7 +47,7 @@ concurrency:
 env:
   APP: ${{ inputs.app || 'clips/app' }}
   URL: ${{ inputs.url }}
-  DRIVER: ${{ inputs.driver || 'clips/app/tests/e2e/webkit-make.js' }}
+  DRIVER: ${{ inputs.driver || 'clips/app/tests/e2e/webkit-save-probe.js' }}
   PREPARE: ${{ inputs.prepare || 'clips/app/tests/e2e/webkit-fixtures.sh' }}
   PARAMS: ${{ inputs.params }}
   IGNORE: "${{ inputs.ignore || '^console: [[]WARNING]' }}"
