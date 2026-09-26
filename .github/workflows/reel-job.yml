@@ -1,0 +1,64 @@
+# ReelStudio's heavy audio/video steps (mix, finish, sound library, voice trimming) run here, not on the laptop.
+# ~/.claude/skills/ReelStudio/Tools/remote.ts packs the job (its own run.sh + the tools + the reel's files), encrypts it
+# with a one-time key, uploads it as an asset of the `reel-jobs` release, and dispatches this workflow. The runner
+# decrypts, runs run.sh, and hands back out/ encrypted as the `result` artifact. This repo is public, so nothing
+# readable crosses: the key is only ever a masked input, and the tool logs stay inside the encrypted result.
+name: reel-job
+run-name: reel ${{ inputs.tag }}
+on:
+  workflow_dispatch:
+    inputs:
+      asset:
+        description: Encrypted job asset on the reel-jobs release
+        required: true
+      key:
+        description: One-time key (masked)
+        required: true
+      tag:
+        description: Lets remote.ts find its own run
+        default: manual
+permissions:
+  contents: read
+jobs:
+  job:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      KEY: ${{ inputs.key }}
+      ASSET: ${{ inputs.asset }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - run: echo "::add-mask::$KEY"
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.2
+      - uses: actions/cache@v4
+        with:
+          path: ~/ffmpeg
+          key: ffmpeg-7.0.2-static
+      - name: ffmpeg 7.0.2 static (the studio's own build, so loudness numbers match)
+        run: |
+          [ -x ~/ffmpeg/ffmpeg ] || { mkdir -p ~/ffmpeg && gh release download reel-jobs -R "$GITHUB_REPOSITORY" -p ffmpeg-7.0.2-static.tar.gz -O - | tar -xz -C ~/ffmpeg; }
+          echo ~/ffmpeg >> "$GITHUB_PATH"
+      - name: Fetch the job
+        run: |
+          mkdir -p /tmp/job && gh release download reel-jobs -R "$GITHUB_REPOSITORY" -p "$ASSET" -O /tmp/job.bin
+          openssl enc -d -aes-256-cbc -pbkdf2 -pass env:KEY -in /tmp/job.bin | tar -xz -C /tmp/job
+      - name: Run
+        working-directory: /tmp/job
+        # The tools' output goes into the encrypted result, not the public log; only the exit status shows here.
+        run: |
+          echo "$(nproc) cores, $(free -m | awk '/Mem:/{print $2}') MB"
+          mkdir -p out && touch /tmp/t0 && sleep 1
+          s=0; bash run.sh > out/log.txt 2>&1 || s=$?
+          echo "$s" > out/status; echo "run.sh exit $s"
+      - name: Pack the result
+        if: always()
+        run: |
+          mkdir -p /tmp/job/out && tar -czf - -C /tmp/job/out . | openssl enc -aes-256-cbc -pbkdf2 -salt -pass env:KEY -out /tmp/result.bin
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: result
+          path: /tmp/result.bin
+          retention-days: 1
