@@ -6,9 +6,10 @@
   const t = () => performance.now();
   const limit = (p, ms, what) => Promise.race([p, new Promise((_, no) => setTimeout(() => no(new Error(`${what}: no answer in ${ms / 1000} s`)), ms))]);
   const steps = [];
+  const show = (r) => { if (r === undefined || r === null || typeof r === "function") return ""; if (typeof r !== "object") return JSON.stringify(r); try { const s = JSON.stringify(r); return s.length > 200 ? "" : s; } catch { return ""; } };
   const step = async (what, ms, fn) => {
     const t0 = t();
-    try { const r = await limit(fn(), ms, what); steps.push({ what, ok: true, ms: Math.round(t() - t0) }); c.log(`ok   ${what} in ${Math.round(t() - t0)} ms ${r === undefined || typeof r === "object" && !Array.isArray(r) && JSON.stringify(r).length > 200 ? "" : JSON.stringify(r)}`); return r; }
+    try { const r = await limit(fn(), ms, what); steps.push({ what, ok: true, ms: Math.round(t() - t0) }); c.log(`ok   ${what} in ${Math.round(t() - t0)} ms ${show(r)}`); return r; }
     catch (e) { steps.push({ what, ok: false, ms: Math.round(t() - t0), error: String(e?.message ?? e) }); c.log(`FAIL ${what}: ${e?.message ?? e}`); throw e; }
   };
   (async () => {
