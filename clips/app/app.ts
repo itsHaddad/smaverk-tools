@@ -6,7 +6,7 @@
 // work in memory, never the recording's. Nothing is uploaded. The only addresses this file knows are the checkout
 // and the page's own files; the key check is src/lib/unlock.ts, the same file in every tool.
 
-import { planMoments, keptCount, trimTo, trimBounds, clipName, mayFreeSave, madeLine, type Kept, type Moment } from "./src/lib/plan";
+import { planMoments, keptCount, trimTo, trimBounds, clipName, mayFreeSave, madeLine, tightPhone, afterReload, BUSY_KEY, type Busy, type Kept, type Moment } from "./src/lib/plan";
 import { makeClip, saveAvailable, warmFraming, type Made, type Phase } from "./src/make";
 import { clock, spoken, displayName } from "../../clipfinder/app/src/lib/naming";
 import { tidyStored } from "../../clipfinder/app/src/lib/rank";
@@ -60,6 +60,8 @@ const mark = () => {
   dbg.made = cards.flatMap((c, i) => (c.made ? [{ i, name: c.made.name, seconds: c.made.seconds, width: c.made.width, height: c.made.height, audio: c.made.audio, words: c.made.words, captionFrames: c.made.captionFrames, frames: c.made.frames, bytes: c.made.blob.size, startS: c.startS, endS: c.made.endS, found: c.made.found, ms: c.made.ms }] : []));
 };
 const say = (msg: string, kind: "" | "err" | "ok" = "") => { $("status").textContent = msg; $("status").className = "status" + (kind ? ` ${kind}` : ""); };
+// Kept while the page works, so a page Safari starts again for lack of memory can say so (plan.ts, afterReload).
+const busy = (what: Busy | null) => { try { if (what) sessionStorage.setItem(BUSY_KEY, what); else sessionStorage.removeItem(BUSY_KEY); } catch { /* storage blocked: the reload goes unexplained, nothing else changes */ } };
 
 // ---------------------------------------------------------------------------------------------
 // The free save: one per device
@@ -211,6 +213,7 @@ function onFinder(m: any) {
     dbg.heardS = m.heardS;
   } else if (m.type === "done") {
     state = "found";
+    busy(null);
     cards = planMoments(m.moments as Moment[]);
     step(2, "done", clock(m.heardS));
     dbg.findMs = m.ms;
@@ -225,13 +228,14 @@ function onFinder(m: any) {
     render();
   } else if (m.type === "error") {
     state = "found";
+    busy(null);
     showSteps(false);
     dbg.error = m.message;
     say(m.message, "err");
     render();
   }
 }
-function stopFinding() { finder?.terminate(); finder = null; }
+function stopFinding() { finder?.terminate(); finder = null; busy(null); }
 
 let listener: Worker | null = null;
 let listenerReady: Promise<void> | null = null;
@@ -290,7 +294,8 @@ input.addEventListener("change", () => {
   reel.muted = true;
   stopAt = Infinity;
   // A small source makes small clips: say so now, not after the work (S7).
-  reel.addEventListener("loadedmetadata", () => { if (reel.videoHeight && reel.videoHeight < 480 && state === "reading") say(`This recording is small (${reel.videoHeight} px tall), so the clips will be small too.`); dbg.sourceHeight = reel.videoHeight; }, { once: true });
+  reel.addEventListener("loadedmetadata", () => { if (reel.videoHeight && reel.videoHeight < 480 && state === "reading") say(`This recording is small (${reel.videoHeight} px tall), so the clips will be small too.`);
+    if (state === "reading" && tightPhone({ iOS: isIOS, screenW: screen.width, screenH: screen.height }, reel.videoHeight)) say("This iPhone may not have enough memory for a recording this sharp. If the page starts again partway, use a computer or a 720p copy."); dbg.sourceHeight = reel.videoHeight; }, { once: true });
   cards = [];
   current = -1;
   state = "reading";
@@ -304,6 +309,7 @@ input.addEventListener("change", () => {
   step(1, "active"); step(2, ""); step(3, "");
   $("s3t").textContent = "Making the clips";
   action.textContent = "Finding the moments…";
+  busy("reading");
   say("Nothing is uploaded. This all happens on your device.");
   render();
   finderWorker().postMessage({ type: "run", file: picked, wantedS: WANTED_S, maxSeconds: READ_S, count: 8 });
@@ -327,6 +333,7 @@ async function makeAll() {
   const todo = cards.map((c, i) => [c, i] as const).filter(([c]) => c.keep);
   if (!todo.length) return;
   stopFinding(); // the finder's engine is not needed again for this recording, and its memory is the clips' now
+  busy("making");
   state = "making";
   action.textContent = "Making the clips…";
   for (const c of cards) { if (c.made) URL.revokeObjectURL(c.made.url); c.made = undefined; c.error = undefined; }
@@ -355,6 +362,7 @@ async function makeAll() {
     }
   }
   dbg.makeMs = Math.round(performance.now() - t0);
+  busy(null);
   state = "made";
   const made = cards.filter((c) => c.made).length;
   step(3, "done");
@@ -417,7 +425,7 @@ function showResult() {
   if (!made.length) return;
   $("rtitle").textContent = `${made.length} clip${made.length === 1 ? "" : "s"} ready`;
   // What was made, and what the free version still allows (S4, S5).
-  const format = `MP4, 9:16. Saved as ${made[0]!.made!.name}${made.length > 1 ? " and so on" : ""}.`;
+  const format = `MP4, 9:16, ${made[0]!.made!.width}×${made[0]!.made!.height}. Saved as ${made[0]!.made!.name}${made.length > 1 ? " and so on" : ""}.`;
   $("rline").textContent = licensed ? `${format} Save each one, or all of them at once.` : freeSaved() ? `Your free clip is saved. ${PRICE} once saves the rest, with no mark.` : `${format} The free version saves one, with a small smaverk.com mark.`;
   $("saveall").hidden = made.length < 2;
   $("result").classList.add("on");
@@ -504,3 +512,5 @@ void unlock.start();
 })();
 say("");
 $("trust").textContent = TRUST_FREE;
+// A page that starts while its tab says it was working was started again by the browser, most likely for memory.
+{ let was: string | null = null; try { was = sessionStorage.getItem(BUSY_KEY); } catch { /* blocked */ } busy(null); const why = afterReload(was); if (why) { say(why, "err"); dbg.reloadedWhile = was; } }

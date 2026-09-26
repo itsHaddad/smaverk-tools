@@ -715,3 +715,56 @@ test("Clips: the price and the cap are each one constant, and the page states th
   // The sample is the NASA recording the clip finder uses, credited where it shows.
   expect(html).toContain("https://images.nasa.gov/details/iss071m261311538_NASA_Astronaut_Matt_Dominick_Talks_with_KMGH_Denver_240510");
 });
+
+// The cold user (2026-09-25) found the sample clips stopping at 20 s while their cards said about a minute.
+test("Clips: the sample clips are as long as their cards say", () => {
+  // An mp4's length, from its movie header: [size][mvhd][version][flags] then v0: 4+4 bytes of dates, v1: 8+8.
+  const mp4Seconds = (file: string) => {
+    const b = readFileSync(join(ROOT, file)); const at = b.indexOf("mvhd"); expect(at, `${file}: an mp4 movie header`).toBeGreaterThan(0);
+    const v1 = b[at + 4] === 1, p = at + 8 + (v1 ? 16 : 8), scale = b.readUInt32BE(p);
+    return (v1 ? Number(b.readBigUInt64BE(p + 4)) : b.readUInt32BE(p + 4)) / scale;
+  };
+  const s = JSON.parse(read("clips/app/dist/sample.json"));
+  expect(s.moments.length).toBe(3);
+  for (const m of s.moments) {
+    expect(m.lengthS, `${m.clip}: the card's length is the moment's`).toBeCloseTo(m.endS - m.startS, 0);
+    expect(Math.abs(mp4Seconds(`clips/app/dist/${m.clip}`) - m.lengthS), `${m.clip} plays as long as its card says`).toBeLessThan(0.5);
+  }
+});
+
+// The same round found no word anywhere on what size a clip comes out. The size is Vertical's outputSize: the
+// recording's full height, 9:16, not enlarged. Every place that states it names the same numbers, and they are that function's.
+test("Clips: what comes out is stated the same everywhere, and is what the save writes", async () => {
+  const { outputSize } = await import("../vertical/app/src/lib/track");
+  expect(outputSize(1920, 1080), "a 1080p recording").toEqual({ width: 608, height: 1080 });
+  expect(outputSize(1280, 720), "a 720p recording").toEqual({ width: 406, height: 720 });
+  const html = read("clips/app/dist/index.html");
+  const ld = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)![1]!;
+  const meta = (p: string) => html.match(new RegExp(`<meta (?:name|property)="${p}" content="([^"]*)"`))?.[1] ?? "";
+  const card = read(STUDIO).split("<article").find((a) => /<h3>Clips<\/h3>/.test(a)) ?? "";
+  const terms = text(read(LEGAL[1]!)).replace(/\s+/g, " ");
+  const places: [string, string][] = [
+    ["the page, under the tool", html.match(/<p class="fine" id="caphint">([^<]*)</)?.[1] ?? ""],
+    ["the page, in the price box", html.match(/<div class="price"[\s\S]*?<\/div><\/div>/)?.[0] ?? ""],
+    ["the page, what it does", html.match(/<summary>What it does[\s\S]*?<\/details>/)?.[0] ?? ""],
+    ["description", meta("description")], ["og:description", meta("og:description")], ["twitter:description", meta("twitter:description")],
+    ["JSON-LD", JSON.parse(ld).description], ["llms.txt", read("clips/app/dist/llms.txt")],
+    ["terms", terms.match(/In Clips [^.]*\./)?.[0] ?? ""], ["the studio card", text(card)],
+  ];
+  for (const [where, t] of places) expect(t, `${where} states the size of a clip from a 1080p recording`).toContain("608×1080");
+  for (const [where, t] of places) expect(t, `${where}: no size a clip does not come out at`).not.toMatch(/1080\s*[×x]\s*1920|\b4K\b/);
+  // The finished-clip line says the size of the clip actually made, not a stated one.
+  expect(code(read("clips/app/app.ts"))).toMatch(/MP4, 9:16, \$\{[^}]*\.width\}×\$\{[^}]*\.height\}/);
+});
+
+// The page said a clip took "about as long as it plays". Measured 2026-09-26 (.github/workflows/webkit.yml, the Chromium
+// row on a four-core runner): two 1080p clips of 61 and 65 s in 67 s, and five minutes read in 37 s; the cold user's
+// 18:57 read in 2:16. So the page and llms.txt state those, and no longer the old line.
+test("Clips: the time it takes is the measured one, the same on the page and in llms.txt", () => {
+  for (const [f, t] of [["page", text(read("clips/app/dist/index.html"))], ["llms.txt", read("clips/app/dist/llms.txt")]] as const) {
+    expect(t, `${f}: the old claim`).not.toMatch(/about as long as it plays/);
+    expect(t, `${f}: the reading time`).toMatch(/an hour of recording (in|is read in) about 7 minutes/);
+    expect(t, `${f}: the clip time`).toMatch(/each clip takes about half as long as it plays/);
+    expect(t, `${f}: the phone limit`).toMatch(/iPhone.*(small screen|small-screen)/);
+  }
+});

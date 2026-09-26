@@ -8,8 +8,9 @@
 // tree is sampled from outside every second, the way the clip-length report measured Captions (peak RSS), so the
 // memory a phone would need is a number, not a guess.
 //
-// With --sample it also writes the page's sample: the moments, a short opening of each clip, a poster, and the
-// three side by side for the studio card. The clips are the tool's own output, re-encoded smaller for the web.
+// With --sample it also writes the page's sample: the moments, each clip whole (its card states its length, so the file
+// plays that long), a poster, and the three side by side for the studio card. The clips are the tool's own output,
+// re-encoded smaller for the web.
 //
 // Run with node, not bun: the page is served by bun, the browser is driven from node (as the other gates' remote rigs are).
 import { chromium } from "playwright";
@@ -137,11 +138,10 @@ try {
 
   if (writeSample) {
     const dist = join(root, "dist");
-    const EX = 20;
     const moments = [];
     for (const [k, c] of report.clips.entries()) {
       const name = `sample-${k + 1}.mp4`;
-      execFileSync("ffmpeg", ["-v", "error", "-y", "-i", join(out, c.name), "-t", String(EX), "-vf", "scale=432:768:flags=lanczos", "-c:v", "libx264", "-profile:v", "main", "-preset", "slow", "-crf", "26", "-maxrate", "450k", "-bufsize", "900k", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "64k", "-movflags", "+faststart", join(dist, name)]);
+      execFileSync("ffmpeg", ["-v", "error", "-y", "-i", join(out, c.name), "-vf", "scale=432:768:flags=lanczos", "-c:v", "libx264", "-profile:v", "main", "-preset", "slow", "-crf", "26", "-maxrate", "450k", "-bufsize", "900k", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "64k", "-movflags", "+faststart", join(dist, name)]);
       const m = found.list.find((x) => Math.abs(x.startS - c.startS) < 0.01);
       const opening = await page.evaluate((i) => document.querySelectorAll(".moment .says")[i]?.textContent ?? "", made.made[k].i);
       moments.push({ startS: c.startS, endS: c.endS, why: m?.why ?? [], opening, clip: name, lengthS: c.ffprobeS });

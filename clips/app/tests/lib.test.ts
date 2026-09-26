@@ -1,5 +1,5 @@
 import { test, expect } from "bun:test";
-import { MAX_CLIP_S, MIN_CLIP_S, DEFAULT_KEEP, planMoments, capEnd, trimTo, trimBounds, sentenceEnd, alignToZero, clipName, mayFreeSave, keptCount, madeLine } from "../src/lib/plan";
+import { MAX_CLIP_S, MIN_CLIP_S, DEFAULT_KEEP, planMoments, capEnd, trimTo, trimBounds, sentenceEnd, alignToZero, clipName, mayFreeSave, keptCount, madeLine, tightPhone, afterReload } from "../src/lib/plan";
 
 const m = (startS: number, endS: number, opening = "So what happened next?") => ({ startS, endS, why: ["Opens on the question it answers"], opening });
 
@@ -115,4 +115,27 @@ test("the free version saves one clip; the paid version saves every clip", () =>
 test("the line under a finished clip says its length and where it came from", () => {
   expect(madeLine(56.4, 305.6, false)).toBe("56 s from 5:06.");
   expect(madeLine(90, 100, true)).toBe("1 min 30 s from 1:40. Cut to 90 seconds.");
+});
+
+// Memory on phones (tests/webkit, 2026-09-26): making a clip from a 1080p recording peaks at 1.4-1.5 GB in the page,
+// which is about where an iPhone with 3 GB stops a page. Those are the small-screen iPhones.
+test("a small-screen iPhone is warned before a 1080p recording, in either orientation", () => {
+  expect(tightPhone({ iOS: true, screenW: 375, screenH: 667 }, 1080)).toBe(true);
+  expect(tightPhone({ iOS: true, screenW: 667, screenH: 375 }, 2160)).toBe(true);
+});
+test("a 720p recording, a larger iPhone, or anything that is not an iPhone is not warned", () => {
+  expect(tightPhone({ iOS: true, screenW: 375, screenH: 667 }, 720)).toBe(false);
+  expect(tightPhone({ iOS: true, screenW: 390, screenH: 844 }, 1080)).toBe(false);
+  expect(tightPhone({ iOS: true, screenW: 375, screenH: 812 }, 1080)).toBe(false); // the mini: 4 GB
+  expect(tightPhone({ iOS: false, screenW: 375, screenH: 667 }, 1080)).toBe(false);
+});
+test("a page that started again in the middle of the work says why, and what to do", () => {
+  expect(afterReload("reading")).toMatch(/started again while it was reading the recording/);
+  expect(afterReload("making")).toMatch(/started again while it was making the clips/);
+  for (const p of ["reading", "making"]) expect(afterReload(p)).toMatch(/memory.*computer.*720p/s);
+});
+test("a page that was not working when it loaded says nothing", () => {
+  expect(afterReload(null)).toBe("");
+  expect(afterReload("")).toBe("");
+  expect(afterReload("something else")).toBe("");
 });
