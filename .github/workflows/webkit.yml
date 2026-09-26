@@ -9,12 +9,13 @@
 # tests/webkit/camera-shim.js as the first driver (drivers are space-separated and run in order). From another
 # workflow: `uses: ./.github/workflows/webkit.yml` with the same inputs.
 #
-# It runs on a push to the `webkit-check` branch with the defaults: a dispatch needs the workflow on the default branch.
+# This branch (webkit-operator) is webkit-check with the defaults set to the Operator preview, proxied as deployed, with a
+# camera that plays tests/webkit/operator/two-speakers-turns.mp4. It runs on a push to this branch.
 name: webkit
 on:
   push:
-    branches: [webkit-check]
-    paths: ["tests/webkit/**", "clips/app/**", ".github/workflows/webkit.yml"]
+    branches: [webkit-operator]
+    paths: ["tests/webkit/**", ".github/workflows/webkit.yml"]
   workflow_dispatch:
     inputs:
       app: { description: "App directory: `bun run build` makes its dist/, which is served", default: clips/app }
@@ -46,13 +47,13 @@ concurrency:
 
 env:
   APP: ${{ inputs.app || 'clips/app' }}
-  URL: ${{ inputs.url }}
-  DRIVER: ${{ inputs.driver || 'clips/app/tests/e2e/webkit-make.js' }}
-  PREPARE: ${{ inputs.prepare || 'clips/app/tests/e2e/webkit-fixtures.sh' }}
-  PARAMS: ${{ inputs.params }}
+  URL: ${{ inputs.url || 'https://operator.missions-9p6.pages.dev/' }}
+  DRIVER: ${{ inputs.driver || 'tests/webkit/camera-shim.js tests/webkit/operator/operator-take.js' }}
+  PREPARE: ${{ inputs.prepare || 'tests/webkit/operator/fixtures.sh' }}
+  PARAMS: ${{ inputs.params || 'camera=two-speakers-turns.mp4' }}
   IGNORE: "${{ inputs.ignore || '^console: [[]WARNING]' }}"
-  MINUTES: ${{ inputs.minutes || '45' }}
-  SIM_MINUTES: ${{ inputs.sim_minutes || '100' }}
+  MINUTES: ${{ inputs.minutes || '25' }}
+  SIM_MINUTES: ${{ inputs.sim_minutes || '60' }}
 
 jobs:
   prepare:
