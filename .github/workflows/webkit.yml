@@ -50,7 +50,7 @@ env:
   URL: ${{ inputs.url || 'https://operator.missions-9p6.pages.dev/' }}
   DRIVER: ${{ inputs.driver || 'tests/webkit/camera-shim.js tests/webkit/operator/operator-take.js' }}
   PREPARE: ${{ inputs.prepare || 'tests/webkit/operator/fixtures.sh' }}
-  PARAMS: ${{ inputs.params || 'camera=two-speakers-turns.mp4' }}
+  PARAMS: ${{ inputs.params || 'camera=two-speakers-turns.mp4 sound=no' }}
   IGNORE: "${{ inputs.ignore || '^console: [[]WARNING]' }}"
   MINUTES: ${{ inputs.minutes || '25' }}
   SIM_MINUTES: ${{ inputs.sim_minutes || '60' }}
