@@ -83,9 +83,13 @@ const runtime = `(() => {
       for (;;) { let v; try { v = fn(); } catch { v = false; } if (v) return v; if (performance.now() > end) throw new Error((what || "a condition") + " did not happen in " + Math.round(ms / 1000) + " s"); await new Promise((r) => setTimeout(r, 500)); }
     },
     done: (result) => { if (finished) return; finished = true; return post("/__check/done", JSON.stringify(report({ ok: true, result }))); },
-    fail: (err, result) => { if (finished) return; finished = true; return post("/__check/done", JSON.stringify(report({ ok: false, error: (err && err.message ? err.message + "\n" + (err.stack || "") : String(err)), result }))); },
+    fail: (err, result) => { if (finished) return; finished = true; return post("/__check/done", JSON.stringify(report({ ok: false, error: (err && err.message ? err.message + "\\n" + (err.stack || "") : String(err)), result }))); },
   };
 })();`;
+// Both are parsed here, so a broken script fails this run in a second rather than at the deadline with no driver.
+for (const [what, code] of [["runtime", runtime], ...driverPaths.map((f) => [f, readFileSync(f, "utf8")])]) {
+  try { new Function(code); } catch (e) { console.error(`${what} does not parse: ${e.message}`); process.exit(2); }
+}
 const driver = driverPaths.map((f) => `// ---- ${basename(f)}\n${readFileSync(f, "utf8")}`).join("\n");
 const inject = (html) => {
   const tags = `<script src="/__check/runtime.js"></script><script src="/__check/driver.js"></script>`;
