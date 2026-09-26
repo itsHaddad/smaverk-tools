@@ -26,7 +26,7 @@ export function auditPage(page, columns = []) {
       if ((r.right > W + 1 || r.left < -1) && !clipped(el)) f.beyond.push(`${label(el)} ${Math.round(r.left)}..${Math.round(r.right)}`);
       if (el.children.length === 0 && el.textContent && el.textContent.trim() && cs.overflowX === "visible" && el.scrollWidth > el.clientWidth + 2) f.spill.push(`${label(el)} "${el.textContent.trim().slice(0, 40)}" ${el.scrollWidth}>${el.clientWidth}`);
     }
-    for (const sel of columns) { const el = document.querySelector(sel); if (el && vis(el)) f.widths[sel] = Math.round(el.getBoundingClientRect().width); }
+    for (const sel of columns) { const el = document.querySelector(sel); if (el && vis(el)) f.widths[sel] = el.offsetWidth; } // layout width: a pressed button (scale .99) is not a narrower column
     return f;
   }, columns);
 }
