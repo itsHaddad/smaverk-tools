@@ -23,12 +23,18 @@ jobs:
   job:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    # The key is NOT in this env block: GitHub prints a step's env in its log header before that step runs, so the first
+    # step's header showed it in clear, before its own add-mask (seen in this public repo's logs, 2026-09-26). It is read
+    # from the event, masked, and only then handed to the later steps.
     env:
-      KEY: ${{ inputs.key }}
       ASSET: ${{ inputs.asset }}
       GH_TOKEN: ${{ github.token }}
     steps:
-      - run: echo "::add-mask::$KEY"
+      - name: The key, masked before anything prints it
+        run: |
+          KEY=$(jq -r .inputs.key "$GITHUB_EVENT_PATH")
+          echo "::add-mask::$KEY"
+          echo "KEY=$KEY" >> "$GITHUB_ENV"
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.3.2
