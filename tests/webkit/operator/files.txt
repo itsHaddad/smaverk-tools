@@ -1,4 +1,3 @@
-_headers
 app-vkqaay5w.js
 app.js
 apple-touch-icon.png

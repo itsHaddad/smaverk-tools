@@ -1,0 +1,17 @@
+/*
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Embedder-Policy: credentialless
+  X-Content-Type-Options: nosniff
+  Permissions-Policy: camera=(self), microphone=(self)
+/
+  Cache-Control: no-cache
+/index.html
+  Cache-Control: no-cache
+/app.js
+  Cache-Control: no-cache
+/mediapipe/*
+  Cache-Control: public, max-age=31536000, immutable
+/models/*
+  Cache-Control: public, max-age=31536000, immutable
+/demo.*
+  Cache-Control: no-cache
