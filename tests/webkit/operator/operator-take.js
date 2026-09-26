@@ -11,8 +11,8 @@
   const takeS = Number(c.params.take || 15), openMs = Number(c.params.open || 8) * 60_000;
   const now = () => performance.now(), sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const op = () => window.__op;
-  const shimmed = () => !!(navigator.mediaDevices && String(navigator.mediaDevices.getUserMedia).includes("asked.push"));
-  if (c.params.sound === "no" && navigator.mediaDevices) { const g = navigator.mediaDevices.getUserMedia; navigator.mediaDevices.getUserMedia = (k = {}) => g.call(navigator.mediaDevices, { ...k, audio: false }); }
+  const shimmed = () => !!window.__camera?.installed;
+  if (c.params.sound === "no" && navigator.mediaDevices) { const g = navigator.mediaDevices.getUserMedia; Object.defineProperty(navigator.mediaDevices, "getUserMedia", { configurable: true, writable: true, value: (k = {}) => g.call(navigator.mediaDevices, { ...k, audio: false }) }); }
   const features = () => ({
     MediaRecorder: typeof MediaRecorder, mp4: typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported("video/mp4"),
     VideoEncoder: typeof VideoEncoder, VideoFrameCopyTo: typeof VideoFrame !== "undefined" && typeof VideoFrame.prototype.copyTo,

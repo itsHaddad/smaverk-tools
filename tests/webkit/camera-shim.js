@@ -21,6 +21,9 @@
       const v = document.createElement("video");
       v.src = c.fixtureUrl(name);
       v.muted = true; v.loop = true; v.playsInline = true; v.crossOrigin = "anonymous";
+      // In the page, not detached: WebKit pauses a muted video that is not shown (invisible autoplay), which froze the picture.
+      v.style.cssText = "position:fixed;right:0;bottom:0;width:4px;height:4px;opacity:0.01;pointer-events:none";
+      (document.body || document.documentElement).append(v);
       await new Promise((ok, no) => { v.onloadedmetadata = ok; v.onerror = () => no(new Error(`camera fixture ${name} would not load`)); });
       await v.play();
       const canvas = document.createElement("canvas");
@@ -46,6 +49,10 @@
     }
     return stream;
   };
-  navigator.mediaDevices.getUserMedia = fake;
-  navigator.mediaDevices.enumerateDevices = async () => [{ deviceId: "fixture", groupId: "fixture", kind: "videoinput", label: `fixture ${name}`, toJSON() { return this; } }];
+  // Defined, not assigned, on the object and its prototype: in the iOS Simulator's Safari a plain assignment did not take,
+  // and the page reached the real camera (there is none: "Invalid constraint").
+  const put = (o, k, v) => { try { Object.defineProperty(o, k, { value: v, configurable: true, writable: true }); } catch { /* the other place holds */ } };
+  const devices = async () => [{ deviceId: "fixture", groupId: "fixture", kind: "videoinput", label: `fixture ${name}`, toJSON() { return this; } }];
+  for (const o of [navigator.mediaDevices, Object.getPrototypeOf(navigator.mediaDevices)]) { put(o, "getUserMedia", fake); put(o, "enumerateDevices", devices); }
+  window.__camera.installed = navigator.mediaDevices.getUserMedia === fake;
 })();
