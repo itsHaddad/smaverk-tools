@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # The Operator for the WebKit check: its camera clip (two men taking turns to talk, with their sound; NASA, US government
-# Preview build r7e (the recorder keeps what it wrote when it is slow to stop).
+# Preview build r7f.
 # work), and the preview's own files as deployed, so every row serves the page itself. Proxied, the Mac runner's fetches
 # of the 10 MB model runtime timed out and the Simulator never found a face.
 set -euo pipefail
