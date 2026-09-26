@@ -8,12 +8,12 @@
   const steps = [];
   const step = async (what, ms, fn) => {
     const t0 = t();
-    try { const r = await limit(fn(), ms, what); steps.push({ what, ok: true, ms: Math.round(t() - t0), r }); c.log(`ok   ${what} in ${Math.round(t() - t0)} ms ${r === undefined ? "" : JSON.stringify(r)}`); return r; }
+    try { const r = await limit(fn(), ms, what); steps.push({ what, ok: true, ms: Math.round(t() - t0) }); c.log(`ok   ${what} in ${Math.round(t() - t0)} ms ${r === undefined || typeof r === "object" && !Array.isArray(r) && JSON.stringify(r).length > 200 ? "" : JSON.stringify(r)}`); return r; }
     catch (e) { steps.push({ what, ok: false, ms: Math.round(t() - t0), error: String(e?.message ?? e) }); c.log(`FAIL ${what}: ${e?.message ?? e}`); throw e; }
   };
   (async () => {
     const mb = await step("load the library", 60_000, () => import("https://cdn.jsdelivr.net/npm/mediabunny@1.58.1/+esm"));
-    const file = await step("fetch the fixture", 120_000, () => c.fixture(c.params.fixture || c.fixtures[0], "video/mp4"));
+    const file = await step("fetch the fixture", 900_000, () => c.fixture(c.params.fixture || c.fixtures[0], "video/mp4"));
     const W = 608, H = 1080;
     const codec = await step("pick a video codec", 30_000, () => mb.getFirstEncodableVideoCodec(["avc", "hevc", "av1", "vp9"], { width: W, height: H }));
     const input = new mb.Input({ source: new mb.BlobSource(file), formats: [mb.MP4, mb.QTFF, mb.MATROSKA, mb.WEBM] });
