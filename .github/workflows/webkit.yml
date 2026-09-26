@@ -1,7 +1,8 @@
 # webkit: a page in the engines an iPhone uses, driven by a script that runs inside the page (tests/webkit/check.mjs).
-# Three rows: Playwright WebKit on Linux as a desktop, the same engine with an iPhone's profile (the page takes its
+# Four rows: Playwright WebKit on Linux as a desktop, the same engine with an iPhone's profile (the page takes its
 # iPhone paths), and Mobile Safari itself in the iOS Simulator on a Mac. Each row reports time, the web process's peak
 # memory from outside, page errors, and every file the driver hands back; the report job reads those with ffprobe.
+# Chromium on the same runner is the control: what the page does where it is known to work.
 #
 # It is generic: a page (an app directory to build and serve, or a live URL), a driver script, and a command that
 # writes the fixtures. The defaults are Clips making clips from the product gate's recording. A camera page adds
@@ -81,9 +82,14 @@ jobs:
       matrix:
         include:
           - row: desktop
+            engine: webkit
             device: ""
           - row: iphone
+            engine: webkit
             device: iPhone 15
+          - row: chromium
+            engine: chromium
+            device: ""
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
@@ -99,20 +105,21 @@ jobs:
       - name: Machine
         run: echo "$(nproc) cores, $(free -m | awk '/Mem:/{print $2}') MB"
       - name: WebKit
-        run: cd tests/webkit && bun install --frozen-lockfile && bunx playwright install --with-deps webkit
+        run: cd tests/webkit && bun install --frozen-lockfile && bunx playwright install --with-deps ${{ matrix.engine }}
       - name: ffprobe
         run: command -v ffprobe >/dev/null || { sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg; }
       - name: Check
         env:
           DEVICE: ${{ matrix.device }}
           ROW: ${{ matrix.row }}
+          ENGINE: ${{ matrix.engine }}
         run: |
           args=(); for d in $DRIVER; do args+=(--driver "$d"); done
           for f in pack/fixtures/*; do [ -f "$f" ] && args+=(--fixture "$f"); done
           for p in $PARAMS; do args+=(--param "$p"); done
           if [ -n "$URL" ]; then args+=(--url "$URL"); else args+=(--serve pack/dist); fi
           [ -n "$DEVICE" ] && args+=(--device "$DEVICE")
-          node tests/webkit/check.mjs "${args[@]}" --engine webkit --ignore "$IGNORE" --minutes "$MINUTES" --out "out/$ROW"
+          node tests/webkit/check.mjs "${args[@]}" --engine "$ENGINE" --ignore "$IGNORE" --minutes "$MINUTES" --out "out/$ROW"
       - uses: actions/upload-artifact@v4
         if: always()
         with:

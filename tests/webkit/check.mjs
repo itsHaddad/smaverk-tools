@@ -83,7 +83,7 @@ const runtime = `(() => {
       for (;;) { let v; try { v = fn(); } catch { v = false; } if (v) return v; if (performance.now() > end) throw new Error((what || "a condition") + " did not happen in " + Math.round(ms / 1000) + " s"); await new Promise((r) => setTimeout(r, 500)); }
     },
     done: (result) => { if (finished) return; finished = true; return post("/__check/done", JSON.stringify(report({ ok: true, result }))); },
-    fail: (err, result) => { if (finished) return; finished = true; return post("/__check/done", JSON.stringify(report({ ok: false, error: String((err && err.stack) || err), result }))); },
+    fail: (err, result) => { if (finished) return; finished = true; return post("/__check/done", JSON.stringify(report({ ok: false, error: (err && err.message ? err.message + "\n" + (err.stack || "") : String(err)), result }))); },
   };
 })();`;
 const driver = driverPaths.map((f) => `// ---- ${basename(f)}\n${readFileSync(f, "utf8")}`).join("\n");
@@ -188,15 +188,16 @@ const pageUrl = `http://localhost:${server.address().port}/`;
 log(`serving ${upstream || serveDir} at ${pageUrl}, driver ${driverPaths.join(" + ")}, fixtures ${Object.keys(fixtures).join(", ") || "none"}`);
 
 // ---- memory, from outside ---------------------------------------------------------------------------------------------
-const WEB = /WebKitWebProcess|com\.apple\.WebKit\.WebContent|--type=renderer/;
+const WEB = /WebKitWebProcess|WPEWebProcess|com\.apple\.WebKit\.WebContent|--type=renderer/;
 const ANY = /WebKit|MobileSafari|ms-playwright|chrom(e|ium)|headless_shell/;
-const mem = { peakWebProcessMB: 0, peakTotalMB: 0, samples: [] };
+const mem = { peakWebProcessMB: 0, peakTotalMB: 0, atPeak: [], samples: [] };
 const memTimer = setInterval(() => {
   try {
     const rows = execFileSync("ps", ["-axo", "rss=,args="], { maxBuffer: 16 << 20 }).toString().split("\n").map((l) => l.trim()).filter((l) => ANY.test(l) && !/\bps -axo\b|check\.mjs/.test(l));
     const kb = rows.map((l) => [Number(l.split(/\s+/)[0]), l]);
     const web = Math.max(0, ...kb.filter(([, l]) => WEB.test(l)).map(([n]) => n)) / 1024;
     const total = kb.reduce((a, [n]) => a + n, 0) / 1024;
+    if (total > mem.peakTotalMB) mem.atPeak = kb.sort((a, b) => b[0] - a[0]).slice(0, 4).map(([n, l]) => `${Math.round(n / 1024)} MB ${l.split(/\s+/).slice(1).join(" ").replace(/^.*\//, "").slice(0, 80)}`);
     mem.peakWebProcessMB = Math.max(mem.peakWebProcessMB, web);
     mem.peakTotalMB = Math.max(mem.peakTotalMB, total);
     mem.samples.push([Math.round(performance.now() / 1000), Math.round(web), Math.round(total)]);
@@ -221,7 +222,16 @@ try {
     if (!booted) spawnSync("xcrun", ["simctl", "boot", udid], { stdio: "inherit" });
     const bs = spawnSync("xcrun", ["simctl", "bootstatus", udid, "-b"], { encoding: "utf8", timeout: 600_000 });
     if (bs.status !== 0) throw new Error(`the simulator did not boot: ${bs.stderr || bs.stdout}`);
-    sh("xcrun", ["simctl", "openurl", udid, pageUrl]);
+    // Right after a boot the home screen is still starting and the first openurl times out (seen on the runner), so
+    // Safari is started on its own first and the page is opened with a few spaced tries.
+    spawnSync("xcrun", ["simctl", "launch", udid, "com.apple.mobilesafari"], { encoding: "utf8", timeout: 180_000 });
+    for (let k = 1; ; k++) {
+      const r = spawnSync("xcrun", ["simctl", "openurl", udid, pageUrl], { encoding: "utf8", timeout: 240_000 });
+      if (r.status === 0) break;
+      if (k === 4) throw new Error(`openurl failed 4 times: ${(r.stderr || r.stdout || String(r.error)).trim().split("\n")[0]}`);
+      log(`openurl try ${k} failed (${(r.stderr || String(r.error)).trim().split("\n")[0]}); again in 20 s`);
+      await new Promise((ok) => setTimeout(ok, 20_000));
+    }
     log("opened in Mobile Safari");
   } else {
     const pw = await import("playwright");
@@ -260,7 +270,7 @@ const errors = [...(report.errors ?? []), ...pageErrors];
 const blocking = errors.filter((e) => !ignore?.test(e));
 const summary = {
   engine: label, ok: !!report.ok && blocking.length === 0, error: report.error ?? null, wallS,
-  memory: { peakWebProcessMB: Math.round(mem.peakWebProcessMB), peakTotalMB: Math.round(mem.peakTotalMB), peakHeapMB: report.peakHeapBytes ? Math.round(report.peakHeapBytes / 1048576) : null },
+  memory: { peakWebProcessMB: Math.round(mem.peakWebProcessMB), peakTotalMB: Math.round(mem.peakTotalMB), peakHeapMB: report.peakHeapBytes ? Math.round(report.peakHeapBytes / 1048576) : null, atPeak: mem.atPeak },
   ua: report.ua ?? null, crossOriginIsolated: report.crossOriginIsolated ?? null, screen: report.screen ?? null,
   result: report.result ?? null, files: probed, errors, blockingErrors: blocking,
 };
