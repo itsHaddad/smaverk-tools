@@ -49,21 +49,24 @@
     const v = document.getElementById("savedvideo");
     const blob = await (await fetch(v.src)).blob();
     await c.put(`take.${o.recorder.saved.ext}`, blob);
-    // It plays: the end screen's own player, from the start, past 2 s. Playwright's WebKit for Linux is built without an
-    // H.264 decoder (its media comes from the system's GStreamer): there the file is only read by ffprobe, and it says so.
-    const h264 = v.canPlayType('video/mp4; codecs="avc1.640028"');
-    let played = null;
-    if (h264) {
-      v.muted = true; v.currentTime = 0;
-      await v.play().catch((e) => c.log(`play(): ${e.message}`));
-      await c.waitFor(() => v.currentTime > 2, 30_000, "the saved video playing past 2 s");
-      played = +v.currentTime.toFixed(2); v.pause();
-    } else c.log("this engine build cannot decode H.264 (canPlayType is empty): the take is checked by ffprobe only");
+    // It plays: the end screen's own player, from the start, past 2 s. If it does not, a control: the page's own sample
+    // (H.264, made by ffmpeg) in a fresh player. Playwright's WebKit for Linux says it can play H.264 and plays neither
+    // (its media comes from the system's GStreamer): then the take is checked by ffprobe only, and the report says so.
+    // If the sample plays and the take does not, the take is broken and the run fails.
+    const plays = async (el, ms) => { el.muted = true; el.currentTime = 0; await el.play().catch((e) => c.log(`play(): ${e.message}`)); const end = performance.now() + ms; while (performance.now() < end) { if (el.currentTime > 2) return +el.currentTime.toFixed(2); await sleep(500); } return null; };
+    let played = await plays(v, 30_000), h264 = "played";
+    if (played === null) {
+      const ref = document.createElement("video"); ref.src = "/demo.mp4"; ref.playsInline = true; document.body.append(ref);
+      const refPlayed = await plays(ref, 30_000); ref.remove();
+      if (refPlayed !== null) throw new Error("the page's own sample plays here, but the saved take does not");
+      h264 = "this engine build plays no H.264 (the page's own sample did not play either): the take is checked by ffprobe";
+      c.log(h264);
+    } else v.pause();
     clearInterval(watch);
     c.done({
       features: features(), cameraS: +cameraS.toFixed(1), firstFaceS: +faceS.toFixed(1), recordedS: +recS.toFixed(1),
       look: o.look, people: { finder: o.people.finder, where: o.people.where }, describer: o.memory.describer, during,
-      recorder: o.recorder, stills: o.stills, played, h264: h264 || "no decoder in this build", videoSize: [v.videoWidth, v.videoHeight], camera: o.camera, pageErrors: o.errors,
+      recorder: o.recorder, stills: o.stills, played, h264, videoSize: [v.videoWidth, v.videoHeight], camera: o.camera, pageErrors: o.errors,
     });
   };
   const go = () => run().catch((e) => { clearInterval(watch); c.fail(e, { at: op()?.state, line: op()?.line, look: op()?.look, errors: op()?.errors }); });

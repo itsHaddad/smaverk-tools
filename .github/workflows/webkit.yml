@@ -46,8 +46,8 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  APP: ${{ inputs.app || 'clips/app' }}
-  URL: ${{ inputs.url || 'https://operator.missions-9p6.pages.dev/' }}
+  APP: ${{ inputs.app || 'none' }}
+  URL: ${{ inputs.url }}
   DRIVER: ${{ inputs.driver || 'tests/webkit/camera-shim.js tests/webkit/operator/operator-take.js' }}
   PREPARE: ${{ inputs.prepare || 'tests/webkit/operator/fixtures.sh' }}
   PARAMS: ${{ inputs.params || 'camera=two-speakers-turns.mp4 sound=no' }}
@@ -67,7 +67,7 @@ jobs:
       - name: ffmpeg
         run: command -v ffmpeg >/dev/null || { sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg; }
       - name: Build
-        if: env.URL == ''
+        if: env.URL == '' && env.APP != 'none'
         run: cd "$APP" && bun install --frozen-lockfile && bun run build && mkdir -p "$GITHUB_WORKSPACE/pack" && cp -r dist "$GITHUB_WORKSPACE/pack/dist"
       - name: Fixtures
         run: mkdir -p pack/fixtures && if [ "$PREPARE" != none ]; then bash $PREPARE "$GITHUB_WORKSPACE/pack/fixtures"; fi
