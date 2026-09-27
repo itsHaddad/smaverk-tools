@@ -269,7 +269,7 @@ function render() {
       `<button class="go" type="button" aria-label="Play from ${clock(m.startS)}">${PLAY_ICON}</button>` +
       `<div class="at"><b>${clock(m.startS)}</b><span>${spoken(m.endS - m.startS)}</span></div>` +
       `<p class="says">${escapeHtml(m.opening)}</p>` +
-      `<p class="why">${escapeHtml((shared ? m.why.slice(1) : m.why).join(" · "))}</p>`;
+      `<p class="why">${escapeHtml((shared ? m.why.slice(1) : m.why).map((w) => `${w}.`).join(" "))}</p>`;
     if (state === "found" && file) {
       const row = document.createElement("div");
       row.className = "trimrow";
