@@ -23,7 +23,10 @@ cp ../../clips/app/dist/sample-strip.mp4 dist/studio-demo/clips-strip.mp4
 # Its poster is a frame of that strip (3 s in, where all three carry captions), not the tool's own portrait poster: a
 # one-clip picture in a three-clip box was what every first look got (studio design review, four cards, B1).
 ffmpeg -v error -y -ss 3 -i ../../clips/app/dist/sample-strip.mp4 -frames:v 1 -q:v 3 dist/studio-demo/clips-poster.jpg
-for f in vertical-sample.mp4 vertical-track.json vertical-poster.jpg clipfinder-sample.json clipfinder-sample.mp4 clipfinder-poster.jpg clips-strip.mp4 clips-poster.jpg; do
+# The Operator card plays the tool's own demo: its podcast part (the first 24 s), cut without re-encoding.
+ffmpeg -v error -y -i ../../operator/app/dist/demo.mp4 -t 24 -c copy -movflags +faststart dist/studio-demo/operator-sample.mp4
+cp ../../operator/app/dist/demo.jpg dist/studio-demo/operator-poster.jpg
+for f in vertical-sample.mp4 vertical-track.json vertical-poster.jpg clipfinder-sample.json clipfinder-sample.mp4 clipfinder-poster.jpg clips-strip.mp4 clips-poster.jpg operator-sample.mp4 operator-poster.jpg; do
   [ -s "dist/studio-demo/$f" ] || { echo "studio-demo/$f is missing or empty; deploying now would take it off the live page"; exit 1; }
 done
 bun build app.ts worker.ts --target browser --outdir dist --minify --splitting --format esm | tail -3

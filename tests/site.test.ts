@@ -164,10 +164,15 @@ test("only files whose names change with their content are cached as immutable",
 
 test("shared parts are the same file in every tool", () => {
   expect(read("captions/app/src/seek.ts")).toBe(read("vertical/app/src/seek.ts"));
+  expect(read("operator/app/src/seek.ts"), "the Operator's sample scrubs with the same line").toBe(read("vertical/app/src/seek.ts"));
   // The search-page generator, its test and the local server are one file with two copies: a fix belongs in both.
   for (const f of ["tools/pages.ts", "tests/pages.test.ts", "serve.ts"]) expect(read(`captions/app/${f}`), f).toBe(read(`vertical/app/${f}`));
   const seekMarkup = (file: string) => read(file).match(/<input class="seek"[^\n]*/)?.[0];
   expect(seekMarkup("captions/app/dist/index.html")).toBe(seekMarkup("vertical/app/dist/index.html")!);
+  expect(seekMarkup("operator/app/dist/index.html")).toBe(seekMarkup("vertical/app/dist/index.html")!);
+  const sound = (file: string) => read(file).match(/<button class="sound" id="sound"[\s\S]*?<\/button>/)?.[0];
+  expect(sound("operator/app/dist/index.html"), "the Operator's sample has the same sound button").toBe(sound("vertical/app/dist/index.html")!);
+  expect(read("operator/app/dist/index.html"), "the browser's own controls do not cover the sample's captions").not.toMatch(/<video id="sample"[^>]*\bcontrols\b/);
 });
 
 test("one word for where it runs: device", () => {
@@ -246,8 +251,12 @@ test("every studio card shows its tool at work, from the tool's own sample", () 
   // same 16:9 slot — muted, looping, tap to stop — and every file it names exists where build.sh copies it from.
   const studio = read(STUDIO);
   const cards = [...studio.matchAll(/<div class="demo" data-demo="([a-z]+)">([\s\S]*?)<\/div>/g)].map((m) => [m[1]!, m[2]!] as const);
-  expect(cards.map(([n]) => n), "a card without a demo, or a demo without a card").toEqual(["captions", "vertical", "clipfinder", "clips"]);
+  expect(cards.map(([n]) => n), "a card without a demo, or a demo without a card").toEqual(["captions", "vertical", "clipfinder", "clips", "operator"]);
   expect(studio, "no card is left without a demo").not.toContain("tool nodemo");
+  // Each drawn card names its own branch: a new card (Operator, a plain video) fell into the Vertical branch, which asks its
+  // missing canvas for a context, threw on every load and left the card unplayable (cold user, round 7).
+  for (const n of ["captions", "clipfinder", "vertical"]) expect(studio, `the ${n} card's drawing is its own branch`).toContain(`box.dataset.demo === "${n}"`);
+  for (const m of studio.matchAll(/<script type="module">([\s\S]*?)<\/script>/g)) expect(() => new Function(m[1]!), "the studio's script parses").not.toThrow();
   for (const [name, html] of cards) {
     const video = html.match(/<video[^>]*>/)?.[0];
     expect(video, `${name}: the card plays the tool at work`).toBeTruthy();
@@ -620,7 +629,7 @@ test("every page tells the same story about unlocking", () => {
 // the failure where a gate certified an empty card while a different page deployed.
 test("every studio card's data is produced by the build, together", () => {
   const bs = read("captions/app/build.sh");
-  for (const f of ["vertical-sample.mp4", "vertical-track.json", "vertical-poster.jpg", "clipfinder-sample.json", "clips-strip.mp4", "clips-poster.jpg"])
+  for (const f of ["vertical-sample.mp4", "vertical-track.json", "vertical-poster.jpg", "clipfinder-sample.json", "clips-strip.mp4", "clips-poster.jpg", "operator-sample.mp4", "operator-poster.jpg"])
     expect(bs, `build.sh produces studio-demo/${f}`).toContain(`dist/studio-demo/${f}`);
   expect(bs, "build.sh refuses to finish with a card's data missing").toMatch(/is missing or empty; deploying now would take it off the live page/);
   // The clip finder's card data has to be able to draw, not merely exist: the card is a rail with moments on it.
@@ -653,12 +662,13 @@ test("terms describes the clip finder's two versions, and names no price", () =>
 // The studio page exists to list the tools. A live tool missing from it is the failure this guards.
 test("the studio lists every tool that is live, with its price state", () => {
   const studio = read(STUDIO); const t = text(studio).replace(/\s+/g, " ");
-  for (const [name, host] of [["Captions", "captions"], ["Vertical", "vertical"], ["Clip finder", "clipfinder"], ["Clips", "clips"]] as const) {
+  for (const [name, host] of [["Captions", "captions"], ["Vertical", "vertical"], ["Clip finder", "clipfinder"], ["Clips", "clips"], ["Operator", "operator"]] as const) {
     expect(t, `the studio names ${name}`).toContain(name);
     expect(studio, `${name} links to its own host`).toContain(`https://${host}.smaverk.com/?src=studio`);
   }
-  expect((studio.match(/<article class="tool/g) ?? []).length, "one card per tool").toBe(4);
-  // Every tool is priced now, and each card says its own: free to try, then once.
+  expect((studio.match(/<article class="tool/g) ?? []).length, "one card per tool").toBe(5);
+  // Every paid tool says its own price: free to try, then once. Operator is a free preview and says so in words.
+  expect(t, "the Operator card says it is free, in words").toContain("Free while it is a preview.");
   expect(t, "the clip finder's card states its price").toContain("$29 once: up to four hours");
   expect(t, "nothing left from the free-while-new days").not.toMatch(/while it is new/i);
   // The true claim for a tool that reads recordings, not the absolute.
@@ -674,6 +684,63 @@ test("the studio lists every tool that is live, with its price state", () => {
     if (!text(read(`${app}/app/dist/index.html`)).match(/\bEnglish\b/)) continue;
     expect(text(card), `the ${name} card carries the English limit its tool page states`).toMatch(/\bEnglish\b/);
   }
+});
+
+// ---------------------------------------------------------------------------------------------------------
+// Operator (live at operator.smaverk.com as a free preview, no price yet). It is not in SITES because SITES requires a price
+// and a public host. Until it has both, it is held to the rules that do not depend on them.
+// ---------------------------------------------------------------------------------------------------------
+const OP = { dist: "operator/app/dist", src: ["operator/app/app.ts", "operator/app/src/detect.ts", "operator/app/src/record.ts", "operator/app/src/embed.ts", "operator/app/src/embed-worker.ts", "operator/app/src/people.ts", "operator/app/src/vision-worker.ts", "operator/app/src/mouths.ts", "operator/app/src/talk-render.ts"] };
+
+test("Operator wears the studio's clothes: every style rule Vertical also has is identical", () => {
+  const rules = (file: string) => { const css = [...read(file).matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].map((m) => m[1]).join("\n").replace(/@media[^{]+\{([\s\S]*?\})\s*\}/g, " "); const out = new Map<string, string>(); for (const r of css.matchAll(/([^{}@]+)\{([^{}]*)\}/g)) for (const sel of r[1]!.split(",")) out.set(sel.trim(), r[2]!.trim().replace(/;$/, "")); return out; };
+  const a = rules("vertical/app/dist/index.html"), b = rules(`${OP.dist}/index.html`); const drift: string[] = []; let shared = 0;
+  for (const [sel, body] of a) if (b.has(sel)) { shared++; if (b.get(sel) !== body) drift.push(sel); }
+  expect(shared, "the two pages share a look").toBeGreaterThan(80); expect(drift).toEqual([]);
+});
+
+test("Operator: plain words at rest, one word for where it runs, no permanence wording, nothing about how it is built", () => {
+  const html = read(`${OP.dist}/index.html`); const t = text(html);
+  expect(wordsAtRest(html)).toBeLessThanOrEqual(240);
+  expect(t.match(/[^.]{0,40}\b(never|forever|ever)\b[^.]{0,30}/gi) ?? []).toEqual([]);
+  for (const f of OP.src) expect(code(read(f)).match(/["'`][^"'`\n]*\b(never|forever|ever)\b[^"'`\n]*["'`]/gi) ?? [], f).toEqual([]);
+  expect(html).not.toMatch(/(leaves?|stays? on|on) your (phone|computer|laptop)\b/i);
+  expect(t).toMatch(/\bAI\b/); expect(t).toMatch(/device/);
+  const METHOD = /\b(whisper|webgpu|wasm|webassembly|webcodecs|mediapipe|blazeface|hugging ?face|jsdelivr|onnx|tensorflow|mediabunny|ffmpeg|neural|machine learning|face (tracker|detector|detection|recognition)|h\.?264|vp9|opus)\b/i;
+  expect(t.split(/\n|(?<=[.!?])\s/).filter((l) => METHOD.test(l))).toEqual([]);
+  // It tells the faces in one recording apart so as not to repeat a close-up, and says so, and says that nothing about a
+  // face outlasts the recording. It does not claim that it cannot tell people apart.
+  expect(t).toMatch(/tells the faces in one recording apart/); expect(t).toMatch(/Nothing about a face is kept after the recording stops/);
+  expect(t).not.toMatch(/does not (know|recogni[sz]e|identify)/i);
+  // Face information is read in the page and not sent (GDPR Art. 9 / BIPA research, round 7): the page says so where it says where the video goes.
+  expect(t).toMatch(/faces are read inside this page, not sent to us or anyone/);
+});
+
+test("Operator shows a sample to watch before the camera opens, credited, under the host's per-file limit", () => {
+  // Design review r4 B1: at rest the stage was a black box. The sample is the demo video of the real page at work.
+  const html = read(`${OP.dist}/index.html`);
+  const tag = html.match(/<video[^>]*\bid="sample"[^>]*>/)?.[0] ?? "";
+  expect(tag, "a sample video in the stage").toMatch(/\bsrc="demo\.mp4"/); expect(tag).toMatch(/\bposter="demo\.jpg"/); expect(tag).toMatch(/\bplaysinline\b/);
+  expect(html.indexOf('id="sample"'), "the sample is inside the stage").toBeGreaterThan(html.indexOf('id="stage"'));
+  expect(html.indexOf('id="sample"')).toBeLessThan(html.indexOf('id="commands"'));
+  for (const [f, max] of [["demo.mp4", 25e6], ["demo.jpg", 300e3]] as const) { const p = join(ROOT, OP.dist, f); expect(existsSync(p), f).toBe(true); expect(statSync(p).size, f).toBeLessThan(max); }
+  const url = read("operator/app/tests/fixtures/SOURCES.md").match(/https:\/\/www\.youtube\.com\/watch\?v=[\w-]+/)?.[0];
+  expect(html, "the sample's footage is credited").toMatch(new RegExp(`<a href="${url!.replace(/[?.]/g, "\\$&")}" rel="noopener">[^<]*NASA</a>`));
+  // The court scene is a Creative Commons clip (CC BY 3.0): credited where it plays, as the licence asks.
+  const court = read("operator/app/tests/fixtures/SOURCES.md").match(/https:\/\/commons\.wikimedia\.org\/wiki\/File:[\w.-]+/)?.[0];
+  expect(court, "SOURCES.md names the court clip").toBeTruthy();
+  expect(html, "the court footage is credited").toMatch(new RegExp(`<a href="${court!.replace(/[?.]/g, "\\$&")}" rel="noopener">[^<]*CC BY</a>`));
+  expect(read(`${OP.dist}/_headers`), "a replaced demo reaches visitors at once").toMatch(/^\/demo\.(mp4|\*)\n\s+Cache-Control: no-cache/m);
+});
+
+test("Operator loads nothing from other companies, and sends only the numbers a person chooses to send", () => {
+  const html = read(`${OP.dist}/index.html`);
+  for (const m of html.matchAll(/<(?:script|link|img|video|source|iframe)\b[^>]*\b(?:src|href)=["'](https?:\/\/[^"']+)["'][^>]*>/g)) expect(m[1]).toMatch(/^https:\/\/([a-z]+\.)?smaverk\.com\//);
+  for (const m of html.matchAll(/href="([^"]*\b(privacy|terms)\b[^"]*)"/g)) expect(m[1]).toMatch(/^https:\/\/smaverk\.com\/(privacy|terms)$/);
+  const hosts = new Set<string>(); for (const f of OP.src) for (const m of code(read(f)).matchAll(/https:\/\/([a-zA-Z0-9.-]+)/g)) hosts.add(m[1]!);
+  hosts.delete("odml.pa.googleapis.com"); // matched so it can be answered on the device with an empty 204; it is not contacted
+  expect([...hosts]).toEqual(["unlock.smaverk.com"]); // the Send numbers button, shown only with ?debug
+  expect(read(OP.src[0]!)).toMatch(/if \(DEBUG\) \{[\s\S]*unlock\.smaverk\.com\/lab/);
 });
 
 // ---------------------------------------------------------------------------------------------------------
