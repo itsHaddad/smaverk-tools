@@ -243,7 +243,7 @@ export function reasons(c: Candidate, f: Features, t?: Transcript): string[] {
   // on the interviewer's own question — true of the passage's words, false of what a viewer hears first. The
   // opening a person will hear is checked first, because it is the thing they can verify in two seconds.
   if (t && beginsSentence(t, c.startWord) && isQuestionAt(t, c.startWord)) out.push("Opens on the question it answers");
-  else out.push(f.selfContained > 0.35 ? "Stands on its own" : "Starts mid-story: say a line of context first");
+  else out.push(f.selfContained > 0.35 ? "Stands on its own" : "Starts mid-story: add context first");
   if (f.setupPayoff >= 1) out.push("Opens with a problem and answers it later");
   else if (f.setupPayoff > 0) out.push("Sets something up and comes back to it");
   else if (c.sections > 1) out.push(`One subject across ${c.sections} turns`);

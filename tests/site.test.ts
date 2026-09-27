@@ -896,7 +896,8 @@ test("Clips: the time it takes is the measured one, the same on the page and in 
 // bytes on every page; the device's setting until a tap picks one, and a picked theme wins over every dark-mode rule.
 // ---------------------------------------------------------------------------------------------------------
 
-const TOP_PAGES = [STUDIO, "captions/app/dist/index.html", "vertical/app/dist/index.html", "clipfinder/app/dist/index.html", "clips/app/dist/index.html", "operator/app/dist/index.html"];
+// The public mirror carries no Operator page (its code stays here, as opTest says): each page is checked where it is.
+const TOP_PAGES = [STUDIO, "captions/app/dist/index.html", "vertical/app/dist/index.html", "clipfinder/app/dist/index.html", "clips/app/dist/index.html", "operator/app/dist/index.html"].filter((p) => existsSync(join(ROOT, p)));
 const themeParts = (html: string) => ({
   head: html.match(/<script>\/\* theme:[\s\S]*?<\/script>/)?.[0],
   css: html.match(/\/\* theme toggle:[\s\S]*?\/\* \/theme toggle \*\//)?.[0],
@@ -1022,7 +1023,7 @@ test("Clip finder: the moment, not a caveat, on the studio card; its reasons in 
   // first", which a stranger reads as an error, and "setup" is jargon.
   const studio = read(STUDIO);
   expect(studio).not.toMatch(/m\.why\?\.\[0\]/); expect(studio).toMatch(/Math\.round\(m\.endS - m\.startS\)\} s · /);
-  for (const f of ["clipfinder/app/src/lib/rank.ts", "clipfinder/app/dist/sample.json", "clips/app/dist/sample.json", "captions/app/dist/studio-demo/clipfinder-sample.json"]) expect(read(f), f).not.toMatch(/line of setup/i);
+  for (const f of ["clipfinder/app/src/lib/rank.ts", "clipfinder/app/dist/sample.json", "clips/app/dist/sample.json", "captions/app/dist/studio-demo/clipfinder-sample.json"].filter((f) => existsSync(join(ROOT, f)))) expect(read(f), f).not.toMatch(/line of setup/i);
   expect(text(studio.split("<article").find((a) => /<h3>Clip finder<\/h3>/.test(a)) ?? "")).toMatch(/Free up to 30 minutes, to watch\./);
 });
 
