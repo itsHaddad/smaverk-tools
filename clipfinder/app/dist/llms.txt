@@ -33,6 +33,7 @@ const moments = await page.evaluate(() => window.__cf.list);  // [{startS, endS,
 - https://vertical.smaverk.com — a wide clip cut to 9:16 with the speaker in frame.
 - https://captions.smaverk.com — captions burned onto a short clip.
 - https://clips.smaverk.com — the three tools in a row: a long recording in, tall clips with captions out.
+- https://operator.smaverk.com — a full-screen camera for a group: each face close up in turn, one person followed, or cuts to whoever is talking, tall or wide as the device is held. Free while it is a preview.
 
 ## Contact
 hello@smaverk.com

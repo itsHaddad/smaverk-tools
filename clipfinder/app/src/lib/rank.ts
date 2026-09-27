@@ -238,12 +238,12 @@ export function reasons(c: Candidate, f: Features, t?: Transcript): string[] {
   // only when the answer flattered the passage, and everything else fell through to "Stays on one subject"
   // — three cards in four carrying one sentence, which teaches a reader that the slot is decoration
   // (design review, 2026-09-21). Saying the unflattering half is both more honest and more useful: it
-  // tells the person this one needs a line of setup before they post it.
+  // tells the person this one starts mid-story, so a line of context goes before it when they post it.
   // 2026-09-22: once the edges moved to whole sentences, "leans on what came before" sat on a moment that opens
   // on the interviewer's own question — true of the passage's words, false of what a viewer hears first. The
   // opening a person will hear is checked first, because it is the thing they can verify in two seconds.
   if (t && beginsSentence(t, c.startWord) && isQuestionAt(t, c.startWord)) out.push("Opens on the question it answers");
-  else out.push(f.selfContained > 0.35 ? "Stands on its own" : "Needs a line of setup first");
+  else out.push(f.selfContained > 0.35 ? "Stands on its own" : "Starts mid-story: say a line of context first");
   if (f.setupPayoff >= 1) out.push("Opens with a problem and answers it later");
   else if (f.setupPayoff > 0) out.push("Sets something up and comes back to it");
   else if (c.sections > 1) out.push(`One subject across ${c.sections} turns`);

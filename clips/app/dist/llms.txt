@@ -32,6 +32,7 @@ const made = await page.evaluate(() => window.__clips.made); // [{name, seconds,
 - https://clipfinder.smaverk.com — the moments worth posting in a long recording, and timeline files for editing programs.
 - https://vertical.smaverk.com — a wide clip cut to 9:16 with the speaker in frame.
 - https://captions.smaverk.com — captions burned onto a short clip.
+- https://operator.smaverk.com — a full-screen camera for a group: each face close up in turn, one person followed, or cuts to whoever is talking, tall or wide as the device is held. Free while it is a preview.
 
 ## Contact
 hello@smaverk.com

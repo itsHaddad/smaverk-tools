@@ -236,11 +236,13 @@ async function run() {
     stageNow = "listen";
     // Estimate from the last run on this device when there is one; otherwise a cautious guess (WASM is slow on phones).
     const secs = audio.length / 16000; const factor = estimateFactor(dbg.device, navigator.hardwareConcurrency, dbg.ms, dbg.lastSecs);
-    const est = Math.max(4, Math.round(secs * factor)); dbg.lastSecs = secs;
+    const est = Math.max(4, Math.round(secs * factor)), measuredHere = !!(dbg.ms && dbg.lastSecs); dbg.lastSecs = secs;
     const t0 = performance.now(); const elapsed = () => Math.round((performance.now() - t0) / 1000);
     let upTo = 0, done = 0, of = 0; dbg.partials = 0; words = []; dbg.words = words; relines();
-    const left = () => (done ? Math.round((elapsed() / done) * (of - done)) : est - elapsed()); // once a window is done the pace is measured, not guessed
-    const note = () => (upTo ? `captions to ${Math.round(upTo)} s, ` : "") + (left() > 0 ? `about ${left()} s left` : `still working, ${elapsed()} s`);
+    // Seconds left once the pace is measured: a window done, or a run on this device before. A first-run guess said "about
+    // 66 s left" and finished in 20 s (Captions cold user 6, 2026-09-27), so until then no number is shown.
+    const left = () => (done ? Math.round((elapsed() / done) * (of - done)) : measuredHere ? est - elapsed() : -1);
+    const note = () => (upTo ? `captions to ${Math.round(upTo)} s, ` : "") + (left() > 0 ? `about ${left()} s left` : done || measuredHere ? `still working, ${elapsed()} s` : `listening, ${elapsed()} s`);
     step(2, "active", note()); const tick = setInterval(() => step(2, "active", note()), 1000);
     // The engine hears the clip in 30 s windows and sends each window's words as soon as it has them. The first batch starts
     // playback from the top, so the person watches captions on the part already heard while the rest is still being listened to.

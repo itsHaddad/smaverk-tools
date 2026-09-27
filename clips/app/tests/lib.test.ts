@@ -102,8 +102,8 @@ test("sound that starts at zero is handed back as it is", () => {
 // --- names, saving, and what the page says ------------------------------------------------------------
 
 test("a saved clip is named after the recording, its place in the list and where it starts", () => {
-  expect(clipName("My podcast episode 12.mp4", 1, 305.6)).toBe("My-podcast-episode-12-01-at-5-06.mp4");
-  expect(clipName("interview.mov", 3, 3725)).toBe("interview-03-at-1-02-05.mp4");
+  expect(clipName("My podcast episode 12.mp4", 1, 305.6)).toBe("My podcast episode 12 - clip 1 (5m06s).mp4");
+  expect(clipName("interview.mov", 3, 3725)).toBe("interview - clip 3 (1h02m05s).mp4");
 });
 
 test("the free version saves one clip; the paid version saves every clip", () => {
