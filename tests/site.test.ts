@@ -953,7 +953,7 @@ test("a picked theme wins: every dark-mode rule has its data-theme twin, on ever
     if (/prefers-color-scheme/.test(scripts.replace(/<style[\s\S]*?<\/style>/g, ""))) miss.push(`${p}: a script reads the device's scheme without the picked theme`);
   }
   // A canvas that picks colours for the scheme reads the picked theme too, and redraws when it changes.
-  for (const f of ["captions/app/app.ts", "vertical/app/app.ts", "clipfinder/app/app.ts", "clips/app/app.ts", "operator/app/app.ts"]) {
+  for (const f of ["captions/app/app.ts", "vertical/app/app.ts", "clipfinder/app/app.ts", "clips/app/app.ts", "operator/app/app.ts"].filter((f) => existsSync(join(ROOT, f)))) { // no Operator code in the public mirror
     const src = code(read(f)); if (!/prefers-color-scheme/.test(src)) continue;
     if (!/data-theme/.test(src) || !/"themechange"/.test(src)) miss.push(`${f}: reads the device's scheme but not the picked theme`);
   }
