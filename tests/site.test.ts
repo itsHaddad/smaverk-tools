@@ -1102,3 +1102,11 @@ test("Captions: no seconds-left guess before the pace is measured; Clip finder's
   // Clips cold user 2: "weekly-live-5-min-01-at-2-20.mp4" read as a code.
   expect(read("clipfinder/app/src/lib/naming.ts")).toMatch(/- clip \$\{index\} \(\$\{at\(startS\)\}\)\.\$\{ext\}/);
 });
+
+// Design review r8 (2026-09-27): Clips used the screen-reader-only class without its CSS, so "Sound off" showed on the video.
+test("every page that uses class=\"sr\" hides it (defines .sr)", () => {
+  for (const s of Object.values(SITES)) {
+    const h = read(`${s.dist}/${s.page}`);
+    if (/class="[^"]*\bsr\b/.test(h)) expect(h, `${s.dist}/${s.page} uses .sr without defining it`).toMatch(/\.sr\{[^}]*clip-path:inset\(50%\)/);
+  }
+});
