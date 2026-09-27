@@ -131,7 +131,9 @@ const say = (msg: string, kind: "" | "err" | "ok" = "") => {
 
 // A custom property comes back unresolved, and a canvas drops a colour it cannot parse without a word.
 // See src/lib/theme.ts: this one line is why the map used to paint black on black.
-const css = (name: string) => pickScheme(getComputedStyle(document.body).getPropertyValue(name), matchMedia("(prefers-color-scheme: dark)").matches);
+// The scheme in force is the visitor's pick from the light/dark button (data-theme on <html>), else the device's.
+const isDark = () => { const t = document.documentElement.getAttribute("data-theme"); return t ? t === "dark" : matchMedia("(prefers-color-scheme: dark)").matches; };
+const css = (name: string) => pickScheme(getComputedStyle(document.body).getPropertyValue(name), isDark());
 
 /**
  * One band, the whole recording, with the found moments lit inside it. This is the picture of what the
@@ -339,9 +341,23 @@ function select(i: number) {
   drawMap();
 }
 
+// At rest the strongest moment of the sample plays muted, in a loop, its first words on the picture; a tap on the picture
+// turns the sound on (Clip finder cold user 2, 2026-09-27: the sample stood still behind a play button). Not for anyone who
+// asked for less motion, and it stops for good once the person plays something.
+let preview = false;
+function previewSample() {
+  const m = moments[0];
+  if (!m || !sample?.video || state !== "sample" || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  preview = true; audio.muted = true; current = 0;
+  if (!audio.src.endsWith(sample.audio)) audio.src = sample.audio;
+  const go = () => { if (!preview) return; audio.currentTime = m.playFromS; audio.play().catch(() => { preview = false; audio.muted = false; }); };
+  if (audio.readyState >= 1) go(); else { audio.addEventListener("loadedmetadata", go, { once: true }); audio.load(); }
+}
+
 function play(i: number) {
   const m = moments[i];
   if (!m) return;
+  preview = false; audio.muted = false;
   select(i);
   if (!stage.hidden) stage.scrollIntoView({ block: "nearest", behavior: "smooth" });
   const src = state === "sample" ? sample?.audio : mediaUrl;
@@ -360,13 +376,14 @@ function play(i: number) {
 
 // The big button on the picture: the moment already chosen, or the strongest one; again to pause.
 $("stageplay").addEventListener("click", () => {
+  if (preview) return play(current >= 0 ? current : 0); // the sound on, from the top of the moment
   if (!audio.paused) return audio.pause();
   if (moments.length) play(current >= 0 ? current : 0);
 });
 
 audio.addEventListener("timeupdate", () => {
   const m = moments[current];
-  if (m && audio.currentTime >= m.playToS) audio.pause();
+  if (m && audio.currentTime >= m.playToS) { if (preview) audio.currentTime = m.playFromS; else audio.pause(); }
 });
 for (const ev of ["play", "pause", "ended", "seeked"]) {
   audio.addEventListener(ev, () => {
@@ -374,8 +391,8 @@ for (const ev of ["play", "pause", "ended", "seeked"]) {
     if (!audio.paused && current >= 0) (list.children[current] as HTMLElement)?.setAttribute("data-playing", "1");
     stage.dataset.playing = audio.paused ? "0" : "1";
     const m = moments[current];
-    $("now").textContent = !audio.paused && m ? `${clock(m.startS)} · ${m.why[0] ?? ""}` : "";
-    $("stageplay").setAttribute("aria-label", audio.paused ? "Play the moment" : "Pause");
+    $("now").textContent = !audio.paused && m ? (preview ? `${clock(m.startS)} · “${m.opening.replace(/…$/, "")}…”` : `${clock(m.startS)} · ${m.why[0] ?? ""}`) : "";
+    $("stageplay").setAttribute("aria-label", preview ? "Turn the sound on" : audio.paused ? "Play the moment" : "Pause");
   });
 }
 
@@ -529,6 +546,7 @@ $("action").addEventListener("click", () => {
 for (const ev of ["pointerdown", "focusin"] as const) map.addEventListener(ev, warm, { once: true });
 
 $("file").addEventListener("change", async (e) => {
+  if (preview) { preview = false; audio.pause(); audio.muted = false; } // the person's own recording takes the picture
   const picked = (e.target as HTMLInputElement).files?.[0];
   if (!picked) return;
   file = picked;
@@ -781,6 +799,10 @@ matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
   drawMap();
   drawChips();
 });
+addEventListener("themechange", () => {
+  drawMap();
+  drawChips();
+});
 
 (async () => {
   drawChips();
@@ -789,6 +811,7 @@ matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
     if (!r.ok) throw new Error(String(r.status));
     sample = (await r.json()) as Sample;
     showSample();
+    previewSample();
   } catch {
     // The sample is decoration, not the product. Without it the page still does its one job.
     $("clipname").textContent = "Pick a recording to start";

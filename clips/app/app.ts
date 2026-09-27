@@ -12,6 +12,7 @@ import { clock, spoken, displayName } from "../../clipfinder/app/src/lib/naming"
 import { tidyStored } from "../../clipfinder/app/src/lib/rank";
 import type { Word } from "../../captions/app/src/lib/lines";
 import { Unlock, SAMPLE_KEY, type UnlockState } from "./src/lib/unlock";
+import { attachSeek } from "./src/seek";
 
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 const SANDBOX = new URL(location.href).searchParams.get("rail") === "sandbox";
@@ -44,6 +45,15 @@ let licensed = false;
 let sample: { title: string; credit: string; url: string; durationS: number; poster: string; moments: (Moment & { clip: string; lengthS: number })[] } | null = null;
 
 const reel = $<HTMLVideoElement>("reel");
+// The clip plays in the studio's stage player, as in Captions and Vertical (design review r8 C1): a tap on the picture plays
+// or pauses it, a round button in the top corner turns the sound on or off, a thin line along the bottom scrubs it.
+{ const stage = $("reelwrap"), sound = $<HTMLButtonElement>("sound");
+  attachSeek($<HTMLInputElement>("seek"), $("seekbar"), reel);
+  const said = () => { sound.setAttribute("aria-pressed", String(!reel.muted)); sound.setAttribute("aria-label", reel.muted ? "Sound is off. Turn it on" : "Sound is on. Turn it off"); $("soundtxt").textContent = reel.muted ? "Sound off" : "Sound on"; };
+  for (const ev of ["play", "playing", "pause", "ended", "emptied"]) reel.addEventListener(ev, () => stage.classList.toggle("playing", !reel.paused));
+  reel.addEventListener("volumechange", said); said();
+  $("tap").addEventListener("click", () => { if (reel.paused) reel.play().catch(() => {}); else reel.pause(); });
+  sound.addEventListener("click", () => { reel.muted = !reel.muted; if (!reel.muted && reel.paused) reel.play().catch(() => {}); }); }
 const list = $<HTMLOListElement>("moments");
 const action = $<HTMLButtonElement>("action");
 

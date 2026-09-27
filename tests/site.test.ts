@@ -69,6 +69,16 @@ test("no permanence wording in anything a visitor reads (never, ever, forever)",
   expect(hits).toEqual([]);
 });
 
+test("no permanence wording in the drafts the principal will paste (the > lines in */assets/marketing/*.md)", () => {
+  // The principal's rule covers posts and listings as well as pages ("no 'no subscription, ever' on pages or in drafts").
+  // Paste-ready text in a draft file is written as a > blockquote; notes to the principal around it are not checked.
+  const hits: string[] = [];
+  for (const d of readdirSync(ROOT)) { const dir = join(ROOT, d, "assets", "marketing"); if (!existsSync(dir)) continue;
+    for (const f of readdirSync(dir).filter((n) => n.endsWith(".md"))) for (const line of read(`${d}/assets/marketing/${f}`).split("\n"))
+      if (/^>/.test(line) && /\b(never|forever|ever)\b/i.test(line)) hits.push(`${d}/assets/marketing/${f}: ${line.slice(0, 90)}`); }
+  expect(hits).toEqual([]);
+});
+
 test("Privacy and Terms links open the studio's own pages, from every page", () => {
   const bad: string[] = [];
   for (const p of pages()) for (const m of read(p).matchAll(/href="([^"]*\b(privacy|terms)\b[^"]*)"/g)) if (!/^https:\/\/smaverk\.com\/(privacy|terms)$/.test(m[1]!)) bad.push(`${p}: ${m[1]}`);
@@ -168,6 +178,19 @@ test("shared parts are the same file in every tool", () => {
   for (const f of ["tools/pages.ts", "tests/pages.test.ts", "serve.ts"]) expect(read(`captions/app/${f}`), f).toBe(read(`vertical/app/${f}`));
   const seekMarkup = (file: string) => read(file).match(/<input class="seek"[^\n]*/)?.[0];
   expect(seekMarkup("captions/app/dist/index.html")).toBe(seekMarkup("vertical/app/dist/index.html")!);
+  // Clips plays its clip in the same stage player (design review r8 C1): no browser controls, the same sound button, play
+  // disc, tap layer and scrub line, the same seek.ts, and the same CSS rules for them as Captions.
+  const clips = read("clips/app/dist/index.html"), cap = read("captions/app/dist/index.html");
+  expect(read("clips/app/src/seek.ts"), "Clips scrubs with the same line").toBe(read("captions/app/src/seek.ts"));
+  expect(seekMarkup("clips/app/dist/index.html")).toBe(seekMarkup("captions/app/dist/index.html")!);
+  for (const re of [/<button class="sound" id="sound"[\s\S]*?<\/button>/, /<button class="tap" id="tap"[^>]*><\/button>/, /<div class="play" id="playicon">[\s\S]*?<\/div>/])
+    expect(clips.match(re)?.[0], String(re)).toBe(cap.match(re)?.[0]!);
+  expect(clips, "the browser's own controls are not on the clip").not.toMatch(/<video id="reel"[^>]*\bcontrols\b/);
+  expect(clips).toMatch(/<div class="reel stage" id="reelwrap">\s*<video id="reel"/);
+  const stageRules = (html: string) => [...html.matchAll(/(?<=[}\n])(\.stage(?:\.playing)? \.(?:tap|play|sound|seek|seekbar)\b[^{]*\{[^}]*\})/g)].map((m) => m[1]).filter((r) => !/\.stage\.busy|data-side/.test(r!));
+  expect(stageRules(clips).length).toBeGreaterThan(8);
+  for (const r of stageRules(cap)) expect(clips, r!).toContain(r!);
+  expect(read("clips/app/app.ts")).toMatch(/attachSeek\(\$<HTMLInputElement>\("seek"\), \$\("seekbar"\), reel\)/);
 });
 
 test("one word for where it runs: device", () => {
@@ -217,7 +240,7 @@ test("each page says it in one line: AI, on your device", () => {
     for (const f of search(s)) expect(read(`${s.dist}/${f}`).match(/<p class="sub">([^<]*)<\/p>/)?.[1], `${f} line under the headline`).toMatch(/^AI [^.]*on your device\./);
   }
   const studio = read(STUDIO);
-  expect(text(studio.match(/<h1>[\s\S]*?<\/h1>/)![0]).replace(/\s+/g, " ").trim()).toBe("Small AI tools that run on your device.");
+  expect(text(studio.match(/<h1>[\s\S]*?<\/h1>/)![0]).replace(/\s+/g, " ").trim()).toBe("Short videos for your socials, made on your device."); // studio cold user 4: say what they are for
   expect(studio.match(/<title>([^<]*)<\/title>/)?.[1]).toMatch(/AI tools that run on your device/);
 });
 
@@ -749,6 +772,31 @@ opTest("Operator loads nothing from other companies, and sends only the numbers 
   expect(read(OP.src[0]!)).toMatch(/if \(DEBUG\) \{[\s\S]*unlock\.smaverk\.com\/lab/);
 });
 
+opTest("Operator shows what it does in pictures: one moving diagram per mode, the controls on the picture, few words", () => {
+  // The principal, 2026-09-27: "the how to use and description in general sucks, it doesn't reflect the operator now … less
+  // words and more diagrams". Each mode is the picture the camera sees (its shot in green) beside the video it makes.
+  const html = read(`${OP.dist}/index.html`);
+  expect(wordsAtRest(html), "well under the 234 words the text version had").toBeLessThanOrEqual(200);
+  const cards = [...(html.match(/<div class="dg-modes">[\s\S]*?<\/div>/)?.[0] ?? "").matchAll(/<figure class="dg-card">([\s\S]*?)<\/figure>/g)].map((m) => m[1]!);
+  const chips = [...html.matchAll(/<button class="chip" data-cmd="\w+"[^>]*><span class="short">([^<]+)</g)].map((m) => m[1]!.replace("&#39;", "'"));
+  expect(cards.map((c) => c.match(/<figcaption><b>([^<]+)<\/b>/)?.[1]), "a diagram for each command, in the chips' order").toEqual(chips);
+  for (const c of cards) {
+    expect(c, "a drawing, not a picture file or a library").toMatch(/^<svg class="dg" viewBox/);
+    const words = c.match(/<\/b>([^<]*)<\/figcaption>/)![1]!.trim().split(/\s+/).length; expect(words, c.slice(-80)).toBeLessThanOrEqual(8);
+  }
+  // Moving, and still under reduced motion: every animated shot also has a resting transform (the page's reduced-motion rule
+  // stops every animation, and the resting one is the frame shown then); no script draws them.
+  expect(html).toMatch(/@media\(prefers-reduced-motion:reduce\)\{\*\{animation:none!important/);
+  for (const k of ["eF", "eC", "fF", "fC", "tF", "tC"]) expect(html, `.dg-${k}`).toMatch(new RegExp(`\\.dg-${k}\\{transform:[^;]+;animation:dg[A-Z]{2} `));
+  expect([...html.matchAll(/<script\b[^>]*\bsrc=/g)].length, "one script: the app").toBe(1);
+  // The controls diagram names each control on the picture, and the facts the text used to carry are still said.
+  const ctl = html.match(/<svg class="dg-ctl"[\s\S]*?<\/svg>/)?.[0] ?? "";
+  for (const l of ["Turn off", "Light", "Shape", "Zoom", "What to film", "Switch camera", "Close-up time", "Hold to stop"]) expect(ctl, l).toContain(l);
+  const t = text(html), llms = read(`${OP.dist}/llms.txt`);
+  for (const f of [/a still of each face/, /camera turns off when you leave the page/, /[Ff]ree while (in|it is a) preview/]) { expect(t, String(f)).toMatch(f); expect(llms, `llms.txt ${f}`).toMatch(f); }
+  expect(html, "JSON-LD: free while a preview").toMatch(/"price":"0","priceCurrency":"USD","description":"Free while in preview"/);
+});
+
 // ---------------------------------------------------------------------------------------------------------
 // Clips. It is in SITES, so everything above applies to it; what is left is what is true of this tool only: it is
 // the other three tools' own code in a row, its price is one constant, its cap is one constant, and it has no
@@ -853,4 +901,204 @@ test("Clips: the time it takes is the measured one, the same on the page and in 
     expect(t, `${f}: the clip time`).toMatch(/each clip takes about half as long as it plays/);
     expect(t, `${f}: the phone limit`).toMatch(/iPhone.*(small screen|small-screen)/);
   }
+});
+
+// ---------------------------------------------------------------------------------------------------------
+// The top bar. The principal, 2026-09-27: "smaverk.com doesn't have the smaverk logo on top clickable and there are no
+// dark and light buttons even though they are supposed to be there." One brand link and one light/dark button, the same
+// bytes on every page; the device's setting until a tap picks one, and a picked theme wins over every dark-mode rule.
+// ---------------------------------------------------------------------------------------------------------
+
+// The public mirror carries no Operator page (its code stays here, as opTest says): each page is checked where it is.
+const TOP_PAGES = [STUDIO, "captions/app/dist/index.html", "vertical/app/dist/index.html", "clipfinder/app/dist/index.html", "clips/app/dist/index.html", "operator/app/dist/index.html"].filter((p) => existsSync(join(ROOT, p)));
+const themeParts = (html: string) => ({
+  head: html.match(/<script>\/\* theme:[\s\S]*?<\/script>/)?.[0],
+  css: html.match(/\/\* theme toggle:[\s\S]*?\/\* \/theme toggle \*\//)?.[0],
+  button: html.match(/<button class="theme" id="theme"[\s\S]*?<\/button>/)?.[0],
+});
+// Each rule inside an @media block, with braces matched, as [media query, selector, body].
+const mediaRules = (css: string) => {
+  const out: [string, string, string][] = [];
+  for (const m of css.matchAll(/@media([^{]+)\{/g)) {
+    let i = m.index! + m[0].length, depth = 1; const start = i;
+    while (i < css.length && depth) { if (css[i] === "{") depth++; else if (css[i] === "}") depth--; i++; }
+    for (const r of css.slice(start, i - 1).matchAll(/([^{}]+)\{([^{}]*)\}/g)) out.push([m[1]!.trim(), r[1]!.trim(), r[2]!.trim()]);
+  }
+  return out;
+};
+
+test("every page's top bar: the brand links home, and the light/dark button is the same on every page", () => {
+  const first = themeParts(read(TOP_PAGES[0]!));
+  expect(first.head && first.css && first.button, "the studio has all three parts").toBeTruthy();
+  for (const p of TOP_PAGES) {
+    const html = read(p), parts = themeParts(html);
+    expect(html, `${p}: brand link`).toMatch(/<div class="top"><a class="brand" href="https:\/\/smaverk\.com"><i><\/i>Småverk/);
+    expect(parts, p).toEqual(first);
+    // Inside the top bar, and the stored pick is applied in <head>, before anything is painted.
+    expect(html.match(/<div class="top">[\s\S]*?<\/div>/)?.[0], `${p}: button in the top bar`).toContain(first.button!);
+    expect(html.indexOf(first.head!), `${p}: theme script in head`).toBeLessThan(html.indexOf("</head>"));
+    expect(html.indexOf(first.head!)).toBeLessThan(html.indexOf("<style"));
+  }
+  // What it does: remembered (guarded), explicit, both the scheme and the attribute set, and a label that says what a tap does.
+  const js = first.head!;
+  for (const need of ["localStorage.getItem", "localStorage.setItem", "try{", "style.colorScheme", 'setAttribute("data-theme"', '"aria-pressed"', "Switch to light mode", "Switch to dark mode"]) expect(js).toContain(need);
+  expect(first.css).toMatch(/\.theme\{[^}]*width:44px;height:44px/);
+  expect(first.button).toMatch(/class="moon"/); expect(first.button).toMatch(/class="sun"/);
+});
+
+test("the light/dark pick carries across the studio: one cookie for .smaverk.com, on every page incl. the search pages, Privacy and Terms", () => {
+  // Design review r8 X1: localStorage belongs to one site, and smaverk.com and each tool are six sites, so a pick made on
+  // the studio was lost one tap later. The cookie is read first, then this site's storage; a tap writes both.
+  const first = themeParts(read(TOP_PAGES[0]!));
+  const all = [...TOP_PAGES, ...LEGAL, ...Object.values(SITES).flatMap((s) => search(s).map((f) => `${s.dist}/${f}`))];
+  for (const p of all) {
+    const html = read(p), parts = themeParts(html);
+    expect(parts.head, `${p}: the theme script`).toBe(first.head!); expect(parts.css, `${p}: the toggle CSS`).toBe(first.css!); expect(parts.button, `${p}: #theme`).toBe(first.button!);
+    expect(html.match(/<div class="top">[\s\S]*?<\/div>/)?.[0], `${p}: brand link and button in the top row`).toMatch(/<a class="brand" href="https:\/\/smaverk\.com"><i><\/i>Småverk[\s\S]*<button class="theme" id="theme"/);
+    expect(html.indexOf(first.head!), `${p}: theme script before any style`).toBeLessThan(html.indexOf("<style"));
+  }
+  const js = first.head!;
+  expect(js).toContain('document.cookie.match(/(?:^|; )smaverk-theme=(light|dark)/)');
+  expect(js.indexOf("document.cookie.match")).toBeLessThan(js.indexOf("localStorage.getItem"));
+  for (const need of ["Domain=.smaverk.com", "Path=/", "Max-Age=31536000", "SameSite=Lax", "Secure"]) expect(js, need).toContain(need);
+  // Privacy names the cookie (it also says the analytics count visits without cookies), and so does every llms.txt.
+  expect(text(read(LEGAL[0]!)).replace(/\s+/g, " ")).toContain("If you pick light or dark, one small cookie remembers that choice across the tools. It holds nothing else.");
+  for (const f of ["captions", "vertical", "clipfinder", "clips", "operator"].map((t) => `${t}/app/dist/llms.txt`).filter((f) => existsSync(join(ROOT, f)))) expect(read(f), f).toContain("`smaverk-theme` cookie for `.smaverk.com`");
+});
+
+test("Operator: one set of mode names everywhere (Everyone / Follow / Talking), and a sample that is the program, playing at rest", () => {
+  // Design review r8 O1: the chooser said "Talking the speaker", the diagrams "Who's talking", the camera bar "Talking".
+  const f = "operator/app/dist/index.html"; if (!existsSync(join(ROOT, f))) return; // no Operator page in the public mirror
+  const html = read(f);
+  expect([...html.matchAll(/<button class="chip" data-cmd="[a-z]+"[^>]*><span class="short">([^<]+)<\/span><small>([^<]+)<\/small><\/button>/g)].map((m) => `${m[1]} / ${m[2]}`)).toEqual(["Everyone / each face", "Follow / one person", "Talking / who speaks"]);
+  expect([...html.matchAll(/<figcaption><b>([^<]+)<\/b>/g)].map((m) => m[1]).slice(0, 3)).toEqual(["Everyone", "Follow", "Talking"]);
+  for (const p of [f, "operator/app/dist/llms.txt", STUDIO, "operator/app/src/lib/words.ts", "operator/app/app.ts"]) {
+    const t = p.endsWith(".ts") ? [...code(read(p)).matchAll(/"([^"\n]*)"|`([^`\n]*)`/g)].map((m) => m[1] ?? m[2]).join("\n") : read(p);
+    expect(t, p).not.toMatch(/Everyone, once|Follow this one|Who's talking|class="long"/);
+  }
+  // O3: muted, looping, playing at rest, with the mode named on the picture from the chapter lines make-demo writes.
+  const v = html.match(/<video id="sample"[^>]*>/)?.[0] ?? "";
+  for (const a of [" muted", " autoplay", " loop", " playsinline"]) expect(v, a).toContain(a);
+  expect(v).not.toContain(" controls");
+  const lines = JSON.parse((v.match(/data-lines="([^"]*)"/)?.[1] ?? "[]").replace(/&quot;/g, '"').replace(/&amp;/g, "&")) as [number, string][];
+  expect(lines.map((l) => l[1].split(":")[0])).toEqual(["Everyone", "Follow", "Talking"]);
+  expect(html).toContain('<p class="chapline" id="chapline" aria-hidden="true"></p>');
+});
+
+test("the light/dark button: no hover circle on touch, on the 16 px grid, a visible focus ring; the top row in one place on every page", () => {
+  // Design review r8 X2: a :hover outside (hover:hover) sticks after a tap on a phone; -12 px pushed it into the price tag.
+  const css = themeParts(read(TOP_PAGES[0]!)).css!;
+  expect(css.replace(/@media\s*\(hover:\s*hover\)\{[^{}]*\{[^{}]*\}\}/g, ""), "a :hover rule outside @media(hover:hover)").not.toMatch(/:hover/);
+  expect(css).toContain("@media(hover:hover){.theme:hover{background:var(--line)}}");
+  expect(css).toMatch(/\.theme\{[^}]*margin:0 -10px 0 -4px/);
+  expect(css).toContain(".theme:focus-visible{outline:2px solid var(--ink);outline-offset:-4px}");
+  // S1: the studio's column is 880 px and the legal pages' 640 px, the tools' 1100 px; the top row spans the tools' width
+  // everywhere, so the brand and the button do not move under the pointer from page to page.
+  for (const p of [STUDIO, ...LEGAL]) expect(read(p), p).toContain(".top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:");
+  for (const p of [STUDIO, ...LEGAL]) expect(read(p), p).toMatch(/\.top\{[^}]*margin-inline:calc\(\(100% - min\(1100px, 100vw - 32px\)\) \/ 2\)/);
+  for (const p of TOP_PAGES.slice(1)) expect(read(p), p).toMatch(/\.wrap\{max-width:1100px;/);
+});
+
+test("a picked theme wins: every dark-mode rule has its data-theme twin, on every page", () => {
+  const miss: string[] = [];
+  for (const p of TOP_PAGES) {
+    const css = [...read(p).matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].map((m) => m[1]).join("\n");
+    const flat = css.replace(/@media[^{]+\{/g, "\n"); // every rule, media or not, for the twin lookup
+    for (const [q, sel, body] of mediaRules(css)) {
+      const scheme = q.match(/prefers-color-scheme:\s*(dark|light)/)?.[1]; if (!scheme) continue;
+      const other = scheme === "dark" ? "light" : "dark";
+      for (const s of sel.split(",").map((x) => x.trim())) {
+        const guard = `:root:not([data-theme=${other}]) `;
+        if (!s.startsWith(guard)) { miss.push(`${p}: "${s}" in @media ${q} does not yield to a picked ${other} theme`); continue; }
+        const twin = `:root[data-theme=${scheme}] ${s.slice(guard.length)}`;
+        if (!flat.split("\n").some((l) => l.includes(`${twin}{${body}}`))) miss.push(`${p}: no "${twin}{${body}}"`);
+      }
+    }
+    // Scripts on the page that ask the device for its scheme: only the theme script itself.
+    const scripts = read(p).replace(/<script>\/\* theme:[\s\S]*?<\/script>/, "");
+    if (/prefers-color-scheme/.test(scripts.replace(/<style[\s\S]*?<\/style>/g, ""))) miss.push(`${p}: a script reads the device's scheme without the picked theme`);
+  }
+  // A canvas that picks colours for the scheme reads the picked theme too, and redraws when it changes.
+  for (const f of ["captions/app/app.ts", "vertical/app/app.ts", "clipfinder/app/app.ts", "clips/app/app.ts", "operator/app/app.ts"].filter((f) => existsSync(join(ROOT, f)))) { // no Operator code in the public mirror
+    const src = code(read(f)); if (!/prefers-color-scheme/.test(src)) continue;
+    if (!/data-theme/.test(src) || !/"themechange"/.test(src)) miss.push(`${f}: reads the device's scheme but not the picked theme`);
+  }
+  expect(miss).toEqual([]);
+});
+
+// ---------------------------------------------------------------------------------------------------------
+// Quality pass, 2026-09-27 (the principal: "use better material for the marketing or what the tool does… less words and
+// more diagrams"). Pictures carry what words used to: each one is drawn inline (no image file), says what it shows to a
+// screen reader, and follows the theme. And the facts it touched stay rippled.
+// ---------------------------------------------------------------------------------------------------------
+test("quality pass: the pictures that replaced words, and the facts they carry", () => {
+  const studio = read(STUDIO), t = text(studio).replace(/\s+/g, " ");
+  // Every tool: six facts, each an icon and a few words (was "How they work", over a list of promises; studio cold user 4).
+  const facts = studio.match(/<ul class="facts">([\s\S]*?)<\/ul>/)?.[1] ?? "";
+  const items = [...facts.matchAll(/<li><span class="ic" aria-hidden="true"><svg [\s\S]*?<\/svg><\/span>([^<]+)<\/li>/g)].map((m) => m[1]!);
+  expect(items).toEqual(["Works offline once loaded", "Nothing uploaded", "No account", "Pay once, through Polar", "Refund within 14 days", "Clips key opens every paid tool"]);
+  for (const i of items) expect(i.split(" ").length, i).toBeLessThanOrEqual(6);
+  // The Operator card says what it is now: a full-screen camera, its three commands, and a shape that follows the device.
+  const op = text(studio.split("<article").find((a) => /<h3>Operator<\/h3>/.test(a)) ?? "");
+  for (const f of [/full-screen camera/, /films each face/, /follows one person/, /whoever talks/, /tall or wide/]) expect(op, String(f)).toMatch(f);
+  // Every llms.txt that lists the other tools names Operator; no page or llms.txt sells the maker.
+  for (const f of ["captions/app/dist/llms.txt", "vertical/app/dist/llms.txt", "clipfinder/app/dist/llms.txt", "clips/app/dist/llms.txt"]) {
+    expect(read(f), `${f} names Operator`).toContain("https://operator.smaverk.com");
+    expect(read(f), `${f}: the maker is not the pitch`).not.toMatch(/one-person|one person studio|made by one person/i);
+  }
+  expect(studio, "studio: the maker is not the pitch").not.toMatch(/[Mm]ade by one person|one-person/);
+  // Captions and Vertical point at each other with a picture of what the other tool does, the same block in both.
+  for (const [p, to] of [["captions/app/dist/index.html", "vertical"], ["vertical/app/dist/index.html", "captions"]] as const) {
+    const x = read(p).match(/<div class="xlink"><svg [^>]*aria-hidden="true">[\s\S]*?<\/svg><p>[^<]*<a href="https:\/\/([a-z]+)\.smaverk\.com\/\?src=[a-z]+">/);
+    expect(x?.[1], `${p}: the picture link to ${to}`).toBe(to);
+  }
+  // Clips: the headline as a picture, named for a screen reader, its motion off for anyone who asked for less.
+  const clips = read("clips/app/dist/index.html");
+  expect(clips).toMatch(/<div class="flow" role="img" aria-label="[^"]{30,}"><svg /);
+  expect(clips).toMatch(/@media\(prefers-reduced-motion:no-preference\)\{\.flow \.head\{animation:/);
+});
+
+// ---------------------------------------------------------------------------------------------------------
+// Cold-user rounds, 2026-09-27 (Operator r8 finding 3, studio-4/captions-6/clipfinder-2/clips-2). What a script shows the
+// visitor follows the same wording rules as the page: the site test read only HTML, so Operator's camera line said "Turn
+// the phone sideways" and nothing caught it. Every string passed to say(…) or set as textContent in an app's source.
+// ---------------------------------------------------------------------------------------------------------
+test("status lines a script shows: \"device\", and no never/ever/forever", () => {
+  const bad: string[] = [];
+  for (const tool of ["captions", "vertical", "clipfinder", "clips", "operator"]) {
+    const dir = join(ROOT, tool, "app"); if (!existsSync(join(dir, "app.ts"))) continue;
+    const files = ["app.ts", ...(existsSync(join(dir, "src")) ? readdirSync(join(dir, "src"), { recursive: true }).map(String).filter((f) => f.endsWith(".ts")).map((f) => "src/" + f) : [])];
+    for (const f of files) {
+      const src = code(readFileSync(join(dir, f), "utf8"));
+      for (const m of src.matchAll(/(?:\bsay\(|\.textContent\s*=)([^;\n]{0,400})/g))
+        for (const s of m[1]!.matchAll(/"([^"\n]*)"|`([^`\n]*)`|'([^'\n]*)'/g)) { const lit = s[1] ?? s[2] ?? s[3] ?? ""; if (/\b(phone|computer|never|ever|forever)\b/i.test(lit)) bad.push(`${tool}/app/${f}: "${lit.slice(0, 90)}"`); }
+    }
+  }
+  expect(bad).toEqual([]);
+});
+
+test("Vertical: one short line over the sample, the same in the page, its search page and the script", () => {
+  // Vertical cold user 6 (2026-09-27): four lines of instructions sat above the sample and repeated what it shows.
+  const src = read("vertical/app/app.ts").match(/s === "sample" \? "([^"]+)"/)?.[1] ?? "";
+  expect(src.split(/\s+/).length, src).toBeLessThanOrEqual(10);
+  for (const f of ["vertical/app/dist/index.html", "vertical/app/dist/capcut-auto-reframe-alternative.html"]) expect(read(f).match(/<span id="hint">([^<]*)<\/span>/)?.[1], f).toBe(src);
+});
+
+test("Clip finder: the moment, not a caveat, on the studio card; its reasons in plain words", () => {
+  // Studio cold user 4 and Clip finder cold user 2 (2026-09-27): the card's overlay read "12:03 · Needs a line of setup
+  // first", which a stranger reads as an error, and "setup" is jargon.
+  const studio = read(STUDIO);
+  expect(studio).not.toMatch(/m\.why\?\.\[0\]/); expect(studio).toMatch(/Math\.round\(m\.endS - m\.startS\)\} s · /);
+  for (const f of ["clipfinder/app/src/lib/rank.ts", "clipfinder/app/dist/sample.json", "clips/app/dist/sample.json", "captions/app/dist/studio-demo/clipfinder-sample.json"].filter((f) => existsSync(join(ROOT, f)))) expect(read(f), f).not.toMatch(/line of setup/i);
+  expect(text(studio.split("<article").find((a) => /<h3>Clip finder<\/h3>/.test(a)) ?? "")).toMatch(/Free up to 30 minutes, to watch\./);
+});
+
+test("Captions: no seconds-left guess before the pace is measured; Clip finder's sample plays at rest; Clips names read as words", () => {
+  // Captions cold user 6 (2026-09-27): the first estimate said "about 66 s left" and it finished in 20 s.
+  expect(code(read("captions/app/app.ts"))).toMatch(/const left = \(\) => \(done \? [^:]+ : measuredHere \? est - elapsed\(\) : -1\)/);
+  // Clip finder cold user 2: the sample stood still behind a play button. At rest the strongest moment plays muted.
+  const cf = code(read("clipfinder/app/app.ts"));
+  expect(cf).toMatch(/showSample\(\);\s*previewSample\(\);/); expect(cf).toMatch(/prefers-reduced-motion: reduce/);
+  // Clips cold user 2: "weekly-live-5-min-01-at-2-20.mp4" read as a code.
+  expect(read("clipfinder/app/src/lib/naming.ts")).toMatch(/- clip \$\{index\} \(\$\{at\(startS\)\}\)\.\$\{ext\}/);
 });

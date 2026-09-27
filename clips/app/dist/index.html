@@ -6,16 +6,17 @@
 <title>AI that turns a long recording into clips, on your device · Clips by Småverk</title>
 <meta name="description" content="AI that finds the moments in a long recording and makes them into 9:16 clips with captions (608×1080 MP4 from 1080p video), on your device. Nothing gets uploaded. Free to try; $49 once to save every clip.">
 <meta name="color-scheme" content="light dark">
+<script>/* theme: the device's setting until a tap picks light or dark, then that pick on every Småverk page (a cookie for .smaverk.com, as each tool is its own site; this site's storage as the fallback), applied before first paint */(function(){var d=document.documentElement,k="smaverk-theme",m=matchMedia("(prefers-color-scheme: dark)");function set(t){d.setAttribute("data-theme",t);d.style.colorScheme=t}function dark(){var t=d.getAttribute("data-theme");return t?t==="dark":m.matches}function sync(){var b=document.getElementById("theme");if(!b)return;var on=dark();b.setAttribute("aria-pressed",String(on));b.setAttribute("aria-label",on?"Switch to light mode":"Switch to dark mode")}var s=null;try{var c=document.cookie.match(/(?:^|; )smaverk-theme=(light|dark)/);s=c?c[1]:null}catch(e){}try{if(!s)s=localStorage.getItem(k)}catch(e){}if(s==="light"||s==="dark")set(s);m.addEventListener("change",sync);document.addEventListener("DOMContentLoaded",function(){var b=document.getElementById("theme");if(!b)return;sync();b.addEventListener("click",function(){var t=dark()?"light":"dark";set(t);try{localStorage.setItem(k,t)}catch(e){}try{document.cookie=k+"="+t+"; Path=/; Max-Age=31536000; SameSite=Lax; Secure"+(/(^|\.)smaverk\.com$/.test(location.hostname)?"; Domain=.smaverk.com":"")}catch(e){}sync();dispatchEvent(new Event("themechange"))})})})();</script>
 <meta name="google-site-verification" content="_eN1ywvXp9R-hebN0pJSivwAN8J8DuuaNGwfr_QqmnU">
 <meta property="og:title" content="A long recording in, clips ready to post out. Your recording stays on your device.">
 <meta property="og:description" content="Moments found, framed 9:16 and captioned, on your device: 608×1080 MP4 from 1080p video. No upload, no account.">
-<meta property="og:image" content="https://clips.smaverk.com/poster.jpg?v=1790467189">
+<meta property="og:image" content="https://clips.smaverk.com/poster.jpg?v=1790521576">
 <link rel="preload" href="fonts/bricolage-grotesque-latin.woff2" as="font" type="font/woff2" crossorigin>
 <style>@font-face{font-family:"Bricolage Grotesque";font-style:normal;font-weight:200 800;font-stretch:100%;font-display:swap;src:url(fonts/bricolage-grotesque-latin.woff2) format("woff2")}</style>
 <link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="icon" type="image/png" sizes="64x64" href="/icon-64.png">
 <link rel="canonical" href="https://clips.smaverk.com/">
 <meta property="og:url" content="https://clips.smaverk.com/"><meta property="og:type" content="website"><meta property="og:site_name" content="Småverk">
-<meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="A long recording in, clips ready to post out."><meta name="twitter:description" content="Moments found, framed 9:16 and captioned, on your device: 608×1080 MP4 from 1080p video. Free to try, $49 once to save every clip."><meta name="twitter:image" content="https://clips.smaverk.com/poster.jpg?v=1790467189">
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="A long recording in, clips ready to post out."><meta name="twitter:description" content="Moments found, framed 9:16 and captioned, on your device: 608×1080 MP4 from 1080p video. Free to try, $49 once to save every clip."><meta name="twitter:image" content="https://clips.smaverk.com/poster.jpg?v=1790521576">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Clips by Småverk","applicationCategory":"MultimediaApplication","operatingSystem":"Any (web browser)","description":"Finds the moments in a long recording and makes them into 9:16 MP4 clips with captions, on your device, as tall as the recording: 608×1080 from 1080p video. Nothing is uploaded.","offers":{"@type":"Offer","price":"49","priceCurrency":"USD","description":"One-time purchase"},"url":"https://clips.smaverk.com"}</script>
 <style>
 :root{color-scheme:light dark;
@@ -42,7 +43,8 @@ button{font:inherit;color:inherit}
 .brand span{color:var(--muted);font:400 15px/1 var(--body)}
 h1{font:800 clamp(30px,8vw,46px)/1.04 var(--display);letter-spacing:-.025em;margin:0 0 12px;text-wrap:balance}
 h1 mark{background:linear-gradient(transparent 55%,var(--hi) 55%);color:inherit;padding:0 .08em}
-@media(prefers-color-scheme:dark){h1 mark{background:none;color:var(--hi);padding:0}}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]) h1 mark{background:none;color:var(--hi);padding:0}}
+:root[data-theme=dark] h1 mark{background:none;color:var(--hi);padding:0}
 .sub{color:var(--muted);font-size:17px;margin:0 0 22px;text-wrap:pretty;max-width:34em}
 h2{font:700 21px/1.2 var(--display);letter-spacing:-.01em;margin:32px 0 10px}
 p{margin:0 0 12px;text-wrap:pretty}
@@ -135,7 +137,8 @@ ul{padding-left:20px;margin:0 0 12px}li{margin-bottom:6px}
 .fine{font-size:15px;color:var(--muted)}
 .key{display:flex;gap:10px;flex-wrap:wrap;margin:8px 0}
 .key input{flex:1 1 220px;min-height:48px;border:1.5px solid var(--line);border-radius:12px;padding:0 14px;font:16px var(--body);background:var(--surface);color:var(--ink)}
-.key .btn{width:auto;min-height:48px}.keyshow{font:600 15px ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--line);color:var(--ink);border-radius:8px;padding:4px 8px;user-select:all;overflow-wrap:anywhere}.keyline{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:8px 0}#keylostline{margin-top:16px}.keyline .btn{width:auto;min-height:44px;padding:0 16px;font-size:15px}
+.key .btn{width:auto;min-height:48px}.keyshow{font:600 15px ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--line);color:var(--ink);border-radius:8px;padding:4px 8px;user-select:all;overflow-wrap:anywhere}.keyline{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:8px 0}#keylostline{margin-top:16px}
+#keylost{display:inline-block;padding:7px 0}.keyline .btn{width:auto;min-height:44px;padding:0 16px;font-size:15px}
 .ok{color:var(--good);font-weight:600}
 .foot{color:var(--muted);font-size:15px;margin-top:36px;display:flex;gap:4px 18px;flex-wrap:wrap;align-items:center}
 .foot a{color:var(--muted);display:inline-flex;align-items:center;min-height:44px}
@@ -144,12 +147,49 @@ details summary{cursor:pointer;font-weight:600;font-size:16px;padding:12px 0;min
 details p,details ul{margin:0 0 14px}
 [hidden]{display:none!important}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+/* theme toggle: the same block on every page */
+.top>.brand{margin-right:auto}
+.theme{appearance:none;flex:none;width:44px;height:44px;margin:0 -10px 0 -4px;padding:0;border:0;border-radius:50%;background:transparent;color:var(--ink);display:grid;place-items:center;cursor:pointer}
+.theme svg{width:20px;height:20px}
+.theme .sun{display:none}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]) .theme .sun{display:block}:root:not([data-theme=light]) .theme .moon{display:none}}
+:root[data-theme=dark] .theme .sun{display:block}
+:root[data-theme=dark] .theme .moon{display:none}
+@media(hover:hover){.theme:hover{background:var(--line)}}
+.theme:focus-visible{outline:2px solid var(--ink);outline-offset:-4px}
+/* /theme toggle */
 </style>
 <style>
 /* Clips' own shapes: the finished clip on a 9:16 stage, a tick on each moment, and the save row under a made one. */
-.reel{display:flex;justify-content:center;background:#0E0D12;border-radius:var(--r);overflow:hidden}
-.reel video{display:block;height:min(44svh,560px);max-width:100%;aspect-ratio:9/16;object-fit:contain;background:#000}
-@media(max-width:480px){.reel video{height:38svh}.price .btn{width:100%}}
+/* the headline as a picture: a long recording, its moments, the tall clips they become; the playhead moves only for those who allow motion */
+.flow{max-width:320px;margin:-8px 0 22px;color:var(--ink)}
+.flow svg{display:block;width:100%;height:auto}
+.flow .hi{fill:var(--hi);stroke:none}
+.flow .head{stroke:var(--muted)}
+@media(prefers-reduced-motion:no-preference){.flow .head{animation:flowhead 6s linear infinite}}
+@keyframes flowhead{0%{transform:translateX(0)}100%{transform:translateX(156px)}}
+@media(max-width:480px){.flow{max-width:220px;margin:-4px 0 0}}
+.reel{position:relative;height:min(44svh,560px);aspect-ratio:9/16;max-width:100%;margin-inline:auto;background:#000;border-radius:var(--r);overflow:hidden;box-shadow:0 1px 0 rgba(0,0,0,.05),0 12px 32px -18px rgba(0,0,0,.45)}
+/* the stage player: the same rules as Captions and Vertical (rule 15) */
+.stage .tap{position:absolute;inset:0;width:100%;height:100%;background:transparent;border:0;cursor:pointer;padding:0;touch-action:none;-webkit-user-select:none;user-select:none}
+.stage .play{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.92);display:grid;place-items:center;pointer-events:none;transition:opacity .15s}
+.stage .play svg{width:26px;height:26px;margin-left:4px}
+.stage.playing .play{opacity:0}
+.stage .sound{position:absolute;right:10px;top:10px;width:44px;height:44px;padding:0;border:0;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;display:grid;place-items:center;cursor:pointer;z-index:2}
+.stage .sound[data-side="left"]{left:10px;right:auto}
+.stage .sound[data-side="bottom"]{left:10px;right:auto;top:auto;bottom:52px}
+.stage .sound svg{width:21px;height:21px}
+.sound[hidden]{display:none}
+.sound[aria-pressed="false"] .wave,.sound[aria-pressed="true"] .mute{display:none}
+.stage .seek{position:absolute;left:0;right:0;bottom:0;width:100%;height:44px;margin:0;opacity:0;cursor:pointer;touch-action:none}
+.stage .seekbar{position:absolute;left:0;right:0;bottom:0;height:28px;display:flex;align-items:flex-end;background:linear-gradient(transparent,rgba(0,0,0,.5));pointer-events:none}
+.stage .seekbar i{display:block;width:100%;height:4px;background:linear-gradient(to right,var(--hi) var(--p,0%),rgba(255,255,255,.45) var(--p,0%));transition:height .15s}
+.stage .seek.held ~ .seekbar i,.stage .seek:focus-visible ~ .seekbar i{height:8px}
+.stage .seek[hidden],.stage .seek[hidden] ~ .seekbar{display:none}
+@media (prefers-reduced-motion:reduce){.stage .seekbar i{transition:none}}
+/* /stage player */
+.reel video{display:block;width:100%;height:100%;object-fit:contain;background:#000}
+@media(max-width:480px){.reel{height:38svh}.price .btn{width:100%}}
 .keep{grid-column:1/-1;display:flex;align-items:center;gap:10px;min-height:44px;font-size:15px;cursor:pointer}
 .keep input{width:44px;height:44px;accent-color:var(--hi);margin:0;flex:none}
 .made{grid-column:1/-1;display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0}
@@ -158,21 +198,28 @@ details p,details ul{margin:0 0 14px}
 </head>
 <body>
 <div class="wrap">
-  <div class="top"><a class="brand" href="https://smaverk.com"><i></i>Småverk <span>Clips</span></a><a class="tag" id="tag" href="#price">Free ·<b>$49 once</b></a></div>
+  <div class="top"><a class="brand" href="https://smaverk.com"><i></i>Småverk <span>Clips</span></a><a class="tag" id="tag" href="#price">Free ·<b>$49 once</b></a><button class="theme" id="theme" type="button" aria-pressed="false" aria-label="Switch to dark mode"><svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg><svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/></svg></button></div>
   <div class="grid">
     <div class="say">
       <h1>A long recording in, clips ready to post out. <mark>Your recording stays on your device.</mark></h1>
       <p class="sub">AI that finds the moments, keeps the speaker in frame and adds captions, on your device.</p>
+      <div class="flow" role="img" aria-label="One long recording, three moments marked in it, made into three tall clips with captions."><svg viewBox="0 0 320 60" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="22" width="156" height="16" rx="4"/><rect class="hi" x="22" y="24" width="16" height="12" rx="1.5"/><rect class="hi" x="74" y="24" width="12" height="12" rx="1.5"/><rect class="hi" x="118" y="24" width="18" height="12" rx="1.5"/><path class="head" d="M2 16v28"/><path d="M170 30h18M183 25l5 5-5 5"/><rect x="200" y="3" width="30" height="54" rx="5"/><rect class="hi" x="205" y="40" width="20" height="4" rx="1.5"/><rect class="hi" x="208" y="47" width="14" height="4" rx="1.5"/><rect x="242" y="3" width="30" height="54" rx="5"/><rect class="hi" x="247" y="40" width="20" height="4" rx="1.5"/><rect class="hi" x="250" y="47" width="14" height="4" rx="1.5"/><rect x="284" y="3" width="30" height="54" rx="5"/><rect class="hi" x="289" y="40" width="20" height="4" rx="1.5"/><rect class="hi" x="292" y="47" width="14" height="4" rx="1.5"/></svg></div>
     </div>
 
     <section class="demo" aria-label="Try it">
       <div class="caplabel"><b id="clipname">Sample: a 15-minute interview</b><span id="hint">Made from it here. Tap one to watch.</span></div>
       <p class="notice" id="notice" role="alert" hidden></p>
-      <div class="reel" id="reelwrap"><video id="reel" playsinline muted loop controls preload="metadata" poster="poster.jpg?v=1790467189" aria-label="A finished clip: tall, the speaker in frame, captions written in"></video></div>
+      <div class="reel stage" id="reelwrap">
+        <video id="reel" playsinline muted loop preload="metadata" poster="poster.jpg?v=1790521576" aria-label="A finished clip: tall, the speaker in frame, captions written in"></video>
+        <button class="tap" id="tap" aria-label="Play or pause"></button>
+        <div class="play" id="playicon"><svg viewBox="0 0 24 24" fill="#16141D"><path d="M7 4.5v15l12-7.5z"/></svg></div>
+        <button class="sound" id="sound" aria-pressed="false" aria-label="Sound is off. Turn it on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10v4h4l5 4V6L8 10H4z"/><path class="wave" d="M16.5 9a4 4 0 0 1 0 6M19 6.5a8 8 0 0 1 0 11"/><path class="mute" d="M17 9.5l4.5 5M21.5 9.5l-4.5 5"/></svg><span id="soundtxt" class="sr">Sound off</span></button>
+        <input class="seek" id="seek" type="range" min="0" max="1000" step="1" value="0" aria-label="Position in the clip"><div class="seekbar" id="seekbar" aria-hidden="true"><i></i></div>
+      </div>
       <input id="file" type="file" accept="video/*" hidden>
       <button class="btn primary" id="action">Use my own recording</button>
       <p class="trust" id="trust">Free to find and watch. Save one clip with a small mark. English. Your recording stays on your device.</p>
-      <p class="fine" id="caphint">Each clip is up to 90 seconds, an MP4 as tall as your recording: 608×1080 from 1080p.</p>
+      <p class="fine" id="caphint">Each clip: up to 90 seconds, 608×1080 from 1080p.</p>
       <div class="status" id="status"></div>
       <div class="steps" id="steps" role="status" aria-live="polite">
         <div class="step" id="s1"><span class="dot"></span><span id="s1t">Getting the tool onto your device</span><small id="s1n"></small><div class="bar"><i id="s1b"></i></div></div>
@@ -222,7 +269,7 @@ details p,details ul{margin:0 0 14px}
     </section>
   </div>
 </div>
-<script type="module" src="app.js?v=1790467189"></script>
+<script type="module" src="app.js?v=1790521576"></script>
 <script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "91285919879f4672a4342550a4b0b07c"}'></script>
 </body>
 </html>

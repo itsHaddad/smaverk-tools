@@ -38,12 +38,12 @@ test("a name with no spaces and no dots still shortens", () => {
 });
 
 test("an output name says which moment it is and where it came from", () => {
-  expect(outputName("Artemis II: The Crew.mp3", 3, 725, "mp3")).toBe("Artemis-II-The-Crew-03-at-12-05.mp3");
-  expect(timelineName("Artemis II: The Crew.mp3", "edl")).toBe("Artemis-II-The-Crew-moments.edl");
+  expect(outputName("Artemis II: The Crew.mp3", 3, 725, "mp3")).toBe("Artemis II The Crew - clip 3 (12m05s).mp3");
+  expect(timelineName("Artemis II: The Crew.mp3", "edl")).toBe("Artemis II The Crew - moments.edl");
 });
 
 test("a name made only of punctuation still produces a usable file name", () => {
-  expect(outputName("###.mp3", 1, 0, "mp4")).toMatch(/^recording-\d{4}-\d{2}-\d{2}-01-at-0-00\.mp4$/);
+  expect(outputName("###.mp3", 1, 0, "mp4")).toMatch(/^recording \d{4}-\d{2}-\d{2} - clip 1 \(0m00s\)\.mp4$/);
 });
 
 // --- the seam between windows ----------------------------------------------------------------
@@ -178,9 +178,9 @@ test("the reasons are sentences about the passage, never a number, and never mor
   expect(strong).toEqual(["Stands on its own", "Opens with a problem and answers it later"]);
   // A passage with nothing true to say says nothing. Three cards in four used to carry "Stays on one
   // subject", which teaches a reader that the reason slot is decoration (design review, 2026-09-21).
-  expect(reasons(span, { selfContained: 0, length: 300, setupPayoff: 0 })).toEqual(["Needs a line of setup first"]);
-  expect(reasons({ ...span, sections: 3 }, { selfContained: 0, length: 300, setupPayoff: 0 })).toEqual(["Needs a line of setup first", "One subject across 3 turns"]);
-  expect(reasons(span, { selfContained: 0, length: 300, setupPayoff: 0.5 })).toEqual(["Needs a line of setup first", "Sets something up and comes back to it"]);
+  expect(reasons(span, { selfContained: 0, length: 300, setupPayoff: 0 })).toEqual(["Starts mid-story: add context first"]);
+  expect(reasons({ ...span, sections: 3 }, { selfContained: 0, length: 300, setupPayoff: 0 })).toEqual(["Starts mid-story: add context first", "One subject across 3 turns"]);
+  expect(reasons(span, { selfContained: 0, length: 300, setupPayoff: 0.5 })).toEqual(["Starts mid-story: add context first", "Sets something up and comes back to it"]);
   // The length is on the card beside the time; repeating it in a reason spends words the page has not got.
   for (const why of [strong, reasons(span, { selfContained: 0.6, length: 300, setupPayoff: 0 })]) {
     expect(why.length).toBeLessThanOrEqual(2);

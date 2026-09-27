@@ -2,7 +2,7 @@
 
 > AI captions for short videos, made on your device, in the page at https://captions.smaverk.com. Nothing is uploaded. Free for clips up to 60 seconds with a small corner mark; $19 once removes the mark and allows clips up to five minutes.
 
-Captions is one of the tools by Småverk, a one-person studio in Sweden; https://smaverk.com is the studio page listing every tool. The others are Vertical (https://vertical.smaverk.com, a landscape clip made tall with the speaker kept in frame) Clip finder (https://clipfinder.smaverk.com, the moments worth posting found in a long recording, free to try), Clips (https://clips.smaverk.com, a long recording made into tall clips with captions, the three tools in a row) and Operator (https://operator.smaverk.com, a phone that films a group like a camera operator, each person close up in turn; free while it is a preview).
+Captions is one of the tools by Småverk, a studio in Sweden; https://smaverk.com is the studio page listing every tool. The others are Vertical (https://vertical.smaverk.com, a landscape clip made tall with the speaker kept in frame) Clip finder (https://clipfinder.smaverk.com, the moments worth posting found in a long recording, free to try), Clips (https://clips.smaverk.com, a long recording made into tall clips with captions, the three tools in a row) and Operator (https://operator.smaverk.com, a full-screen camera for a group: it films each face close up in turn, follows one person, or cuts to whoever is talking, tall or wide as the device is held; free while it is a preview).
 
 ## What it does
 - Input: a video or audio file (mp4, mov, webm, m4a), up to 60 seconds free and up to five minutes paid. English speech. Output: the same clip with burned-in captions (mp4 on Safari and Chrome, webm elsewhere), plus word timings.
@@ -24,6 +24,7 @@ await dl.saveAs("clip-captions.mp4");
 - `?style=bar|karaoke|big` preselects the caption style. `window.captions.style("big")` changes it.
 - `window.__cap` mirrors state: `state`, `words`, `ms`, `exportBytes`, `error`.
 - A paid key is applied by filling `#key` and clicking `#keygo`; it is kept in `localStorage` under `smaverk.key`, the same name in every Småverk tool. What a key opens is decided by `POST https://unlock.smaverk.com/entitlements` with `{key, rail}`, which answers `{status, tools, expires}` — `tools` lists every Småverk tool the key opens, so one key can open several. Coming back from a checkout with `?checkout_id=…` unlocks the page by itself; nothing is pasted.
+- The light/dark button (`#theme`) keeps the choice in a `smaverk-theme` cookie for `.smaverk.com` (and in `localStorage`), so it carries across the studio and every tool. It holds nothing else.
 
 ## Pages
 - https://captions.smaverk.com/capcut-captions-alternative — For people who met CapCut Pro when saving auto captions: the same job here, $19 once.

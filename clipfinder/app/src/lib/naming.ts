@@ -33,17 +33,23 @@ export function displayName(name: string, max = 34): string {
   return `${stem.slice(0, head)}…${tail > 0 ? stem.slice(stem.length - tail) : ""}${ext}`;
 }
 
-const SAFE = /[^A-Za-z0-9-_]+/g;
 
-/** The name of a file we hand back: the recording's name, the moment's place in it, and the format. */
+/** The recording's own name, as the person wrote it (spaces kept), without the characters a file name cannot hold. */
+function stemOf(sourceName: string): string {
+  const stem = sourceName.replace(/\.[^.]+$/, "").replace(/[^\p{L}\p{N} _-]+/gu, " ").replace(/\s+/g, " ").trim().slice(0, 40).trim();
+  return stem || `recording ${new Date().toISOString().slice(0, 10)}`;
+}
+
+/** Where a moment starts, as a file name can carry it: 5m06s, 1h02m05s. */
+const at = (seconds: number) => { const s = Math.max(0, Math.round(seconds)), pad = (n: number) => String(n).padStart(2, "0"); return s >= 3600 ? `${Math.floor(s / 3600)}h${pad(Math.floor(s / 60) % 60)}m${pad(s % 60)}s` : `${Math.floor(s / 60)}m${pad(s % 60)}s`; };
+
+/** The name of a file we hand back: the recording's name, which clip, and where it starts ("My talk - clip 1 (5m06s).mp4").
+ *  Clips cold user 2 (2026-09-27): "weekly-live-5-min-01-at-2-20.mp4" lost the spaces and "01-at-2-20" read as a code. */
 export function outputName(sourceName: string, index: number, startS: number, ext: string): string {
-  const stem = sourceName.replace(/\.[^.]+$/, "").replace(SAFE, "-").replace(/^-+|-+$/g, "").slice(0, 40);
-  const at = clock(startS).replace(/:/g, "-");
-  return `${stem || `recording-${new Date().toISOString().slice(0, 10)}`}-${String(index).padStart(2, "0")}-at-${at}.${ext}`;
+  return `${stemOf(sourceName)} - clip ${index} (${at(startS)}).${ext}`;
 }
 
 /** The name of the timeline file for a whole recording. */
 export function timelineName(sourceName: string, ext: string): string {
-  const stem = sourceName.replace(/\.[^.]+$/, "").replace(SAFE, "-").replace(/^-+|-+$/g, "").slice(0, 40);
-  return `${stem || `recording-${new Date().toISOString().slice(0, 10)}`}-moments.${ext}`;
+  return `${stemOf(sourceName)} - moments.${ext}`;
 }
