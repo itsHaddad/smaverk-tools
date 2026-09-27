@@ -164,15 +164,10 @@ test("only files whose names change with their content are cached as immutable",
 
 test("shared parts are the same file in every tool", () => {
   expect(read("captions/app/src/seek.ts")).toBe(read("vertical/app/src/seek.ts"));
-  expect(read("operator/app/src/seek.ts"), "the Operator's sample scrubs with the same line").toBe(read("vertical/app/src/seek.ts"));
   // The search-page generator, its test and the local server are one file with two copies: a fix belongs in both.
   for (const f of ["tools/pages.ts", "tests/pages.test.ts", "serve.ts"]) expect(read(`captions/app/${f}`), f).toBe(read(`vertical/app/${f}`));
   const seekMarkup = (file: string) => read(file).match(/<input class="seek"[^\n]*/)?.[0];
   expect(seekMarkup("captions/app/dist/index.html")).toBe(seekMarkup("vertical/app/dist/index.html")!);
-  expect(seekMarkup("operator/app/dist/index.html")).toBe(seekMarkup("vertical/app/dist/index.html")!);
-  const sound = (file: string) => read(file).match(/<button class="sound" id="sound"[\s\S]*?<\/button>/)?.[0];
-  expect(sound("operator/app/dist/index.html"), "the Operator's sample has the same sound button").toBe(sound("vertical/app/dist/index.html")!);
-  expect(read("operator/app/dist/index.html"), "the browser's own controls do not cover the sample's captions").not.toMatch(/<video id="sample"[^>]*\bcontrols\b/);
 });
 
 test("one word for where it runs: device", () => {
@@ -690,16 +685,18 @@ test("the studio lists every tool that is live, with its price state", () => {
 // Operator (live at operator.smaverk.com as a free preview, no price yet). It is not in SITES because SITES requires a price
 // and a public host. Until it has both, it is held to the rules that do not depend on them.
 // ---------------------------------------------------------------------------------------------------------
+// The public mirror carries the Operator's demo but not its code, so these run where the code is (here; its deploy runs them).
+const opTest = existsSync(join(ROOT, "operator/app/app.ts")) ? test : test.skip;
 const OP = { dist: "operator/app/dist", src: ["operator/app/app.ts", "operator/app/src/detect.ts", "operator/app/src/record.ts", "operator/app/src/embed.ts", "operator/app/src/embed-worker.ts", "operator/app/src/people.ts", "operator/app/src/vision-worker.ts", "operator/app/src/mouths.ts", "operator/app/src/talk-render.ts"] };
 
-test("Operator wears the studio's clothes: every style rule Vertical also has is identical", () => {
+opTest("Operator wears the studio's clothes: every style rule Vertical also has is identical", () => {
   const rules = (file: string) => { const css = [...read(file).matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].map((m) => m[1]).join("\n").replace(/@media[^{]+\{([\s\S]*?\})\s*\}/g, " "); const out = new Map<string, string>(); for (const r of css.matchAll(/([^{}@]+)\{([^{}]*)\}/g)) for (const sel of r[1]!.split(",")) out.set(sel.trim(), r[2]!.trim().replace(/;$/, "")); return out; };
   const a = rules("vertical/app/dist/index.html"), b = rules(`${OP.dist}/index.html`); const drift: string[] = []; let shared = 0;
   for (const [sel, body] of a) if (b.has(sel)) { shared++; if (b.get(sel) !== body) drift.push(sel); }
   expect(shared, "the two pages share a look").toBeGreaterThan(80); expect(drift).toEqual([]);
 });
 
-test("Operator: plain words at rest, one word for where it runs, no permanence wording, nothing about how it is built", () => {
+opTest("Operator: plain words at rest, one word for where it runs, no permanence wording, nothing about how it is built", () => {
   const html = read(`${OP.dist}/index.html`); const t = text(html);
   expect(wordsAtRest(html)).toBeLessThanOrEqual(240);
   expect(t.match(/[^.]{0,40}\b(never|forever|ever)\b[^.]{0,30}/gi) ?? []).toEqual([]);
@@ -716,7 +713,7 @@ test("Operator: plain words at rest, one word for where it runs, no permanence w
   expect(t).toMatch(/faces are read inside this page, not sent to us or anyone/);
 });
 
-test("Operator shows a sample to watch before the camera opens, credited, under the host's per-file limit", () => {
+opTest("Operator shows a sample to watch before the camera opens, credited, under the host's per-file limit", () => {
   // Design review r4 B1: at rest the stage was a black box. The sample is the demo video of the real page at work.
   const html = read(`${OP.dist}/index.html`);
   const tag = html.match(/<video[^>]*\bid="sample"[^>]*>/)?.[0] ?? "";
@@ -733,7 +730,16 @@ test("Operator shows a sample to watch before the camera opens, credited, under 
   expect(read(`${OP.dist}/_headers`), "a replaced demo reaches visitors at once").toMatch(/^\/demo\.(mp4|\*)\n\s+Cache-Control: no-cache/m);
 });
 
-test("Operator loads nothing from other companies, and sends only the numbers a person chooses to send", () => {
+opTest("Operator's sample plays in the studio's player: the same scrub line and sound button as the other tools, no native controls", () => {
+  const seekMarkup = (file: string) => read(file).match(/<input class="seek"[^\n]*/)?.[0];
+  expect(read("operator/app/src/seek.ts"), "the Operator's sample scrubs with the same line").toBe(read("vertical/app/src/seek.ts"));
+  expect(seekMarkup("operator/app/dist/index.html")).toBe(seekMarkup("vertical/app/dist/index.html")!);
+  const sound = (file: string) => read(file).match(/<button class="sound" id="sound"[\s\S]*?<\/button>/)?.[0];
+  expect(sound("operator/app/dist/index.html"), "the Operator's sample has the same sound button").toBe(sound("vertical/app/dist/index.html")!);
+  expect(read("operator/app/dist/index.html"), "the browser's own controls do not cover the sample's captions").not.toMatch(/<video id="sample"[^>]*\bcontrols\b/);
+});
+
+opTest("Operator loads nothing from other companies, and sends only the numbers a person chooses to send", () => {
   const html = read(`${OP.dist}/index.html`);
   for (const m of html.matchAll(/<(?:script|link|img|video|source|iframe)\b[^>]*\b(?:src|href)=["'](https?:\/\/[^"']+)["'][^>]*>/g)) expect(m[1]).toMatch(/^https:\/\/([a-z]+\.)?smaverk\.com\//);
   for (const m of html.matchAll(/href="([^"]*\b(privacy|terms)\b[^"]*)"/g)) expect(m[1]).toMatch(/^https:\/\/smaverk\.com\/(privacy|terms)$/);
