@@ -62,7 +62,7 @@ const errs = [];
 p.on("pageerror", (e) => errs.push(`pageerror: ${e.message.slice(0, 160)}`));
 p.on("console", (m) => { if (m.type() === "error" && !/cloudflareinsights|Failed to load resource|^\[WARNING\]/.test(m.text())) errs.push(`console: ${m.text().slice(0, 160)}`); });
 let baseFont = null;
-const snap = async (tag) => { await unlockCheck(p, tag, check); const f = await auditPage(p, COLUMNS); baseFont ??= f.font; await p.screenshot({ path: join(out, `${tag}.png`) }); judge(f, tag, check, { baseFont }); };
+const snap = async (tag) => { await unlockCheck(p, tag, check); const f = await auditPage(p, COLUMNS); baseFont ??= f.font; await p.screenshot({ path: join(out, `${tag}.png`) }); judge(f, tag, check, { baseFont, ignoreWidths: [".reel"] }) /* the stage is the tall clip's own width (design review r8 round 3), like the other tools' .stage */; };
 // Every control a phone user taps is at least 44 px each way.
 const taps = async (tag) => {
   const small = await p.evaluate(() => [...document.querySelectorAll("button, a[href], input, label.keep, summary")].filter((e) => e.offsetParent && !e.closest(".foot") && !e.closest("details:not([open]) > :not(summary)")).map((e) => { const r = e.getBoundingClientRect(); return { id: e.id || e.className || e.tagName, w: Math.round(r.width), h: Math.round(r.height), type: e.type }; }).filter((x) => x.type !== "range" && x.type !== "checkbox" && (x.h < 44 || x.w < 44) && x.w > 0));
