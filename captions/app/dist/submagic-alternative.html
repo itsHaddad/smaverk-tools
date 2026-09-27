@@ -9,7 +9,7 @@
 <script>/* theme: the device's setting until a tap picks light or dark, then that pick on every Småverk page (a cookie for .smaverk.com, as each tool is its own site; this site's storage as the fallback), applied before first paint */(function(){var d=document.documentElement,k="smaverk-theme",m=matchMedia("(prefers-color-scheme: dark)");function set(t){d.setAttribute("data-theme",t);d.style.colorScheme=t}function dark(){var t=d.getAttribute("data-theme");return t?t==="dark":m.matches}function sync(){var b=document.getElementById("theme");if(!b)return;var on=dark();b.setAttribute("aria-pressed",String(on));b.setAttribute("aria-label",on?"Switch to light mode":"Switch to dark mode")}var s=null;try{var c=document.cookie.match(/(?:^|; )smaverk-theme=(light|dark)/);s=c?c[1]:null}catch(e){}try{if(!s)s=localStorage.getItem(k)}catch(e){}if(s==="light"||s==="dark")set(s);m.addEventListener("change",sync);document.addEventListener("DOMContentLoaded",function(){var b=document.getElementById("theme");if(!b)return;sync();b.addEventListener("click",function(){var t=dark()?"light":"dark";set(t);try{localStorage.setItem(k,t)}catch(e){}try{document.cookie=k+"="+t+"; Path=/; Max-Age=31536000; SameSite=Lax; Secure"+(/(^|\.)smaverk\.com$/.test(location.hostname)?"; Domain=.smaverk.com":"")}catch(e){}sync();dispatchEvent(new Event("themechange"))})})})();</script>
 <meta property="og:title" content="A Submagic alternative if captions are all you need">
 <meta property="og:description" content="AI captions, made on your device. $19 once, not $19 a month.">
-<meta property="og:image" content="https://captions.smaverk.com/poster.webp?v=1790523557">
+<meta property="og:image" content="https://captions.smaverk.com/poster.webp?v=1790528310">
 <link rel="preload" href="fonts/bricolage-grotesque-latin.woff2" as="font" type="font/woff2" crossorigin>
 <style>@font-face{font-family:"Bricolage Grotesque";font-style:normal;font-weight:200 800;font-stretch:100%;font-display:swap;src:url(fonts/bricolage-grotesque-latin.woff2) format("woff2")}</style>
 <link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="icon" type="image/png" sizes="64x64" href="/icon-64.png">
@@ -17,8 +17,8 @@
 <link rel="canonical" href="https://captions.smaverk.com/submagic-alternative">
 <meta name="google-site-verification" content="_eN1ywvXp9R-hebN0pJSivwAN8J8DuuaNGwfr_QqmnU">
 <meta property="og:url" content="https://captions.smaverk.com/submagic-alternative"><meta property="og:type" content="website"><meta property="og:site_name" content="Småverk">
-<meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="A Submagic alternative if captions are all you need"><meta name="twitter:description" content="AI captions, made on your device. $19 once, not $19 a month."><meta name="twitter:image" content="https://captions.smaverk.com/poster.webp?v=1790523557">
-<link rel="preload" as="image" href="poster.webp?v=1790523557" fetchpriority="high">
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="A Submagic alternative if captions are all you need"><meta name="twitter:description" content="AI captions, made on your device. $19 once, not $19 a month."><meta name="twitter:image" content="https://captions.smaverk.com/poster.webp?v=1790528310">
+<link rel="preload" as="image" href="poster.webp?v=1790528310" fetchpriority="high">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Captions by Småverk","applicationCategory":"MultimediaApplication","operatingSystem":"Any (web browser)","description":"AI captions for short videos, made on your device. Nothing is uploaded.","offers":{"@type":"Offer","price":"19","priceCurrency":"USD","description":"One-time purchase"},"url":"https://captions.smaverk.com"}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Captions","item":"https://captions.smaverk.com/"},{"@type":"ListItem","position":2,"name":"Submagic alternative","item":"https://captions.smaverk.com/submagic-alternative"}]}</script>
 <style>
@@ -173,7 +173,7 @@ details p{margin:0 0 14px}
     <section class="demo" aria-label="Try it">
       <div class="caplabel"><b id="clipname">Sample clip</b><span id="hint">Tap a style. Drag the captions to move.</span><button class="btn quiet small" id="editwords" hidden>Fix a word</button></div>
       <div class="stage" id="stage">
-        <img class="poster" id="poster" src="poster.webp?v=1790523557" alt="" width="540" height="960" decoding="async">
+        <img class="poster" id="poster" src="poster.webp?v=1790528310" alt="" width="540" height="960" decoding="async">
         <video id="video" playsinline muted loop preload="metadata" crossorigin="anonymous"></video>
         <canvas id="canvas"></canvas>
         <button class="tap" id="tap" aria-label="Play or pause"></button>
@@ -236,7 +236,7 @@ details p{margin:0 0 14px}
     </section>
   </div>
 </div>
-<script type="module" src="app.js?v=1790523557"></script>
+<script type="module" src="app.js?v=1790528310"></script>
 <script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "91285919879f4672a4342550a4b0b07c"}'></script>
 </body>
 </html>
