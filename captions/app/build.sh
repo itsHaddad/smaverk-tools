@@ -24,8 +24,8 @@ cp ../../clips/app/dist/sample-strip.mp4 dist/studio-demo/clips-strip.mp4
 # one-clip picture in a three-clip box was what every first look got (studio design review, four cards, B1).
 ffmpeg -v error -y -ss 3 -i ../../clips/app/dist/sample-strip.mp4 -frames:v 1 -q:v 3 dist/studio-demo/clips-poster.jpg
 # The Operator card plays the tool's own sample: its Everyone part (what Operator filmed, up to where Follow begins in the
-# sample's chapters), cut without re-encoding. The same file feeds the page and the card (UiStandard "Demo media").
-OPT=$(grep -o '<video id="sample"[^>]*data-chapters="[^"]*"' ../../operator/app/dist/index.html | grep -oE 'follow&quot;:[0-9.]+' | cut -d: -f2)
+# sample's chapters, operator/app/dist/demo.json), cut without re-encoding. The same file feeds the page and the card (UiStandard "Demo media").
+OPT=$(bun -e 'process.stdout.write(String(require("../../operator/app/dist/demo.json").chapters.follow ?? ""))')
 [ -n "$OPT" ] || { echo "the Operator sample has no Follow chapter to end the card at"; exit 1; }
 ffmpeg -v error -y -i ../../operator/app/dist/demo.mp4 -t "$OPT" -c copy -movflags +faststart dist/studio-demo/operator-sample.mp4
 cp ../../operator/app/dist/demo.jpg dist/studio-demo/operator-poster.jpg
