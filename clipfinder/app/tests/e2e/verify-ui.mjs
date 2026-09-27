@@ -136,6 +136,24 @@ try {
   await p.waitForTimeout(800);
   await snap("0-rest");
 
+  // The live audit (Qa.ts) reads the RENDERED page, sample moments included, and blocks over 240 words or
+  // above reading grade 7, at phone and desktop width. The site test counts the static HTML only, so on
+  // 2026-09-27 v=1790529291 passed every gate and went live at 241 words (desktop) and grade 7.3 (phone).
+  // Same formula as Qa.ts, held here with a margin (235 words) at both widths, before anything ships.
+  {
+    const syl = (w) => { w = w.toLowerCase().replace(/[^a-z]/g, ""); if (!w) return 0; if (w.length <= 3) return 1; w = w.replace(/(?:[^laeiouy]es|ed|[^laeiouy]e)$/, "").replace(/^y/, ""); return Math.max(1, (w.match(/[aeiouy]{1,2}/g) ?? []).length); };
+    const grade = (t) => { const s = Math.max(1, (t.match(/[.!?]+(\s|$)/g) ?? []).length); const w = t.split(/\s+/).filter((x) => /[A-Za-z]/.test(x)); if (w.length < 20) return 0; const y = w.reduce((a, x) => a + syl(x), 0); return Math.round((0.39 * (w.length / s) + 11.8 * (y / w.length) - 15.59) * 10) / 10; };
+    for (const width of [390, 1280]) {
+      await p.setViewportSize({ width, height: width === 390 ? 844 : 900 });
+      await p.waitForTimeout(400);
+      const t = await p.evaluate(() => document.body.innerText ?? "");
+      const n = t.split(/\s+/).filter(Boolean).length, g = grade(t);
+      check(n <= 235 && g <= 7, `rendered page at rest @${width}px: ${n} words (max 235; live audit blocks over 240), reading grade ${g} (max 7)`);
+    }
+    await p.setViewportSize({ width: 390, height: 844 });
+    await p.waitForTimeout(400);
+  }
+
   // What it costs is on the first phone screen, tall enough to tap, clear of the name and of the edge.
   // It states the owner's price, the one constant in app.ts (free while new until 2026-09-22).
   {
