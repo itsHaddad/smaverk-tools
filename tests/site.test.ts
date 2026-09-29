@@ -92,6 +92,7 @@ test("every page loads the Småverk count script, and the privacy page says what
   const missing = pages().filter((f) => f.endsWith(".html") && !read(f).includes(`<script src="https://events.smaverk.com/c.js" defer></script>`));
   expect(missing).toEqual([]);
   expect(text(read(LEGAL[0]!))).toMatch(/We also count, per day, how often a tool is opened, a file is picked, a result is saved or shared, and a buy link is tapped/);
+  expect(text(read(LEGAL[0]!))).toMatch(/only the country and whether it came from a phone or a computer/); // what D1 stores beside each count (events/schema.sql)
 });
 
 test("pages load nothing from other companies except the analytics beacon", () => {
