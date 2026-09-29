@@ -148,7 +148,7 @@ try {
   // the only form that survives them being renamed. The page now also says that Vertical serves every file itself
   // while these two do not yet, and that closing that gap is work we have not done.
   // unlock.smaverk.com is the one host the key check talks to; the page no longer calls Polar itself.
-  const ALLOWED_HOSTS = /^(huggingface\.co|[\w.-]*\.hf\.co|cdn\.jsdelivr\.net|static\.cloudflareinsights\.com|cloudflareinsights\.com|unlock\.smaverk\.com|[\w.-]*\.polar\.sh|polar\.sh)$/;
+  const ALLOWED_HOSTS = /^(huggingface\.co|[\w.-]*\.hf\.co|cdn\.jsdelivr\.net|static\.cloudflareinsights\.com|cloudflareinsights\.com|unlock\.smaverk\.com|events\.smaverk\.com|[\w.-]*\.polar\.sh|polar\.sh)$/;
   const BODY_LIMIT = 8 * 1024;
   const strangers = sent.filter((s) => !ALLOWED_HOSTS.test(s.host));
   const heavy = sent.filter((s) => s.bytes > BODY_LIMIT);

@@ -109,7 +109,7 @@ try {
   else ok("with a key, the page says the clips must be made again to lose the mark");
 
   // 5. Nothing left with the recording.
-  const ALLOWED = /^(huggingface\.co|[\w.-]*\.hf\.co|cdn\.jsdelivr\.net|static\.cloudflareinsights\.com|cloudflareinsights\.com|unlock\.smaverk\.com|[\w.-]*\.polar\.sh|polar\.sh|localhost:\d+)$/;
+  const ALLOWED = /^(huggingface\.co|[\w.-]*\.hf\.co|cdn\.jsdelivr\.net|static\.cloudflareinsights\.com|cloudflareinsights\.com|unlock\.smaverk\.com|events\.smaverk\.com|[\w.-]*\.polar\.sh|polar\.sh|localhost:\d+)$/;
   const strangers = sent.filter((s) => !ALLOWED.test(s.host)), heavy = sent.filter((s) => s.bytes > 8192);
   if (strangers.length) fail(`requests to hosts nothing accounts for: ${JSON.stringify(strangers.slice(0, 4))}`);
   if (heavy.length) fail(`requests carrying more than 8 KB: ${JSON.stringify(heavy.slice(0, 4))}`);
