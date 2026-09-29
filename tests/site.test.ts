@@ -86,6 +86,14 @@ test("Privacy and Terms links open the studio's own pages, from every page", () 
   for (const l of LEGAL) { const h = read(l); expect(h).toContain(`<link rel="canonical" href="https://smaverk.com/`); for (const tool of ["Captions", "Vertical"]) expect(h).toContain(tool); }
 });
 
+// 2026-09-29: the gates had no usage data (Cloudflare samples at 10% and cannot see use), so every page loads the first-party
+// count script (missions/events) and the privacy page says what it counts.
+test("every page loads the Småverk count script, and the privacy page says what it counts", () => {
+  const missing = pages().filter((f) => f.endsWith(".html") && !read(f).includes(`<script src="https://events.smaverk.com/c.js" defer></script>`));
+  expect(missing).toEqual([]);
+  expect(text(read(LEGAL[0]!))).toMatch(/We also count, per day, how often a tool is opened, a file is picked, a result is saved or shared, and a buy link is tapped/);
+});
+
 test("pages load nothing from other companies except the analytics beacon", () => {
   const bad: string[] = [];
   for (const p of pages().filter((f) => f.endsWith(".html"))) for (const m of read(p).matchAll(/<(?:script|link|img|video|source|iframe)\b[^>]*\b(?:src|href)=["'](https?:\/\/[^"']+)["'][^>]*>/g)) {
@@ -788,7 +796,7 @@ opTest("Operator shows what it does in pictures: one moving diagram per mode, th
   // stops every animation, and the resting one is the frame shown then); no script draws them.
   expect(html).toMatch(/@media\(prefers-reduced-motion:reduce\)\{\*\{animation:none!important/);
   for (const k of ["eF", "eC", "fF", "fC", "tF", "tC"]) expect(html, `.dg-${k}`).toMatch(new RegExp(`\\.dg-${k}\\{transform:[^;]+;animation:dg[A-Z]{2} `));
-  expect([...html.matchAll(/<script\b[^>]*\bsrc=/g)].length, "one script: the app").toBe(1);
+  expect([...html.matchAll(/<script\b[^>]*\bsrc="(?!https:\/\/events\.smaverk\.com\/c\.js")/g)].length, "one script: the app (the shared count script aside)").toBe(1);
   // The controls diagram names each control on the picture, and the facts the text used to carry are still said.
   const ctl = html.match(/<svg class="dg-ctl"[\s\S]*?<\/svg>/)?.[0] ?? "";
   for (const l of ["Turn off", "Light", "Shape", "Zoom", "What to film", "Switch camera", "Close-up time", "Hold to stop"]) expect(ctl, l).toContain(l);
