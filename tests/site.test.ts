@@ -1047,9 +1047,14 @@ test("quality pass: the pictures that replaced words, and the facts they carry",
   const items = [...facts.matchAll(/<li><span class="ic" aria-hidden="true"><svg [\s\S]*?<\/svg><\/span>([^<]+)<\/li>/g)].map((m) => m[1]!);
   expect(items).toEqual(["Works offline once loaded", "Nothing uploaded", "No account", "Pay once, through Polar", "Refund within 14 days", "Clips key opens every paid tool"]);
   for (const i of items) expect(i.split(" ").length, i).toBeLessThanOrEqual(6);
-  // The Operator card says what it is now: a full-screen camera, its three commands, and a shape that follows the device.
+  // The Operator card leads with the job, not a list of modes (A, 2026-09-30: "the operator does a lot more"): it works the
+  // camera (each face, one person, whoever talks) and hands over the video with a still of every face. Kept to three lines
+  // on desktop so the text column ends with the demo, and the page stays under 240 words (design review r8, round 3).
   const op = text(studio.split("<article").find((a) => /<h3>Operator<\/h3>/.test(a)) ?? "");
-  for (const f of [/full-screen camera/, /films each face/, /follows one person/, /whoever talks/, /tall or wide/]) expect(op, String(f)).toMatch(f);
+  for (const f of [/works the camera/, /each face/, /follows one person/, /whoever talks/, /still of every face/]) expect(op, String(f)).toMatch(f);
+  const opLine = /<h3>Operator<\/h3>\s*<p>([^<]+)<\/p>/.exec(studio)?.[1] ?? "";
+  expect(opLine.split(/\s+/).filter(Boolean).length, "the Operator line fits three desktop lines").toBeLessThanOrEqual(31);
+  expect(op, "the card is not a spec sheet").not.toMatch(/full-screen camera/);
   // Every llms.txt that lists the other tools names Operator; no page or llms.txt sells the maker.
   for (const f of ["captions/app/dist/llms.txt", "vertical/app/dist/llms.txt", "clipfinder/app/dist/llms.txt", "clips/app/dist/llms.txt"]) {
     expect(read(f), `${f} names Operator`).toContain("https://operator.smaverk.com");
