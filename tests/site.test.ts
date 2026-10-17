@@ -232,6 +232,43 @@ test("every tool page says Free in the header and carries the one support line; 
   for (const t of ["captions", "vertical", "clipfinder", "clips"]) expect(existsSync(join(ROOT, `${t}/app/src/lib/unlock.ts`)), `${t}: the unlock module is gone`).toBe(false);
 });
 
+// Independent design review r10 and cold-user round (2026-10-17): the free change's loose ends, each held here.
+test("no page says Free twice in a row, and the free wording keeps the limit apart from the price", () => {
+  const toolPages = [...Object.values(SITES).flatMap((s) => every(s).map((f) => `${s.dist}/${f}`)), "operator/app/dist/index.html"].filter((p) => existsSync(join(ROOT, p)));
+  for (const p of toolPages) {
+    const html = read(p), at = html.indexOf(SUPPORT_LINE);
+    const before = text(html.slice(html.lastIndexOf("<p", at - 1), at)).trim();
+    expect(before, `${p}: the line before the support line ends "Free."`).not.toMatch(/\bFree\.$/);
+  }
+  // "Free for clips up to five minutes" read as "longer clips cost money" (cold user, minor 1); "every export" hinted at a gated past (minor 2).
+  for (const p of [...toolPages, STUDIO, ...Object.values(SITES).map((s) => `${s.dist}/llms.txt`)]) {
+    const t = read(p);
+    expect(t, `${p}: a limit worded as a condition of the price`).not.toMatch(/[Ff]ree (for|up to) (clips|recordings|five|four)/);
+    expect(t, `${p}: "every export"`).not.toMatch(/and every export|with every export/);
+  }
+  // "No mark" is said once on the studio, in its tile, not on every card.
+  expect([...read(STUDIO).matchAll(/<p class="price">[^<]*no mark/gi)].length, "studio cards repeating no mark").toBe(0);
+  expect(read(LEGAL[0]!).match(/<meta name="description" content="([^"]*)"/)?.[1], "privacy description names every tool").toMatch(/Captions, Vertical, Clip finder, Clips (or|and) Operator/);
+  expect(read(STUDIO), "og:title and twitter:title without an em dash").not.toMatch(/<meta (property|name)="(og|twitter):title" content="[^"]*—/);
+});
+
+test("one footer on every tool, every link at least 44 px wide, and the support line clear of the top edge", () => {
+  const toolPages = [...Object.values(SITES).flatMap((s) => every(s).map((f) => `${s.dist}/${f}`)), "operator/app/dist/index.html"].filter((p) => existsSync(join(ROOT, p)));
+  for (const p of toolPages) {
+    const html = read(p);
+    const foot = [...(html.match(/<p class="foot">([\s\S]*?)<\/p>/)?.[1] ?? "").matchAll(/<a [^>]*>([^<]*)<\/a>/g)].map((m) => m[1]!);
+    expect(foot.slice(0, 5), `${p}: the footer's first five links`).toEqual(["hello@smaverk.com", "smaverk.com", "Privacy", "Terms", "For automations and agents"]);
+    for (const credit of foot.slice(5)) expect(credit, `${p}: after the five, only sample credits`).toMatch(/^(Sample|Court)[^:]*: .+/);
+    expect(html, `${p}: footer links 44 px wide`).toContain(".foot a{color:var(--muted);display:inline-flex;align-items:center;justify-content:center;min-height:44px;min-width:44px}");
+    expect(html, `${p}: the support line lands clear of the top edge`).toContain("#support{scroll-margin-top:24px}");
+    expect(html, `${p}: a stable scrollbar gutter, so the header does not shift between pages`).toContain("html{-webkit-text-size-adjust:100%;scrollbar-gutter:stable}");
+  }
+  const studio = read(STUDIO);
+  expect(studio, "studio footer links 44 px wide").toContain("footer a{justify-content:center;min-width:44px}");
+  expect(studio, "the studio line, quiet like the tools'").toContain(".support{margin:20px 0 0;font-size:15px;color:var(--muted);text-wrap:pretty;scroll-margin-top:24px}.support a{color:inherit;");
+  expect(text(studio.match(/<p class="support" id="support">[\s\S]*?<\/p>/)![0]).replace(/\s+/g, " ").replace(/ \./g, ".").trim()).toBe("If a tool helped you, you can support Småverk.");
+});
+
 test("each page says it in one line: AI, on your device", () => {
   // The principal, 2026-09-18: say "AI" and say where it runs, once, in plain words; no names of what is inside.
   for (const [name, s] of Object.entries(SITES)) {
@@ -304,7 +341,10 @@ test("Captions: the defaults keep the words off the speaker's face and the main 
   // on a 1440 x 900 screen the stage took 78% of the height and the button sat below the fold (Qa.ts now fails on that too).
   const app = read("captions/app/src/draw.ts"); const at = app.match(/st === "big" \? ([\d.]+) : st === "bar" \? ([\d.]+) : ([\d.]+)/)!;
   for (const y of at.slice(1).map(Number)) { expect(y).toBeGreaterThanOrEqual(0.68); expect(y).toBeLessThanOrEqual(0.8); } // under a face, above the bottom fifth the apps cover
-  const sv = [...read("captions/app/dist/index.html").matchAll(/calc\((\d+)svh \* var\(--ar/g)].map((m) => Number(m[1])); expect(sv.length).toBe(2); for (const v of sv) expect(v).toBeLessThanOrEqual(56);
+  const sv = [...read("captions/app/dist/index.html").matchAll(/calc\((\d+)svh \* var\(--ar/g)].map((m) => Number(m[1])); expect(sv.length).toBe(3); for (const v of sv) expect(v).toBeLessThanOrEqual(56);
+  // A short screen (375x667) takes the stage down to 50svh, so the main button stays on the first screen (independent design review r10, B2).
+  expect(read("captions/app/dist/index.html")).toContain("@media(max-height:700px){.demo{--sw:min(100%,calc(50svh * var(--ar,0.5625)))}}");
+  for (const t of ["clipfinder", "clips"]) expect(read(`${t}/app/dist/index.html`), `${t}: the tool first on a short phone`).toContain('@media(max-width:899px) and (max-height:700px){.grid{grid-template-areas:"demo" "say" "rest"}.say{grid-area:say}.demo{grid-area:demo}.rest{grid-area:rest}}');
 });
 
 test("every host has a sitemap of its own pages, and its robots.txt points at it", () => {
@@ -574,7 +614,7 @@ test("the studio lists every tool that is live, each one free", () => {
   expect((studio.match(/<article class="tool/g) ?? []).length, "one card per tool").toBe(5);
   // Every card says it is free, in words, and states its tool's limit.
   const lines = [...studio.matchAll(/<p class="price">([^<]*)<\/p>/g)].map((m) => m[1]!);
-  expect(lines, "one line per card, each starting Free").toEqual(["Free. Clips up to five minutes, no mark.", "Free. Clips up to five minutes, no mark.", "Free. Recordings up to four hours, and every export.", "Free. Every clip saved, no mark.", "Free."]);
+  expect(lines, "one line per card, each starting Free").toEqual(["Free. It captions the first five minutes of a clip.", "Free. It works on the first five minutes of a clip.", "Free. It reads up to four hours of a recording.", "Free. Every clip saved.", "Free."]);
   expect(t, "nothing left from the paid or preview days").not.toMatch(/while it is (new|a preview)|pay once|\bonce:/i);
   expect(text(studio.match(/<p class="sub">[\s\S]*?<\/p>/)![0]).trim()).toBe("Five free tools, one job each.");
   // The true claim for a tool that reads recordings, not the absolute.
@@ -977,7 +1017,7 @@ test("Clip finder: the moment, not a caveat, on the studio card; its reasons in 
   const studio = read(STUDIO);
   expect(studio).not.toMatch(/m\.why\?\.\[0\]/); expect(studio).toMatch(/Math\.round\(m\.endS - m\.startS\)\} s · /);
   for (const f of ["clipfinder/app/src/lib/rank.ts", "clipfinder/app/dist/sample.json", "clips/app/dist/sample.json", "captions/app/dist/studio-demo/clipfinder-sample.json"].filter((f) => existsSync(join(ROOT, f)))) expect(read(f), f).not.toMatch(/line of setup/i);
-  expect(text(studio.split("<article").find((a) => /<h3>Clip finder<\/h3>/.test(a)) ?? "")).toMatch(/Free\. Recordings up to four hours, and every export\./);
+  expect(text(studio.split("<article").find((a) => /<h3>Clip finder<\/h3>/.test(a)) ?? "")).toMatch(/Free\. It reads up to four hours of a recording\./);
 });
 
 test("Captions: no seconds-left guess before the pace is measured; Clip finder's sample plays at rest; Clips names read as words", () => {

@@ -9,7 +9,7 @@
 <script>/* theme: the device's setting until a tap picks light or dark, then that pick on every Småverk page (a cookie for .smaverk.com, as each tool is its own site; this site's storage as the fallback), applied before first paint */(function(){var d=document.documentElement,k="smaverk-theme",m=matchMedia("(prefers-color-scheme: dark)");function set(t){d.setAttribute("data-theme",t);d.style.colorScheme=t}function dark(){var t=d.getAttribute("data-theme");return t?t==="dark":m.matches}function sync(){var b=document.getElementById("theme");if(!b)return;var on=dark();b.setAttribute("aria-pressed",String(on));b.setAttribute("aria-label",on?"Switch to light mode":"Switch to dark mode")}var s=null;try{var c=document.cookie.match(/(?:^|; )smaverk-theme=(light|dark)/);s=c?c[1]:null}catch(e){}try{if(!s)s=localStorage.getItem(k)}catch(e){}if(s==="light"||s==="dark")set(s);m.addEventListener("change",sync);document.addEventListener("DOMContentLoaded",function(){var b=document.getElementById("theme");if(!b)return;sync();b.addEventListener("click",function(){var t=dark()?"light":"dark";set(t);try{localStorage.setItem(k,t)}catch(e){}try{document.cookie=k+"="+t+"; Path=/; Max-Age=31536000; SameSite=Lax; Secure"+(/(^|\.)smaverk\.com$/.test(location.hostname)?"; Domain=.smaverk.com":"")}catch(e){}sync();dispatchEvent(new Event("themechange"))})})})();</script>
 <link rel="canonical" href="https://smaverk.com/">
 <meta name="google-site-verification" content="_eN1ywvXp9R-hebN0pJSivwAN8J8DuuaNGwfr_QqmnU">
-<meta property="og:title" content="Småverk — small AI tools that run on your device">
+<meta property="og:title" content="Småverk: small AI tools that run on your device">
 <meta property="og:description" content="Five tools, one job each, in your browser. Nothing uploaded. Every tool is free.">
 <meta property="og:url" content="https://smaverk.com/"><meta property="og:type" content="website"><meta property="og:site_name" content="Småverk">
 <meta property="og:image" content="https://smaverk.com/studio-demo/vertical-poster.jpg?v=1792260190">
@@ -93,7 +93,7 @@ p{margin:0 0 12px;text-wrap:pretty;overflow-wrap:anywhere}
 .demo.is-paused .dtap::after{opacity:1}
 @media (prefers-reduced-motion:reduce){.demo .dtap::after,.demo .inset{transition:none}}
 .tool .price{color:var(--ink);font-size:15px}
-.support{margin:20px 0 0;font-size:16px;color:var(--muted);text-wrap:pretty}.support a{color:var(--ink);display:inline-flex;align-items:center;min-height:44px}
+.support{margin:20px 0 0;font-size:15px;color:var(--muted);text-wrap:pretty;scroll-margin-top:24px}.support a{color:inherit;display:inline-flex;align-items:center;min-height:44px}
 .btn{appearance:none;border:0;border-radius:12px;min-height:52px;padding:0 20px;font:700 16px var(--display);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;background:var(--btn);color:var(--btn-ink);margin-top:4px}
 .btn.quiet{background:transparent;color:var(--ink);border:1.5px solid var(--line);min-height:48px;font-weight:600}
 .btn:focus-visible,a:focus-visible{outline:3px solid var(--hi);outline-offset:2px}
@@ -105,7 +105,7 @@ ul{padding-left:20px;margin:0 0 12px}li{margin-bottom:8px}
 .facts .ic{flex:none;width:36px;height:36px;border-radius:9px;background:var(--hi);color:var(--hi-ink);display:grid;place-items:center}
 .facts .ic svg{width:20px;height:20px}
 .nb{white-space:nowrap}
-footer a,footer span{display:inline-flex;align-items:center;min-height:44px}
+footer a,footer span{display:inline-flex;align-items:center;min-height:44px}footer a{justify-content:center;min-width:44px}
 footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--line);color:var(--muted);font-size:15px;display:flex;flex-wrap:wrap;gap:8px 18px}
 /* theme toggle: the same block on every page */
 .top>.brand{margin-right:auto}
@@ -136,7 +136,7 @@ footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--line);color:v
       </div>
       <h3>Captions</h3>
       <p>Captions on a short clip in under a minute. English.</p>
-      <p class="price">Free. Clips up to five minutes, no mark.</p>
+      <p class="price">Free. It captions the first five minutes of a clip.</p>
       <a class="btn" href="https://captions.smaverk.com/?src=studio">Open Captions</a>
     </article>
     <article class="tool">
@@ -149,7 +149,7 @@ footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--line);color:v
       </div>
       <h3>Vertical</h3>
       <p>A sideways clip made tall for Reels and Shorts, the speaker kept in view.</p>
-      <p class="price">Free. Clips up to five minutes, no mark.</p>
+      <p class="price">Free. It works on the first five minutes of a clip.</p>
       <a class="btn" href="https://vertical.smaverk.com/?src=studio">Open Vertical</a>
     </article>
     <article class="tool">
@@ -161,7 +161,7 @@ footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--line);color:v
       </div>
       <h3>Clip finder</h3>
       <p>A long recording in, the moments worth posting out. English. Your recording stays on your device.</p>
-      <p class="price">Free. Recordings up to four hours, and every export.</p>
+      <p class="price">Free. It reads up to four hours of a recording.</p>
       <a class="btn" href="https://clipfinder.smaverk.com/?src=studio">Open Clip finder</a>
     </article>
     <article class="tool">
@@ -171,7 +171,7 @@ footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--line);color:v
       </div>
       <h3>Clips</h3>
       <p>A long recording in, tall clips with captions out. English.</p>
-      <p class="price">Free. Every clip saved, no mark.</p>
+      <p class="price">Free. Every clip saved.</p>
       <a class="btn" href="https://clips.smaverk.com/?src=studio">Open Clips</a>
     </article>
     <article class="tool">
@@ -196,7 +196,7 @@ footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--line);color:v
     <li><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M14 15h4"/><path d="M3 3l18 18"/></svg></span>No mark on your videos</li>
     <li><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 10h4M7 14h7"/><path d="M3 3l18 18"/></svg></span>No ads</li>
   </ul>
-  <p class="support" id="support">Every tool is free. If one helped you, you can <a href="https://buy.polar.sh/polar_cl_dDSll8mftHzvbuFi5j0OMjqduigiYhMEw4NIm3HTCkb" target="_blank" rel="noopener">support Småverk</a>.</p>
+  <p class="support" id="support">If a tool helped you, you can <a href="https://buy.polar.sh/polar_cl_dDSll8mftHzvbuFi5j0OMjqduigiYhMEw4NIm3HTCkb" target="_blank" rel="noopener">support Småverk</a>.</p>
 
   <footer>
     <span>Småverk, Sweden</span>

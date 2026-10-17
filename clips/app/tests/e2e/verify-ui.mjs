@@ -73,6 +73,11 @@ try {
   await p.waitForFunction(() => window.__clips?.state === "sample" && window.__clips.moments > 0, null, { timeout: 30000 });
   await p.waitForTimeout(800);
   await snap("0-rest");
+  // Every state fits 375x667 (CLAUDE.md; independent design review r10, B2): at rest the main button is whole on the first screen of the smallest phone too.
+  { await p.setViewportSize({ width: 375, height: 667 }); await p.waitForTimeout(500);
+    const s = await p.evaluate(() => { scrollTo(0, 0); const r = document.getElementById("action").getBoundingClientRect(); return { bottom: Math.round(r.bottom), vh: innerHeight }; });
+    check(s.bottom <= s.vh, `375x667: the main button is on the first screen (bottom ${s.bottom} of ${s.vh} px)`);
+    await p.setViewportSize({ width: 390, height: 844 }); await p.waitForTimeout(500); }
   await taps("0-rest");
   {
     const t = await p.evaluate(() => { const el = document.getElementById("tag"), a = el.getBoundingClientRect(), brand = document.querySelector(".brand").getBoundingClientRect(); return { text: el.textContent, top: a.top, bottom: a.bottom, h: a.height, right: a.right, gap: a.left - brand.right, vw: innerWidth, vh: innerHeight }; });

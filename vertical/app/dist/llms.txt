@@ -1,6 +1,6 @@
 # Vertical by Småverk
 
-> AI turns a landscape video into a vertical (9:16) one that keeps the speaker in frame, on your device, in the page at https://vertical.smaverk.com. Nothing is uploaded. Free for clips up to five minutes, with no mark and no account.
+> AI turns a landscape video into a vertical (9:16) one that keeps the speaker in frame, on your device, in the page at https://vertical.smaverk.com. Nothing is uploaded. Free, with no account; a clip longer than five minutes gets its first five minutes made vertical.
 
 Vertical is one of the tools by Småverk, a studio in Sweden; https://smaverk.com lists every tool. Captions (https://captions.smaverk.com) adds captions to the saved clip, Clip finder (https://clipfinder.smaverk.com) finds the moments worth posting in a long recording, Clips (https://clips.smaverk.com) makes those moments into tall clips with captions, and Operator (https://operator.smaverk.com) is an AI camera operator on the device: pointed at a group, it picks the shot, moves in on each face, follows one person or cuts to whoever is talking, and gives the video with a still of every face. Every Småverk tool is free.
 

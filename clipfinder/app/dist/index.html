@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>AI that finds the moments, on your device · Clip finder by Småverk</title>
-<meta name="description" content="AI that reads a podcast, a talk or an interview on your device and marks the moments worth posting, with the time, the length and the reason. Nothing gets uploaded. Free for recordings up to four hours, with every export.">
+<meta name="description" content="AI that reads a podcast, a talk or an interview on your device and marks the moments worth posting, with the time, the length and the reason. Nothing gets uploaded. Free. It reads up to four hours of a recording.">
 <meta name="color-scheme" content="light dark">
 <script>/* theme: the device's setting until a tap picks light or dark, then that pick on every Småverk page (a cookie for .smaverk.com, as each tool is its own site; this site's storage as the fallback), applied before first paint */(function(){var d=document.documentElement,k="smaverk-theme",m=matchMedia("(prefers-color-scheme: dark)");function set(t){d.setAttribute("data-theme",t);d.style.colorScheme=t}function dark(){var t=d.getAttribute("data-theme");return t?t==="dark":m.matches}function sync(){var b=document.getElementById("theme");if(!b)return;var on=dark();b.setAttribute("aria-pressed",String(on));b.setAttribute("aria-label",on?"Switch to light mode":"Switch to dark mode")}var s=null;try{var c=document.cookie.match(/(?:^|; )smaverk-theme=(light|dark)/);s=c?c[1]:null}catch(e){}try{if(!s)s=localStorage.getItem(k)}catch(e){}if(s==="light"||s==="dark")set(s);m.addEventListener("change",sync);document.addEventListener("DOMContentLoaded",function(){var b=document.getElementById("theme");if(!b)return;sync();b.addEventListener("click",function(){var t=dark()?"light":"dark";set(t);try{localStorage.setItem(k,t)}catch(e){}try{document.cookie=k+"="+t+"; Path=/; Max-Age=31536000; SameSite=Lax; Secure"+(/(^|\.)smaverk\.com$/.test(location.hostname)?"; Domain=.smaverk.com":"")}catch(e){}sync();dispatchEvent(new Event("themechange"))})})})();</script>
 <meta name="google-site-verification" content="_eN1ywvXp9R-hebN0pJSivwAN8J8DuuaNGwfr_QqmnU">
@@ -17,8 +17,8 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%277%27 fill=%27%23FFD84D%27/%3E%3Crect x=%274%27 y=%2714%27 width=%2724%27 height=%274%27 rx=%272%27 fill=%27%2316141D%27 opacity=%27.35%27/%3E%3Crect x=%2711%27 y=%2710%27 width=%2710%27 height=%2712%27 rx=%272%27 fill=%27%2316141D%27/%3E%3C/svg%3E">
 <link rel="canonical" href="https://clipfinder.smaverk.com/">
 <meta property="og:url" content="https://clipfinder.smaverk.com/"><meta property="og:type" content="website"><meta property="og:site_name" content="Småverk">
-<meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Find the moments in a long recording. Your recording stays on your device."><meta name="twitter:description" content="Moments from a podcast, a talk or an interview, found on your device. Free for recordings up to four hours."><meta name="twitter:image" content="https://clipfinder.smaverk.com/poster.png?v=1792261449">
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Where does my recording go?","acceptedAnswer":{"@type":"Answer","text":"Nowhere. Everything runs inside the page, on your device. The tool itself is downloaded the first time you use it, from where it is published; your recording is not part of that. Read one recording, then turn your network off and read another: it still works, because by then the tool is on your device. There is no account."}},{"@type":"Question","name":"What does it cost?","acceptedAnswer":{"@type":"Answer","text":"Nothing. Clip finder is free for recordings up to four hours, with every export: the clip itself and a timeline file for Premiere, Resolve or Final Cut. If it helped you, you can choose to support Småverk."}},{"@type":"Question","name":"Does it know what will do well?","acceptedAnswer":{"@type":"Answer","text":"No. It finds passages that stay on one subject and stand on their own, and it says why it picked each one. What an audience does with a clip is not something it measures."}}]}</script>
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Find the moments in a long recording. Your recording stays on your device."><meta name="twitter:description" content="Moments from a podcast, a talk or an interview, found on your device. Free."><meta name="twitter:image" content="https://clipfinder.smaverk.com/poster.png?v=1792261449">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Where does my recording go?","acceptedAnswer":{"@type":"Answer","text":"Nowhere. Everything runs inside the page, on your device. The tool itself is downloaded the first time you use it, from where it is published; your recording is not part of that. Read one recording, then turn your network off and read another: it still works, because by then the tool is on your device. There is no account."}},{"@type":"Question","name":"What does it cost?","acceptedAnswer":{"@type":"Answer","text":"Nothing. Clip finder is free, with no account. It reads up to four hours of a recording and saves the clip itself or a timeline file for Premiere, Resolve or Final Cut. If it helped you, you can choose to support Småverk."}},{"@type":"Question","name":"Does it know what will do well?","acceptedAnswer":{"@type":"Answer","text":"No. It finds passages that stay on one subject and stand on their own, and it says why it picked each one. What an audience does with a clip is not something it measures."}}]}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Clip finder by Småverk","applicationCategory":"MultimediaApplication","operatingSystem":"Any (web browser)","description":"Finds the moments worth posting in a long recording, on your device. Nothing is uploaded.","offers":{"@type":"Offer","price":"0","priceCurrency":"USD","description":"Free"},"url":"https://clipfinder.smaverk.com"}</script>
 <style>
 :root{color-scheme:light dark;
@@ -28,7 +28,7 @@
   --display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;--body:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   --r:14px;--gap:14px}
 *{box-sizing:border-box}
-html{-webkit-text-size-adjust:100%}
+html{-webkit-text-size-adjust:100%;scrollbar-gutter:stable}
 html,body{overflow-x:clip}
 .grid>*{min-width:0}
 .result,.status,.caplabel,.fine,.step,.trust,.moment,.says,.why{overflow-wrap:anywhere}
@@ -41,6 +41,7 @@ button{font:inherit;color:inherit}
 .top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
 .tag{display:inline-flex;align-items:center;justify-content:center;min-height:44px;min-width:44px;font-size:15px;color:var(--muted);text-decoration:none;white-space:nowrap}
 .tag b{color:var(--ink);font:700 15px/1 var(--display)}
+#support{scroll-margin-top:24px}
 .brand i{display:inline-block;width:14px;height:14px;background:var(--hi);border-radius:3px}
 .brand span{color:var(--muted);font:400 15px/1 var(--body)}
 h1{font:800 clamp(30px,8vw,46px)/1.04 var(--display);letter-spacing:-.025em;margin:0 0 12px;text-wrap:balance}
@@ -53,6 +54,8 @@ p{margin:0 0 12px;text-wrap:pretty}
 ul{padding-left:20px;margin:0 0 12px}li{margin-bottom:6px}
 .grid{display:grid;gap:28px}
 @media(min-width:900px){.grid{grid-template-columns:480px minmax(0,1fr);gap:56px;align-items:start;grid-template-areas:"demo say" "demo rest"}.say{grid-area:say}.demo{grid-area:demo;position:sticky;top:16px}.grid{grid-template-rows:auto 1fr}.rest{grid-area:rest}.top{margin-bottom:28px}.map{height:150px}}
+/* On a short phone screen (375x667) the tool comes first and the headline under it, so the main button is on the first screen, as in Captions, Vertical and Operator (independent design review r10, B2). Taller phones keep the headline first. */
+@media(max-width:899px) and (max-height:700px){.grid{grid-template-areas:"demo" "say" "rest"}.say{grid-area:say}.demo{grid-area:demo}.rest{grid-area:rest}}
 /* On the narrowest phones the headline reads first, so it is sized to leave the tool itself on the screen under it. */
 @media(max-width:480px){h1{font-size:clamp(26px,6.8vw,34px)}.sub{font-size:16px;margin-bottom:16px}.grid{gap:20px}}
 .demo{display:flex;flex-direction:column;gap:var(--gap)}
@@ -130,7 +133,7 @@ ul{padding-left:20px;margin:0 0 12px}li{margin-bottom:6px}
 .fine{font-size:15px;color:var(--muted)}
 .ok{color:var(--good);font-weight:600}
 .foot{color:var(--muted);font-size:15px;margin-top:36px;display:flex;gap:4px 18px;flex-wrap:wrap;align-items:center}
-.foot a{color:var(--muted);display:inline-flex;align-items:center;min-height:44px}
+.foot a{color:var(--muted);display:inline-flex;align-items:center;justify-content:center;min-height:44px;min-width:44px}
 details{border-top:1px solid var(--line)}
 details summary{cursor:pointer;font-weight:600;font-size:16px;padding:12px 0;min-height:44px}
 details p,details ul{margin:0 0 14px}
@@ -223,7 +226,7 @@ details p,details ul{margin:0 0 14px}
         <p>You can check it: read one recording, then turn your network off and read another. It still works, because by then the tool is on your device.</p>
       </details>
 
-      <p class="foot"><a href="mailto:hello@smaverk.com">hello@smaverk.com</a><a href="https://smaverk.com">smaverk.com</a><a href="https://smaverk.com/privacy">Privacy</a><a href="https://smaverk.com/terms">Terms</a><a href="https://vertical.smaverk.com/?src=clipfinder">Vertical</a><a href="https://captions.smaverk.com/?src=clipfinder">Captions</a><a href="https://clips.smaverk.com/?src=clipfinder">Make clips</a><a href="llms.txt">For automations and agents</a><a id="samplesrc" href="https://images.nasa.gov/details/iss071m261311538_NASA_Astronaut_Matt_Dominick_Talks_with_KMGH_Denver_240510" rel="noopener">Sample: NASA, public domain</a></p>
+      <p class="foot"><a href="mailto:hello@smaverk.com">hello@smaverk.com</a><a href="https://smaverk.com">smaverk.com</a><a href="https://smaverk.com/privacy">Privacy</a><a href="https://smaverk.com/terms">Terms</a><a href="llms.txt">For automations and agents</a><a id="samplesrc" href="https://images.nasa.gov/details/iss071m261311538_NASA_Astronaut_Matt_Dominick_Talks_with_KMGH_Denver_240510" rel="noopener">Sample: NASA, public domain</a></p>
     </section>
   </div>
 </div>

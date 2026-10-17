@@ -4,19 +4,19 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>AI that turns a long recording into clips, on your device · Clips by Småverk</title>
-<meta name="description" content="AI that finds the moments in a long recording and makes them into 9:16 clips with captions (608×1080 MP4 from 1080p video), on your device. Nothing gets uploaded. Free: every clip saved, with no mark.">
+<meta name="description" content="AI that finds the moments in a long recording and makes them into 9:16 clips with captions (608×1080 MP4 from 1080p video), on your device. Nothing gets uploaded. Free: every clip saved.">
 <meta name="color-scheme" content="light dark">
 <script>/* theme: the device's setting until a tap picks light or dark, then that pick on every Småverk page (a cookie for .smaverk.com, as each tool is its own site; this site's storage as the fallback), applied before first paint */(function(){var d=document.documentElement,k="smaverk-theme",m=matchMedia("(prefers-color-scheme: dark)");function set(t){d.setAttribute("data-theme",t);d.style.colorScheme=t}function dark(){var t=d.getAttribute("data-theme");return t?t==="dark":m.matches}function sync(){var b=document.getElementById("theme");if(!b)return;var on=dark();b.setAttribute("aria-pressed",String(on));b.setAttribute("aria-label",on?"Switch to light mode":"Switch to dark mode")}var s=null;try{var c=document.cookie.match(/(?:^|; )smaverk-theme=(light|dark)/);s=c?c[1]:null}catch(e){}try{if(!s)s=localStorage.getItem(k)}catch(e){}if(s==="light"||s==="dark")set(s);m.addEventListener("change",sync);document.addEventListener("DOMContentLoaded",function(){var b=document.getElementById("theme");if(!b)return;sync();b.addEventListener("click",function(){var t=dark()?"light":"dark";set(t);try{localStorage.setItem(k,t)}catch(e){}try{document.cookie=k+"="+t+"; Path=/; Max-Age=31536000; SameSite=Lax; Secure"+(/(^|\.)smaverk\.com$/.test(location.hostname)?"; Domain=.smaverk.com":"")}catch(e){}sync();dispatchEvent(new Event("themechange"))})})})();</script>
 <meta name="google-site-verification" content="_eN1ywvXp9R-hebN0pJSivwAN8J8DuuaNGwfr_QqmnU">
 <meta property="og:title" content="A long recording in, clips ready to post out. Your recording stays on your device.">
 <meta property="og:description" content="Moments found, framed 9:16 and captioned, on your device: 608×1080 MP4 from 1080p video. No upload, no account.">
-<meta property="og:image" content="https://clips.smaverk.com/poster.jpg?v=1790673918">
+<meta property="og:image" content="https://clips.smaverk.com/poster.jpg?v=1792261815">
 <link rel="preload" href="fonts/bricolage-grotesque-latin.woff2" as="font" type="font/woff2" crossorigin>
 <style>@font-face{font-family:"Bricolage Grotesque";font-style:normal;font-weight:200 800;font-stretch:100%;font-display:swap;src:url(fonts/bricolage-grotesque-latin.woff2) format("woff2")}</style>
 <link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="icon" type="image/png" sizes="64x64" href="/icon-64.png">
 <link rel="canonical" href="https://clips.smaverk.com/">
 <meta property="og:url" content="https://clips.smaverk.com/"><meta property="og:type" content="website"><meta property="og:site_name" content="Småverk">
-<meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="A long recording in, clips ready to post out."><meta name="twitter:description" content="Moments found, framed 9:16 and captioned, on your device: 608×1080 MP4 from 1080p video. Free, with no mark."><meta name="twitter:image" content="https://clips.smaverk.com/poster.jpg?v=1790673918">
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="A long recording in, clips ready to post out."><meta name="twitter:description" content="Moments found, framed 9:16 and captioned, on your device: 608×1080 MP4 from 1080p video. Free."><meta name="twitter:image" content="https://clips.smaverk.com/poster.jpg?v=1792261815">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Clips by Småverk","applicationCategory":"MultimediaApplication","operatingSystem":"Any (web browser)","description":"Finds the moments in a long recording and makes them into 9:16 MP4 clips with captions, on your device, as tall as the recording: 608×1080 from 1080p video. Nothing is uploaded.","offers":{"@type":"Offer","price":"0","priceCurrency":"USD","description":"Free"},"url":"https://clips.smaverk.com"}</script>
 <style>
 :root{color-scheme:light dark;
@@ -26,7 +26,7 @@
   --display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;--body:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   --r:14px;--gap:14px}
 *{box-sizing:border-box}
-html{-webkit-text-size-adjust:100%}
+html{-webkit-text-size-adjust:100%;scrollbar-gutter:stable}
 html,body{overflow-x:clip}
 .grid>*{min-width:0}
 .result,.status,.notice,.caplabel,.fine,.trust,.moment,.says,.why{overflow-wrap:anywhere}
@@ -39,6 +39,7 @@ button{font:inherit;color:inherit}
 .top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
 .tag{display:inline-flex;align-items:center;justify-content:center;min-height:44px;min-width:44px;font-size:15px;color:var(--muted);text-decoration:none;white-space:nowrap}
 .tag b{color:var(--ink);font:700 15px/1 var(--display)}
+#support{scroll-margin-top:24px}
 .brand i{display:inline-block;width:14px;height:14px;background:var(--hi);border-radius:3px}
 .brand span{color:var(--muted);font:400 15px/1 var(--body)}
 h1{font:800 clamp(30px,8vw,46px)/1.04 var(--display);letter-spacing:-.025em;margin:0 0 12px;text-wrap:balance}
@@ -51,6 +52,8 @@ p{margin:0 0 12px;text-wrap:pretty}
 ul{padding-left:20px;margin:0 0 12px}li{margin-bottom:6px}
 .grid{display:grid;gap:28px}
 @media(min-width:900px){.grid{grid-template-columns:480px minmax(0,1fr);gap:56px;align-items:start;grid-template-areas:"demo say" "demo rest"}.say{grid-area:say}.demo{grid-area:demo;position:sticky;top:16px}.grid{grid-template-rows:auto 1fr}.rest{grid-area:rest}.top{margin-bottom:28px}.map{height:150px}}
+/* On a short phone screen (375x667) the tool comes first and the headline under it, so the main button is on the first screen, as in Captions, Vertical and Operator (independent design review r10, B2). Taller phones keep the headline first. */
+@media(max-width:899px) and (max-height:700px){.grid{grid-template-areas:"demo" "say" "rest"}.say{grid-area:say}.demo{grid-area:demo}.rest{grid-area:rest}}
 /* On the narrowest phones the headline reads first, so it is sized to leave the tool itself on the screen under it. */
 @media(max-width:480px){h1{font-size:clamp(26px,6.8vw,34px)}.sub{font-size:16px;margin-bottom:16px}.grid{gap:20px}}
 .demo{display:flex;flex-direction:column;gap:var(--gap)}
@@ -133,7 +136,7 @@ ul{padding-left:20px;margin:0 0 12px}li{margin-bottom:6px}
 .fine{font-size:15px;color:var(--muted)}
 .ok{color:var(--good);font-weight:600}
 .foot{color:var(--muted);font-size:15px;margin-top:36px;display:flex;gap:4px 18px;flex-wrap:wrap;align-items:center}
-.foot a{color:var(--muted);display:inline-flex;align-items:center;min-height:44px}
+.foot a{color:var(--muted);display:inline-flex;align-items:center;justify-content:center;min-height:44px;min-width:44px}
 details{border-top:1px solid var(--line)}
 details summary{cursor:pointer;font-weight:600;font-size:16px;padding:12px 0;min-height:44px}
 details p,details ul{margin:0 0 14px}
@@ -204,7 +207,7 @@ details p,details ul{margin:0 0 14px}
       <div class="caplabel"><b id="clipname">Sample: a 15-minute interview</b><span id="hint">Made from it here. Tap one to watch.</span></div>
       <p class="notice" id="notice" role="alert" hidden></p>
       <div class="reel stage" id="reelwrap">
-        <video id="reel" playsinline muted loop preload="metadata" poster="poster.jpg?v=1790673918" aria-label="A finished clip: tall, the speaker in frame, captions written in"></video>
+        <video id="reel" playsinline muted loop preload="metadata" poster="poster.jpg?v=1792261815" aria-label="A finished clip: tall, the speaker in frame, captions written in"></video>
         <button class="tap" id="tap" aria-label="Play or pause"></button>
         <div class="play" id="playicon"><svg viewBox="0 0 24 24" fill="#16141D"><path d="M7 4.5v15l12-7.5z"/></svg></div>
         <button class="sound" id="sound" aria-pressed="false" aria-label="Sound is off. Turn it on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10v4h4l5 4V6L8 10H4z"/><path class="wave" d="M16.5 9a4 4 0 0 1 0 6M19 6.5a8 8 0 0 1 0 11"/><path class="mute" d="M17 9.5l4.5 5M21.5 9.5l-4.5 5"/></svg><span id="soundtxt" class="sr">Sound off</span></button>
@@ -212,7 +215,7 @@ details p,details ul{margin:0 0 14px}
       </div>
       <input id="file" type="file" accept="video/*" hidden>
       <button class="btn primary" id="action">Use my own recording</button>
-      <p class="trust" id="trust">Every clip saved, no mark. English. Your recording stays on your device.</p>
+      <p class="trust" id="trust">Every clip saved. English. Your recording stays on your device.</p>
       <p class="fine" id="caphint">Each clip: up to 90 seconds, 608×1080 from 1080p.</p>
       <div class="status" id="status"></div>
       <div class="steps" id="steps" role="status" aria-live="polite">
@@ -249,11 +252,11 @@ details p,details ul{margin:0 0 14px}
         <p>The tool itself is downloaded the first time you use it, from where it is published. Your recording is not part of that.</p>
       </details>
 
-      <p class="foot"><a href="mailto:hello@smaverk.com">hello@smaverk.com</a><a href="https://smaverk.com">smaverk.com</a><a href="https://smaverk.com/privacy">Privacy</a><a href="https://smaverk.com/terms">Terms</a><a href="https://clipfinder.smaverk.com/?src=clips">Clip finder</a><a href="https://vertical.smaverk.com/?src=clips">Vertical</a><a href="https://captions.smaverk.com/?src=clips">Captions</a><a href="llms.txt">For automations and agents</a><a id="samplesrc" href="https://images.nasa.gov/details/iss071m261311538_NASA_Astronaut_Matt_Dominick_Talks_with_KMGH_Denver_240510" rel="noopener">Sample: NASA, public domain</a></p>
+      <p class="foot"><a href="mailto:hello@smaverk.com">hello@smaverk.com</a><a href="https://smaverk.com">smaverk.com</a><a href="https://smaverk.com/privacy">Privacy</a><a href="https://smaverk.com/terms">Terms</a><a href="llms.txt">For automations and agents</a><a id="samplesrc" href="https://images.nasa.gov/details/iss071m261311538_NASA_Astronaut_Matt_Dominick_Talks_with_KMGH_Denver_240510" rel="noopener">Sample: NASA, public domain</a></p>
     </section>
   </div>
 </div>
-<script type="module" src="app.js?v=1790673918"></script>
+<script type="module" src="app.js?v=1792261815"></script>
 <script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "91285919879f4672a4342550a4b0b07c"}'></script>
 <script src="https://events.smaverk.com/c.js" defer></script>
 </body>

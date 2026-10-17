@@ -81,6 +81,11 @@ const snap = async (tag) => { await unlockCheck(p, tag, check); const f = await 
 await p.goto(url, { waitUntil: "load" });
 await p.waitForFunction(() => window.__cap && window.__cap.words && window.__cap.words.length > 0, null, { timeout: 30000 });
 await p.waitForTimeout(800); await snap("0-rest");
+// Every state fits 375x667 (CLAUDE.md; independent design review r10, B2): at rest the main button is whole on the first screen of the smallest phone too.
+{ await p.setViewportSize({ width: 375, height: 667 }); await p.waitForTimeout(500);
+  const s = await p.evaluate(() => { scrollTo(0, 0); const r = document.getElementById("action").getBoundingClientRect(); return { bottom: Math.round(r.bottom), vh: innerHeight }; });
+  check(s.bottom <= s.vh, `375x667: the main button is on the first screen (bottom ${s.bottom} of ${s.vh} px)`);
+  await p.setViewportSize({ width: 390, height: 844 }); await p.waitForTimeout(500); }
 // The header says it is free, on the first phone screen: tall enough to tap, clear of the name and of the edge (free since 2026-10-17).
 { const t = await p.evaluate(() => { const el = document.getElementById("tag"), a = el.getBoundingClientRect(), b = document.querySelector(".brand").getBoundingClientRect(); return { text: el.textContent, top: a.top, bottom: a.bottom, h: a.height, right: a.right, gap: a.left - b.right, vw: innerWidth, vh: innerHeight }; });
   check(t.top >= 0 && t.bottom <= t.vh && t.h >= 44 && t.gap >= 8 && t.right <= t.vw - 15 && t.text.trim() === "Free", `the header says it is free, on the first screen: "${t.text}" (${Math.round(t.h)} px tall, ${Math.round(t.gap)} px from the name)`); }

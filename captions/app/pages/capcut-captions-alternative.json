@@ -1,7 +1,7 @@
 {
   "slug": "capcut-captions-alternative",
   "title": "CapCut auto captions alternative: free, no account",
-  "description": "CapCut moved auto captions to Pro. Captions adds them on your device for free: no upload, no account, no mark. Clips up to five minutes.",
+  "description": "CapCut moved auto captions to Pro. Captions adds them on your device for free: no upload, no account. It captions a clip's first five minutes.",
   "ogTitle": "A free CapCut captions alternative",
   "ogDescription": "AI captions, made on your device. No Pro plan, no account, no upload.",
   "h1": "A free CapCut captions alternative",
@@ -24,7 +24,7 @@
     },
     {
       "q": "Can I caption without CapCut Pro?",
-      "a": "Yes. Captions is free for clips up to five minutes, with no mark.",
+      "a": "Yes. Captions is free, and it captions the first five minutes of any clip.",
       "source": { "text": "Our terms", "url": "https://smaverk.com/terms" }
     },
     {

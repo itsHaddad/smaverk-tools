@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>AI captions, made on your device · Captions by Småverk</title>
-<meta name="description" content="AI captions on your short video in under a minute, made on your device. Nothing gets uploaded. Free for clips up to five minutes, with no mark.">
+<meta name="description" content="AI captions on your short video in under a minute, made on your device. Nothing gets uploaded. Free. A longer clip gets its first five minutes captioned.">
 <meta name="color-scheme" content="light dark">
 <script>/* theme: the device's setting until a tap picks light or dark, then that pick on every Småverk page (a cookie for .smaverk.com, as each tool is its own site; this site's storage as the fallback), applied before first paint */(function(){var d=document.documentElement,k="smaverk-theme",m=matchMedia("(prefers-color-scheme: dark)");function set(t){d.setAttribute("data-theme",t);d.style.colorScheme=t}function dark(){var t=d.getAttribute("data-theme");return t?t==="dark":m.matches}function sync(){var b=document.getElementById("theme");if(!b)return;var on=dark();b.setAttribute("aria-pressed",String(on));b.setAttribute("aria-label",on?"Switch to light mode":"Switch to dark mode")}var s=null;try{var c=document.cookie.match(/(?:^|; )smaverk-theme=(light|dark)/);s=c?c[1]:null}catch(e){}try{if(!s)s=localStorage.getItem(k)}catch(e){}if(s==="light"||s==="dark")set(s);m.addEventListener("change",sync);document.addEventListener("DOMContentLoaded",function(){var b=document.getElementById("theme");if(!b)return;sync();b.addEventListener("click",function(){var t=dark()?"light":"dark";set(t);try{localStorage.setItem(k,t)}catch(e){}try{document.cookie=k+"="+t+"; Path=/; Max-Age=31536000; SameSite=Lax; Secure"+(/(^|\.)smaverk\.com$/.test(location.hostname)?"; Domain=.smaverk.com":"")}catch(e){}sync();dispatchEvent(new Event("themechange"))})})})();</script>
 <meta property="og:title" content="Captions on your clip in under a minute. Nothing leaves your device.">
@@ -19,7 +19,7 @@
 <meta property="og:url" content="https://captions.smaverk.com/"><meta property="og:type" content="website"><meta property="og:site_name" content="Småverk">
 <meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Captions on your clip in under a minute. Nothing leaves your device."><meta name="twitter:description" content="AI captions, made on your device. No upload, no account. Free."><meta name="twitter:image" content="https://captions.smaverk.com/poster.webp?v=1792260190">
 <link rel="preload" as="image" href="poster.webp?v=1792260190" fetchpriority="high">
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Where does my video go?","acceptedAnswer":{"@type":"Answer","text":"Nowhere. Everything runs inside the page, on your device. Your video stays on your device and there is no account."}},{"@type":"Question","name":"What does it cost?","acceptedAnswer":{"@type":"Answer","text":"Nothing. Captions is free for clips up to five minutes, with no mark and no account. If it helped you, you can choose to support Småverk."}}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Where does my video go?","acceptedAnswer":{"@type":"Answer","text":"Nowhere. Everything runs inside the page, on your device. Your video stays on your device and there is no account."}},{"@type":"Question","name":"What does it cost?","acceptedAnswer":{"@type":"Answer","text":"Nothing. Captions is free, with no account. A clip longer than five minutes gets its first five minutes captioned. If it helped you, you can choose to support Småverk."}}]}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Captions by Småverk","applicationCategory":"MultimediaApplication","operatingSystem":"Any (web browser)","description":"AI captions for short videos, made on your device. Nothing is uploaded.","offers":{"@type":"Offer","price":"0","priceCurrency":"USD","description":"Free"},"url":"https://captions.smaverk.com"}</script>
 <style>
 :root{color-scheme:light dark;
@@ -29,7 +29,7 @@
   --display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;--body:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   --r:14px;--gap:14px}
 *{box-sizing:border-box}
-html{-webkit-text-size-adjust:100%}
+html{-webkit-text-size-adjust:100%;scrollbar-gutter:stable}
 html,body{overflow-x:clip}
 .grid>*{min-width:0}
 .result,.status,.caplabel,.fine,.words,.step,.trust{overflow-wrap:anywhere}
@@ -43,6 +43,7 @@ button{font:inherit;color:inherit}
 .top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
 .tag{display:inline-flex;align-items:center;justify-content:center;min-height:44px;min-width:44px;font-size:15px;color:var(--muted);text-decoration:none;white-space:nowrap}
 .tag b{color:var(--ink);font:700 15px/1 var(--display)}
+#support{scroll-margin-top:24px}
 .brand i{display:inline-block;width:14px;height:14px;background:var(--hi);border-radius:3px}
 .brand span{color:var(--muted);font:400 15px/1 var(--body)}
 h1{font:800 clamp(30px,8vw,46px)/1.04 var(--display);letter-spacing:-.025em;margin:0 0 12px;text-wrap:balance}
@@ -59,6 +60,7 @@ ul{padding-left:20px;margin:0 0 12px}li{margin-bottom:6px}
 .demo>*{width:100%;max-width:100%;min-width:0}
 .demo>.btn.quiet{width:100%}
 @media(min-width:900px){.demo{--sw:min(100%,calc(52svh * var(--ar,0.5625)))}}
+@media(max-height:700px){.demo{--sw:min(100%,calc(50svh * var(--ar,0.5625)))}}
 .caplabel{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:10px;row-gap:2px;align-items:center;font-size:15px;color:var(--muted);min-height:22px;scroll-margin-top:12px}
 .caplabel b{color:var(--ink);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .caplabel #editwords{grid-column:2;grid-row:1}
@@ -137,7 +139,7 @@ ul{padding-left:20px;margin:0 0 12px}li{margin-bottom:6px}
 .xlink p{margin:0}
 .ok{color:var(--good);font-weight:600}
 .foot{color:var(--muted);font-size:15px;margin-top:36px;display:flex;gap:4px 18px;flex-wrap:wrap;align-items:center}
-.foot a{color:var(--muted);display:inline-flex;align-items:center;min-height:44px}
+.foot a{color:var(--muted);display:inline-flex;align-items:center;justify-content:center;min-height:44px;min-width:44px}
 details{border-top:1px solid var(--line)}
 details summary{cursor:pointer;font-weight:600;font-size:16px;padding:12px 0;min-height:44px}
 details p{margin:0 0 14px}

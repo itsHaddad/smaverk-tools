@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Submagic alternative: free captions, not monthly</title>
-<meta name="description" content="Submagic starts at $19 a month. Captions is free and works on your device: no upload, no account, no mark. English only. Clips up to five minutes.">
+<meta name="description" content="Submagic starts at $19 a month. Captions is free and works on your device: no upload, no account. English only. It captions a clip's first five minutes.">
 <meta name="color-scheme" content="light dark">
 <script>/* theme: the device's setting until a tap picks light or dark, then that pick on every Småverk page (a cookie for .smaverk.com, as each tool is its own site; this site's storage as the fallback), applied before first paint */(function(){var d=document.documentElement,k="smaverk-theme",m=matchMedia("(prefers-color-scheme: dark)");function set(t){d.setAttribute("data-theme",t);d.style.colorScheme=t}function dark(){var t=d.getAttribute("data-theme");return t?t==="dark":m.matches}function sync(){var b=document.getElementById("theme");if(!b)return;var on=dark();b.setAttribute("aria-pressed",String(on));b.setAttribute("aria-label",on?"Switch to light mode":"Switch to dark mode")}var s=null;try{var c=document.cookie.match(/(?:^|; )smaverk-theme=(light|dark)/);s=c?c[1]:null}catch(e){}try{if(!s)s=localStorage.getItem(k)}catch(e){}if(s==="light"||s==="dark")set(s);m.addEventListener("change",sync);document.addEventListener("DOMContentLoaded",function(){var b=document.getElementById("theme");if(!b)return;sync();b.addEventListener("click",function(){var t=dark()?"light":"dark";set(t);try{localStorage.setItem(k,t)}catch(e){}try{document.cookie=k+"="+t+"; Path=/; Max-Age=31536000; SameSite=Lax; Secure"+(/(^|\.)smaverk\.com$/.test(location.hostname)?"; Domain=.smaverk.com":"")}catch(e){}sync();dispatchEvent(new Event("themechange"))})})})();</script>
 <meta property="og:title" content="A Submagic alternative if captions are all you need">
@@ -29,7 +29,7 @@
   --display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;--body:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   --r:14px;--gap:14px}
 *{box-sizing:border-box}
-html{-webkit-text-size-adjust:100%}
+html{-webkit-text-size-adjust:100%;scrollbar-gutter:stable}
 html,body{overflow-x:clip}
 .grid>*{min-width:0}
 .result,.status,.caplabel,.fine,.words,.step,.trust{overflow-wrap:anywhere}
@@ -43,6 +43,7 @@ button{font:inherit;color:inherit}
 .top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
 .tag{display:inline-flex;align-items:center;justify-content:center;min-height:44px;min-width:44px;font-size:15px;color:var(--muted);text-decoration:none;white-space:nowrap}
 .tag b{color:var(--ink);font:700 15px/1 var(--display)}
+#support{scroll-margin-top:24px}
 .brand i{display:inline-block;width:14px;height:14px;background:var(--hi);border-radius:3px}
 .brand span{color:var(--muted);font:400 15px/1 var(--body)}
 h1{font:800 clamp(30px,8vw,46px)/1.04 var(--display);letter-spacing:-.025em;margin:0 0 12px;text-wrap:balance}
@@ -59,6 +60,7 @@ ul{padding-left:20px;margin:0 0 12px}li{margin-bottom:6px}
 .demo>*{width:100%;max-width:100%;min-width:0}
 .demo>.btn.quiet{width:100%}
 @media(min-width:900px){.demo{--sw:min(100%,calc(52svh * var(--ar,0.5625)))}}
+@media(max-height:700px){.demo{--sw:min(100%,calc(50svh * var(--ar,0.5625)))}}
 .caplabel{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:10px;row-gap:2px;align-items:center;font-size:15px;color:var(--muted);min-height:22px;scroll-margin-top:12px}
 .caplabel b{color:var(--ink);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .caplabel #editwords{grid-column:2;grid-row:1}
@@ -137,7 +139,7 @@ ul{padding-left:20px;margin:0 0 12px}li{margin-bottom:6px}
 .xlink p{margin:0}
 .ok{color:var(--good);font-weight:600}
 .foot{color:var(--muted);font-size:15px;margin-top:36px;display:flex;gap:4px 18px;flex-wrap:wrap;align-items:center}
-.foot a{color:var(--muted);display:inline-flex;align-items:center;min-height:44px}
+.foot a{color:var(--muted);display:inline-flex;align-items:center;justify-content:center;min-height:44px;min-width:44px}
 details{border-top:1px solid var(--line)}
 details summary{cursor:pointer;font-weight:600;font-size:16px;padding:12px 0;min-height:44px}
 details p{margin:0 0 14px}
@@ -198,14 +200,14 @@ details p{margin:0 0 14px}
 
     <section>
       <h1>A Submagic alternative if captions are all you need</h1>
-      <p class="sub">AI captions, made on your device. Free.</p>
+      <p class="sub">AI captions, made on your device. No monthly bill.</p>
 
       <p class="fine" id="support">Free. If it helped you, you can <a href="https://buy.polar.sh/polar_cl_dDSll8mftHzvbuFi5j0OMjqduigiYhMEw4NIm3HTCkb" target="_blank" rel="noopener">support Småverk</a>.</p>
 
-      <p>Submagic starts at $19 a month, or $12 a month paid yearly, for 15 videos of up to two minutes (<a href="https://www.submagic.co/pricing" rel="noopener">their pricing page</a>, 19 September 2026). Here it is free: no monthly bill, no video count, clips up to five minutes.</p>
+      <p>Submagic starts at $19 a month, or $12 a month paid yearly, for 15 videos of up to two minutes (<a href="https://www.submagic.co/pricing" rel="noopener">their pricing page</a>, 19 September 2026). Here it is free: no monthly bill, no video count, and it captions the first five minutes of any clip.</p>
       <h2>What it does not do</h2>
       <ul><li>English only; Submagic captions many languages.</li><li>No extra footage, zooms or sound effects.</li><li>No cutting long videos into shorts.</li></ul>
-      <details><summary>Is Submagic free?</summary><p>You can try it without a card, their pricing page says. Its plans start at $19 a month, or $12 a month paid yearly, for 15 videos of up to two minutes each, read on 19 September 2026. Here, clips up to five minutes are free, with no mark. <a href="https://www.submagic.co/pricing" rel="noopener">Submagic pricing, 19 September 2026</a></p></details>
+      <details><summary>Is Submagic free?</summary><p>You can try it without a card, their pricing page says. Its plans start at $19 a month, or $12 a month paid yearly, for 15 videos of up to two minutes each, read on 19 September 2026. Here it is free, and it captions the first five minutes of any clip. <a href="https://www.submagic.co/pricing" rel="noopener">Submagic pricing, 19 September 2026</a></p></details>
       <details><summary>Is there a subscription?</summary><p>No. Captions is free, and there is nothing to renew. <a href="https://smaverk.com/terms" rel="noopener">Our terms</a></p></details>
       <details><summary>Is there a mark?</summary><p>No. Saved clips carry no mark. <a href="https://smaverk.com/terms" rel="noopener">Our terms</a></p></details>
       <h2>More ways to use it</h2>

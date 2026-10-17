@@ -1,15 +1,15 @@
 {
  "slug": "submagic-alternative",
  "title": "Submagic alternative: free captions, not monthly",
- "description": "Submagic starts at $19 a month. Captions is free and works on your device: no upload, no account, no mark. English only. Clips up to five minutes.",
+ "description": "Submagic starts at $19 a month. Captions is free and works on your device: no upload, no account. English only. It captions a clip's first five minutes.",
  "ogTitle": "A Submagic alternative if captions are all you need",
  "ogDescription": "AI captions, made on your device. Free, not $19 a month.",
  "h1": "A Submagic alternative if captions are all you need",
- "sub": "AI captions, made on your device. Free.",
+ "sub": "AI captions, made on your device. No monthly bill.",
  "crumb": "Submagic alternative",
  "style": "big",
  "body": [
-  "Submagic starts at $19 a month, or $12 a month paid yearly, for 15 videos of up to two minutes ([their pricing page](https://www.submagic.co/pricing), 19 September 2026). Here it is free: no monthly bill, no video count, clips up to five minutes."
+  "Submagic starts at $19 a month, or $12 a month paid yearly, for 15 videos of up to two minutes ([their pricing page](https://www.submagic.co/pricing), 19 September 2026). Here it is free: no monthly bill, no video count, and it captions the first five minutes of any clip."
  ],
  "not": [
   "English only; Submagic captions many languages.",
@@ -19,7 +19,7 @@
  "questions": [
   {
    "q": "Is Submagic free?",
-   "a": "You can try it without a card, their pricing page says. Its plans start at $19 a month, or $12 a month paid yearly, for 15 videos of up to two minutes each, read on 19 September 2026. Here, clips up to five minutes are free, with no mark.",
+   "a": "You can try it without a card, their pricing page says. Its plans start at $19 a month, or $12 a month paid yearly, for 15 videos of up to two minutes each, read on 19 September 2026. Here it is free, and it captions the first five minutes of any clip.",
    "source": {
     "text": "Submagic pricing, 19 September 2026",
     "url": "https://www.submagic.co/pricing"
