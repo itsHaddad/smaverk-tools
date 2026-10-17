@@ -9,14 +9,12 @@
 //      every one, and the words it opens on.
 //   3. The recording never leaves the device: every host is one the privacy page accounts for, and
 //      nothing leaving is anywhere near the size of a recording.
-//   4. The paywall holds: an export asks to be paid for first; with a key (the unlock worker stubbed),
-//      every export saves — a timeline file that contains the moments, and the clip itself, checked with ffprobe.
-//   5. The sandbox rail shows the price, the checkout and the key box, and the number on it is the one
-//      constant in app.ts.
+//   4. No paywall (free since 2026-10-17): with no key and nothing paid, every export saves — a timeline file
+//      that contains the moments, and the clip itself, checked with ffprobe.
+//   5. No price, checkout or key box on the page; the one support link goes to Polar in its own tab.
 //   6. With the network off, the whole pipeline still runs. It goes last because it picks a
 //      forty-second file and leaves the page with no list for anything above it to check.
 //
-// From 2026-09-20 to 22 the tool was free and point 4 proved the opposite: that nothing asked for money.
 import { chromium } from "playwright";
 import { spawn } from "node:child_process";
 import { execFileSync } from "node:child_process";
@@ -147,8 +145,8 @@ try {
   // category, which is the principal's decision of 2026-09-18 (do not tell the world how the tools are built) and
   // the only form that survives them being renamed. The page now also says that Vertical serves every file itself
   // while these two do not yet, and that closing that gap is work we have not done.
-  // unlock.smaverk.com is the one host the key check talks to; the page no longer calls Polar itself.
-  const ALLOWED_HOSTS = /^(huggingface\.co|[\w.-]*\.hf\.co|cdn\.jsdelivr\.net|static\.cloudflareinsights\.com|cloudflareinsights\.com|unlock\.smaverk\.com|events\.smaverk\.com|[\w.-]*\.polar\.sh|polar\.sh)$/;
+  // The page asks nothing about keys or payments (free since 2026-10-17): neither the unlock worker nor Polar is on this list.
+  const ALLOWED_HOSTS = /^(huggingface\.co|[\w.-]*\.hf\.co|cdn\.jsdelivr\.net|static\.cloudflareinsights\.com|cloudflareinsights\.com|events\.smaverk\.com)$/;
   const BODY_LIMIT = 8 * 1024;
   const strangers = sent.filter((s) => !ALLOWED_HOSTS.test(s.host));
   const heavy = sent.filter((s) => s.bytes > BODY_LIMIT);
@@ -157,25 +155,10 @@ try {
   if (!strangers.length && !heavy.length)
     ok(`${sent.length} request(s) off this page, every host accounted for, the largest body ${Math.max(0, ...sent.map((s) => s.bytes))} bytes against a ${Math.round(2340958 / 1024)} KB recording`);
 
-  // 4. The paywall, before it is opened.
-  const before = page.waitForEvent("download", { timeout: 4000 }).then(() => "downloaded").catch(() => "blocked");
-  await page.click('[data-save="premiere"]');
-  if ((await before) !== "blocked") fail("an export was saved without paying");
-  else ok("an export asks to be paid for first");
-
-  // 5. With a key, the exports. What a key opens is decided by the unlock worker, which is off this page, so
-  // it is stubbed; everything the page then does is real.
-  await page.route(/unlock\.smaverk\.com\/entitlements/, (r) =>
-    r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ status: "granted", tools: ["clipfinder"], expires: null }) }),
-  );
-  // The key box is on the page, not inside a fold-out: being told the price and then having to hunt for where
-  // the key goes is the finding that reached a paying customer (cold user, 2026-09-19).
-  if (await page.evaluate(() => !document.getElementById("keyrow") || document.getElementById("keyrow").closest("details")))
-    fail("the key box is missing, or back inside a fold-out");
-  if (await page.evaluate(() => document.getElementById("keyrow").hidden)) fail("the key box is hidden while the tool is locked");
-  await page.fill("#key", "SMVCF-TEST-0000-0000");
-  await page.click("#keygo");
-  await page.waitForFunction(() => window.__cf?.licensed === true, null, { timeout: 15000 });
+  // 4. No paywall: nothing on the page asks for money or a key before an export.
+  if (await page.evaluate(() => ["price", "buy", "keyrow", "paidpanel"].some((id) => document.getElementById(id))))
+    fail("a price, checkout or key box is back on the page");
+  else ok("no price, checkout or key box on the page");
 
   // 5. The exports, with no key and nothing paid for.
   const list = await page.evaluate(() => window.__cf.list);
@@ -211,33 +194,12 @@ try {
     else ok(`${clip.suggestedFilename()}: ${(saved.bytes / 1024).toFixed(0)} KB, ${probed.toFixed(1)} s against ${wanted.toFixed(1)} s asked for`);
   }
 
-  // 5c. The sandbox rail: the same paid page against Polar's sandbox, where no visitor lands by accident:
-  //     a second tab on ?rail=sandbox must show the price, the checkout and the key box, and the number
-  //     it shows must be the one constant in app.ts. This is what stops the paid path rotting unread
-  //     while it waits for a number, and it is the only place a price is allowed to appear at all.
+  // 5c. The one support link: Polar's checkout, in its own tab; and the page states no price anywhere.
   {
-    // Its own context: the key unlocked above is in this one's storage, and a paid device shows no price.
-    const railCtx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
-    const rail = await railCtx.newPage();
-    try {
-      await rail.goto(`http://localhost:${port}/?rail=sandbox`, { waitUntil: "load" });
-      await rail.waitForFunction(() => window.__cf?.state === "sample", null, { timeout: 30000 });
-      const shown = await rail.evaluate(() => ({
-        tag: document.getElementById("tag").textContent.trim(),
-        amount: document.getElementById("amount").textContent.trim(),
-        buyHidden: document.getElementById("buy").hidden,
-        keyHidden: document.getElementById("afterpay").hidden,
-        trust: document.getElementById("trust").textContent.trim(),
-      }));
-      const want = readFileSync(join(root, "app.ts"), "utf8").match(/export const PRICE = "(\$\d+)"/)?.[1];
-      if (!want) fail("app.ts no longer holds the price in one named constant");
-      else if (shown.amount !== want || !shown.tag.includes(want)) fail(`the paid rail shows "${shown.tag}" / "${shown.amount}", the constant is ${want}`);
-      else if (shown.buyHidden || shown.keyHidden) fail("the paid rail hides its own checkout or key box");
-      else if (!/30 minutes/.test(shown.trust)) fail(`the paid rail does not state its free limit: "${shown.trust}"`);
-      else ok(`the sandbox rail is whole and states ${want}, the same constant the live page states`);
-    } finally {
-      await railCtx.close();
-    }
+    const s = await page.evaluate(() => ({ href: document.querySelector("#support a")?.href ?? "", tab: document.querySelector("#support a")?.target, money: document.body.innerText.match(/\$\d+/g) ?? [] }));
+    if (!/^https:\/\/buy\.polar\.sh\//.test(s.href) || s.tab !== "_blank") fail(`the support link is missing or opens in this tab: "${s.href}"`);
+    else if (s.money.length) fail(`the page states a price: ${s.money.join(", ")}`);
+    else ok("one support link to Polar in its own tab, and no price on the page");
   }
 
   // 6. Last, because it picks a forty-second file and leaves the page with no list: with the network

@@ -7,7 +7,7 @@ One page, no framework, no server for the video. Everything the person's clip to
 | Piece | File | Job | Tested by |
 |---|---|---|---|
 | Page | `dist/index.html` | structure, copy, all CSS (light-dark tokens, phone-first, sticky action, no zoom-on-focus) | `tests/smoke.mjs`, `Tools/Qa.ts` |
-| UI wiring | `app.ts` | state machine (`sample → loaded → working → captioned → exporting → exported`), stage + canvas painting, drag, fix-word mode, captions shown as each window is heard, save (fast path, then recorder), license unlock, founding counter | `tests/e2e/*` |
+| UI wiring | `app.ts` | state machine (`sample → loaded → working → captioned → exporting → exported`), stage + canvas painting, drag, fix-word mode, captions shown as each window is heard, save (fast path, then recorder) | `tests/e2e/*` |
 | Speech engine | `worker.ts` | Whisper (transformers.js) in a Web Worker: download with progress, setup phase, WebGPU with WASM fallback, retry on a fresh WASM engine if the GPU path fails mid-run; hears the clip in 30 s windows and posts each window's words (`partial`) before the whole (`result`) | `tests/e2e/verify-speed.mjs`, Kaggle probes in `tools/kaggle/` |
 | Windows | `src/lib/windows.ts` | fewest 30 s windows that cover the clip (60 s → 2, 300 s → 10), spread evenly; each keeps the words up to the middle of its overlap with the next | `tests/windows.test.ts` |
 | Caption lines | `src/lib/lines.ts` | words → fixed lines (≤5 words, ≤2.6 s, cut at pauses and sentence ends); which line and word is on screen at time t | `tests/lib.test.ts` |
@@ -16,7 +16,6 @@ One page, no framework, no server for the video. Everything the person's clip to
 | Naming | `src/lib/naming.ts` | output file name from the clip name; dated fallback for junk names | `tests/lib.test.ts` |
 | Audio maths | `src/lib/audio.ts` | mono mix, trim, 16 kHz resample; listening-time estimate | `tests/lib.test.ts` |
 | Audio reading | `app.ts` (`decodeAudio`) | WebCodecs via Mediabunny first (iPhone .mov), then `decodeAudioData` (callback form), then audio-only remux | `tests/e2e/verify-file.mjs` with `.mov` files |
-| Unlock worker | `../worker/src/index.ts` | `/key?checkout_id=` → buyer's key after a Polar checkout; `/count` → paid orders for the founding offer. Org tokens are Worker secrets | sandbox purchase in `Workflows/Payments.md` |
 | Studio page | `dist/studio.html`, `functions/_middleware.js`, `dist/_routes.json` | smaverk.com is served from this same project: the Pages Function rewrites `/` to `/studio` (clean URL) and `/sitemap.xml` to the studio sitemap for the studio host only; every other path is static | `tests/smoke.mjs` (loads /studio.html), `Tools/Qa.ts` on https://smaverk.com/ in deploy.sh |
 | Sample | `dist/sample.mp4`, `sample-words.json`, `poster.webp` | the result shown at rest; built with `tools/voice.mjs` + ffmpeg + `tools/transcribe.ts` | — |
 | Fixture | `tests/fixtures/speech44.mp4` | 44 s of public-domain speech on a flat background, for the speed gate | — |
@@ -24,8 +23,8 @@ One page, no framework, no server for the video. Everything the person's clip to
 
 ## Invariants
 
-- Nothing carrying the clip leaves the device. The only network traffic is the engine download, the analytics ping, the Polar checkout (their page) and the unlock worker (checkout id only).
-- Free: 60 s. Paid: 300 s. `limit()` in `app.ts` is the single source.
+- Nothing carrying the clip leaves the device. The only network traffic is the engine download and the analytics ping. The optional support link opens Polar's own page.
+- Free for everyone since 2026-10-17: clips up to 300 s, no mark. `LIMIT_S` in `app.ts` is the single source.
 - Every public string obeys `MarketingRules.md`; errors name the step and carry a mail link with details.
 - Scripts are versioned per deploy (`app.js?v=`, `worker.js?v=`). Cloudflare's edge caches `app.js` for 4 h and ignores our `Cache-Control`; without the stamp phones run stale code.
 - Production branch is `main`. `deploy.sh` is the only path: unit tests → build → stamp → smoke in a real browser → speed gate (a real clip: captions before the end, fast save faster than real time, valid mp4 with captions in it) → deploy → audit. `QUICK=1` skips the speed gate for copy-only changes.

@@ -1,5 +1,5 @@
 import { test, expect } from "bun:test";
-import { MAX_CLIP_S, MIN_CLIP_S, DEFAULT_KEEP, planMoments, capEnd, trimTo, trimBounds, sentenceEnd, alignToZero, clipName, mayFreeSave, keptCount, madeLine, tightPhone, afterReload } from "../src/lib/plan";
+import { MAX_CLIP_S, MIN_CLIP_S, DEFAULT_KEEP, planMoments, capEnd, trimTo, trimBounds, sentenceEnd, alignToZero, clipName, keptCount, madeLine, tightPhone, afterReload } from "../src/lib/plan";
 
 const m = (startS: number, endS: number, opening = "So what happened next?") => ({ startS, endS, why: ["Opens on the question it answers"], opening });
 
@@ -104,12 +104,6 @@ test("sound that starts at zero is handed back as it is", () => {
 test("a saved clip is named after the recording, its place in the list and where it starts", () => {
   expect(clipName("My podcast episode 12.mp4", 1, 305.6)).toBe("My podcast episode 12 - clip 1 (5m06s).mp4");
   expect(clipName("interview.mov", 3, 3725)).toBe("interview - clip 3 (1h02m05s).mp4");
-});
-
-test("the free version saves one clip; the paid version saves every clip", () => {
-  expect(mayFreeSave(false, 0)).toBe(true);
-  expect(mayFreeSave(false, 1)).toBe(false);
-  expect(mayFreeSave(true, 7)).toBe(true);
 });
 
 test("the line under a finished clip says its length and where it came from", () => {

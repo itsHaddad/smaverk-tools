@@ -1,4 +1,4 @@
-// draw.ts: the captions and the free-version mark, drawn onto a frame. Captions draws its stage, its style chips and
+// draw.ts: the captions, drawn onto a frame. Captions draws its stage, its style chips and
 // every saved frame with these; Clips burns its captions in with the same calls, so a caption looks the same in both.
 import type { Word } from "./lib/lines";
 
@@ -32,11 +32,6 @@ export function drawCaption(c: CanvasRenderingContext2D, W: number, H: number, l
   }
 }
 
-/** The small smaverk.com mark in the corner of a free save. */
-export function drawMark(c: CanvasRenderingContext2D, W: number, H: number) {
-  c.textBaseline = "middle"; c.lineJoin = "round";
-  c.font = `700 ${Math.round(Math.min(W, H) * 0.035)}px ${FONT}`; c.textAlign = "right"; c.lineWidth = 3; c.strokeStyle = "rgba(0,0,0,.5)"; c.fillStyle = "rgba(255,255,255,.85)"; c.strokeText("smaverk.com", W - 12, H - 16); c.fillText("smaverk.com", W - 12, H - 16);
-}
 
 function fitText(c: CanvasRenderingContext2D, text: string, maxW: number, fs: number, wt: number) { let f = fs; while (f > fs * 0.5 && c.measureText(text).width > maxW) { f -= 2; c.font = `${wt} ${f}px ${FONT}`; } }
 function wrap(c: CanvasRenderingContext2D, text: string, maxW: number) { const out: string[] = []; let cur = ""; for (const w of text.split(" ")) { const t = cur ? cur + " " + w : w; if (c.measureText(t).width > maxW && cur) { out.push(cur); cur = w; } else cur = t; } if (cur) out.push(cur); return out.slice(0, 3); }

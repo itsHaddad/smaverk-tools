@@ -7,17 +7,22 @@ import { join } from "node:path";
 import { execFileSync } from "node:child_process";
 
 const ROOT = join(import.meta.dir, "..");
-// A tool joins this list the day it gets a page, and every check below then applies to it. `prices` empty
-// means it costs nothing today: the checks flip from "the price agrees everywhere" to "no price anywhere",
-// because a number in front of a visitor that the owner has not given is the worse failure of the two.
-// `limits` are the sentences that must appear wherever a searcher can land, since a limit discovered after
-// the work is done is what earns one-star reviews. `copy` is where the page's own sentences live.
+// A tool joins this list the day it gets a page, and every check below then applies to it. Every tool is free (A, 2026-10-17:
+// Polar showed no order in 60 days, and the tools run on the visitor's device), so no page states a price and none has a
+// key box; one optional support payment is linked from every page. `limits` are the sentences that must appear wherever a
+// searcher can land, since a limit discovered after the work is done is what earns one-star reviews. `copy` is where the
+// page's own sentences live.
 const SITES = {
-  captions: { dist: "captions/app/dist", src: ["captions/app/app.ts", "captions/app/worker.ts"], prices: ["$19"], limits: ["60 seconds", "five minutes"], page: "index.html", host: "captions.smaverk.com", copy: "captions/app/app.ts", savedPrice: true },
-  vertical: { dist: "vertical/app/dist", src: ["vertical/app/app.ts", "vertical/app/src/detect.ts", "vertical/app/src/fastsave.ts"], prices: ["$24", "$29"], limits: ["60 seconds", "five minutes"], page: "index.html", host: "vertical.smaverk.com", copy: "vertical/app/app.ts", savedPrice: true },
-  clipfinder: { dist: "clipfinder/app/dist", src: ["clipfinder/app/app.ts", "clipfinder/app/worker.ts"], prices: ["$29"], limits: ["30 minutes", "four hours"], page: "index.html", host: "clipfinder.smaverk.com", copy: "clipfinder/app/src/lib/pricing.ts", savedPrice: false },
-  clips: { dist: "clips/app/dist", src: ["clips/app/app.ts", "clips/app/src/make.ts", "clips/app/src/lib/plan.ts"], prices: ["$49"], limits: ["90 seconds", "four hours"], page: "index.html", host: "clips.smaverk.com", copy: "clips/app/app.ts", savedPrice: false },
+  captions: { dist: "captions/app/dist", src: ["captions/app/app.ts", "captions/app/worker.ts"], limits: ["five minutes"], page: "index.html", host: "captions.smaverk.com", copy: "captions/app/app.ts" },
+  vertical: { dist: "vertical/app/dist", src: ["vertical/app/app.ts", "vertical/app/src/detect.ts", "vertical/app/src/fastsave.ts"], limits: ["five minutes"], page: "index.html", host: "vertical.smaverk.com", copy: "vertical/app/app.ts" },
+  clipfinder: { dist: "clipfinder/app/dist", src: ["clipfinder/app/app.ts", "clipfinder/app/worker.ts"], limits: ["four hours"], page: "index.html", host: "clipfinder.smaverk.com", copy: "clipfinder/app/app.ts" },
+  clips: { dist: "clips/app/dist", src: ["clips/app/app.ts", "clips/app/src/make.ts", "clips/app/src/lib/plan.ts"], limits: ["90 seconds", "four hours"], page: "index.html", host: "clips.smaverk.com", copy: "clips/app/app.ts" },
 } as const;
+// The one optional payment (Polar product "Support Småverk", the visitor picks the amount, one time, no benefit), and the
+// two pieces every tool page carries byte for byte: "Free" in the header, and one quiet support line.
+const SUPPORT = "https://buy.polar.sh/polar_cl_dDSll8mftHzvbuFi5j0OMjqduigiYhMEw4NIm3HTCkb";
+const FREE_TAG = '<a class="tag" id="tag" href="#support"><b>Free</b></a>';
+const SUPPORT_LINE = '<p class="fine" id="support">Free. If it helped you, you can <a href="https://buy.polar.sh/polar_cl_dDSll8mftHzvbuFi5j0OMjqduigiYhMEw4NIm3HTCkb" target="_blank" rel="noopener">support Småverk</a>.</p>';
 const STUDIO = "captions/app/dist/studio.html"; const LEGAL = ["captions/app/dist/privacy.html", "captions/app/dist/terms.html"];
 const read = (p: string) => readFileSync(join(ROOT, p), "utf8");
 const pages = () => Object.values(SITES).flatMap((s) => readdirSync(join(ROOT, s.dist)).filter((f) => /\.(html|txt)$/.test(f) && !/^google/.test(f)).map((f) => `${s.dist}/${f}`));
@@ -91,7 +96,7 @@ test("Privacy and Terms links open the studio's own pages, from every page", () 
 test("every page loads the Småverk count script, and the privacy page says what it counts", () => {
   const missing = pages().filter((f) => f.endsWith(".html") && !read(f).includes(`<script src="https://events.smaverk.com/c.js" defer></script>`));
   expect(missing).toEqual([]);
-  expect(text(read(LEGAL[0]!))).toMatch(/We also count, per day, how often a tool is opened, a file is picked, a result is saved or shared, and a buy link is tapped/);
+  expect(text(read(LEGAL[0]!))).toMatch(/We also count, per day, how often a tool is opened, a file is picked, a result is saved or shared, and the support link is tapped/);
   expect(text(read(LEGAL[0]!))).toMatch(/only the country and whether it came from a phone or a computer/); // what D1 stores beside each count (events/schema.sql)
 });
 
@@ -106,7 +111,7 @@ test("pages load nothing from other companies except the analytics beacon", () =
 
 test("every outside address the scripts contact is accounted for in the privacy page", () => {
   // Add a host here only after the privacy page says what is sent to it, in plain words.
-  const KNOWN: Record<string, RegExp> = { "api.polar.sh": /Polar/, "sandbox-api.polar.sh": /Polar/, "buy.polar.sh": /Polar/, "unlock.smaverk.com": /small service of ours/, "captions.smaverk.com": /./, "vertical.smaverk.com": /./, "clipfinder.smaverk.com": /./, "clips.smaverk.com": /./, "smaverk.com": /./ };
+  const KNOWN: Record<string, RegExp> = { "captions.smaverk.com": /./, "vertical.smaverk.com": /./, "clipfinder.smaverk.com": /./, "clips.smaverk.com": /./, "smaverk.com": /./ };
   const privacy = text(read(LEGAL[0]!)); const unknown: string[] = [];
   for (const s of Object.values(SITES)) for (const f of s.src) if (existsSync(join(ROOT, f))) for (const m of code(read(f)).matchAll(/https:\/\/([a-zA-Z0-9.-]+)/g)) { const h = m[1]!; if (!KNOWN[h]) unknown.push(`${f}: ${h}`); else expect(privacy).toMatch(KNOWN[h]!); }
   expect(unknown).toEqual([]);
@@ -116,32 +121,25 @@ test("every outside address the scripts contact is accounted for in the privacy 
   expect(privacy).toMatch(/public file hosts/);
 });
 
-test("each tool's price is the same wherever it is stated, a free tool states none, and the legal pages state none", () => {
-  const studio = text(read(STUDIO));
-  for (const [name, s] of Object.entries(SITES)) {
-    const own = new Set<string>(s.prices); const found = new Set<string>();
-    for (const f of [...every(s), "llms.txt"]) for (const m of text(read(`${s.dist}/${f}`)).replace(/\$\d+ a month/g, " ").matchAll(/\$\d+/g)) found.add(m[0]); // the home page, every search page, and what agents read. A rival's price is always written "$N a month" (we charge nothing monthly), so that form is theirs, not a drifted price of ours
-    // A tool with a price says it in its script too. A free tool keeps its constant asleep there, so only
-    // its pages are read here; that the constant is the single number in the script is checked further down.
-    if (s.prices.length) for (const m of code(read(s.src[0]!)).matchAll(/["'`][^"'`\n]*(\$\d+)[^"'`\n]*["'`]/g)) if (!/\$\{/.test(m[0]!.slice(m[0]!.indexOf(m[1]!), m[0]!.indexOf(m[1]!) + 2))) found.add(m[1]!);
-    expect([...found].filter((p) => !own.has(p)).map((p) => `${name}: ${p}`)).toEqual([]);
-    if (s.prices.length) {
-      expect(found.has(s.prices[0]!), `${name} page states ${s.prices[0]}`).toBe(true);
-      expect(studio, `studio card for ${name}`).toContain(s.prices[0]!);
-    } else {
-      // Free today. Nothing a visitor reads may carry a number, and the card says what it costs in words.
-      expect([...found], `${name}: a price on a page of a free tool`).toEqual([]);
-      throw new Error(`${name} has no price, and every tool has one now`);
-    }
+test("every tool is free: no page, llms.txt, script or legal page states a price, and JSON-LD offers it at 0", () => {
+  const found: string[] = [];
+  const pagesRead = [...Object.values(SITES).flatMap((s) => [...every(s), "llms.txt"].map((f) => `${s.dist}/${f}`)), STUDIO, ...LEGAL, "operator/app/dist/index.html", "operator/app/dist/llms.txt"].filter((p) => existsSync(join(ROOT, p)));
+  // A rival's price is always written "$N a month" (we charge nothing), so that form is theirs, not one of ours.
+  for (const p of pagesRead) for (const m of text(read(p)).replace(/\$\d+ a month/g, " ").matchAll(/\$\d+/g)) found.push(`${p}: ${m[0]}`);
+  for (const s of Object.values(SITES)) for (const f of s.src) for (const m of code(read(f)).matchAll(/["'`][^"'`\n]*\$\d+[^"'`\n]*["'`]/g)) if (!/\$\{/.test(m[0]!)) found.push(`${f}: ${m[0].slice(0, 80)}`);
+  expect(found).toEqual([]);
+  for (const p of [...Object.values(SITES).flatMap((s) => every(s).map((f) => `${s.dist}/${f}`)), "operator/app/dist/index.html"].filter((p) => existsSync(join(ROOT, p)))) {
+    const offers = [...read(p).matchAll(/"offers":(\{[^}]*\})/g)].map((m) => JSON.parse(m[1]!));
+    expect(offers.length, `${p}: one offer in the JSON-LD`).toBe(1);
+    expect(offers[0], p).toEqual({ "@type": "Offer", price: "0", priceCurrency: "USD", description: "Free" });
   }
-  for (const l of LEGAL) expect(text(read(l)).match(/\$\d+/g) ?? []).toEqual([]);
 });
 
 test("every limit a tool enforces is stated wherever a searcher can land", () => {
   // Hidden limits earn one-star reviews (Kapwing, Trustpilot, 12 Apr 2026), so each tool's own limits are
   // on every page of it, in what agents read, and in the script that enforces them.
   for (const s of Object.values(SITES)) for (const f of every(s)) { const t = text(read(`${s.dist}/${f}`)) + code(read(s.src[0]!)); for (const limit of s.limits) expect(t, `${s.dist}/${f}: ${limit}`).toMatch(new RegExp(limit, "i")); }
-  const terms = text(read(LEGAL[1]!)); expect(terms).toMatch(/60 seconds/); expect(terms).toMatch(/five minutes/); expect(terms).toMatch(/four hours/); expect(terms).not.toMatch(/being finished|estimate/);
+  const terms = text(read(LEGAL[1]!)); expect(terms).toMatch(/five minutes/); expect(terms).toMatch(/four hours/); expect(terms).toMatch(/90 seconds/); expect(terms).not.toMatch(/60 seconds|30 minutes/); expect(terms).not.toMatch(/being finished|estimate/);
   // Every tool is named in both legal pages: one of them described a tool that did not exist yet, once.
   for (const l of LEGAL) for (const tool of ["Captions", "Vertical", "Clip finder", "Clips"]) expect(text(read(l)), `${l} names ${tool}`).toContain(tool);
 });
@@ -209,31 +207,29 @@ test("one word for where it runs: device", () => {
   expect(hits).toEqual([]);
 });
 
-test("what it costs is on the first screen and in the Saved box, per tool", () => {
-  // Both cold users, 2026-09-18: on the phone the price was one scroll away at arrival and absent after a save.
-  for (const [name, s] of Object.entries(SITES)) {
-    if (!s.prices.length) {
-      // Free: the same place on the first screen, saying so, and no checkout for a visitor to find.
-      const html = read(`${s.dist}/${s.page}`);
-      const top = html.match(/<div class="top">[\s\S]*?<\/div>/)?.[0] ?? "";
-      expect(top, `${name}: header tag says what it costs`).toMatch(/<a class="tag" id="tag" href="#price">[^<]*<b>Free[^<]*<\/b><\/a>/);
-      expect(html, `${name}: the tag's target exists`).toContain('<div class="price" id="price">');
-      continue;
-    }
-    const html = read(`${s.dist}/${s.page}`); const price = s.prices[0].replace("$", "\\$");
-    const top = html.match(/<div class="top">[\s\S]*?<\/div>/)?.[0] ?? "";
-    expect(top, `${name}: header price tag`).toMatch(new RegExp(`<a class="tag" id="tag" href="#price">[^<]*<b>${price} once</b></a>`));
-    expect(html, `${name}: the tag's target exists`).toContain('<div class="price" id="price">');
-    expect(html.match(/<a [^>]*id="r?buy"[^>]*>/g)!.every((a) => /target="_blank" rel="noopener"/.test(a)), `${name}: buy links open their own tab`).toBe(true);
-    // The clip finder has no Saved box: it saves moments, not one clip, and its price sits beside the exports instead.
-    if (!s.savedPrice) continue;
-    expect(html, `${name}: Saved box states the price with a link to the checkout`).toMatch(new RegExp(`<span id="rmark">[^<]*<a id="rbuy" href="https://[^"]+"[^>]*>${price} once</a>[^<]*five minutes[^<]*</span>`));
-    expect(code(read(s.src[0]!)), `${name}: both buy links get the checkout address`).toMatch(/\["buy", "rbuy"\]/);
-    // Cold user, 2026-09-19: the checkout opened in the same tab and Back wiped the clip. Both links open their own tab; the first tab picks the key up.
-    expect(html.match(/<a [^>]*id="r?buy"[^>]*>/g)!.every((a) => /target="_blank" rel="noopener"/.test(a)), `${name}: buy links open their own tab`).toBe(true);
-    // Design review 6, 2026-09-19: on every desktop the 440 px column broke the price in two ("$24" / "once") and its tap area lay over "Save again".
-    expect(html, `${name}: the price in the Saved box stays in one piece`).toContain("#rbuy{white-space:nowrap}");
+test("every tool page says Free in the header and carries the one support line; nothing asks for a key or nags", () => {
+  // A, 2026-10-17: free tools, one optional support payment, a quiet link and not a popup.
+  const toolPages = [...Object.values(SITES).flatMap((s) => every(s).map((f) => `${s.dist}/${f}`)), "operator/app/dist/index.html"].filter((p) => existsSync(join(ROOT, p)));
+  for (const p of toolPages) {
+    const html = read(p);
+    expect(html.match(/<div class="top">[\s\S]*?<\/div>/)?.[0], `${p}: "Free" in the header, pointing at the support line`).toContain(FREE_TAG);
+    expect(html, `${p}: the support line, byte for byte`).toContain(SUPPORT_LINE);
   }
+  const studio = read(STUDIO);
+  expect(studio, "the studio's support line").toMatch(new RegExp(`<p class="support" id="support">[^<]*<a href="${SUPPORT.replace(/[.?]/g, "\\$&")}" target="_blank" rel="noopener">support Småverk</a>\\.</p>`));
+  for (const p of [...toolPages, STUDIO, ...LEGAL]) {
+    const html = read(p);
+    // One link to Polar per page, the support link: no checkout of a product, no portal, no key box, no paid panel, no pop-up.
+    expect([...html.matchAll(/https:\/\/[a-z.-]*polar\.sh[^"'\s<]*/g)].map((m) => m[0]), `${p}: the only Polar link is the support link`).toEqual(LEGAL.includes(p) ? [] : [SUPPORT]);
+    expect(html.match(/\bid="(price|buy|rbuy|rmark|keyrow|keystatus|keylostline|paidpanel|paidkey|afterpay|pricefine|founding)"/g) ?? [], `${p}: a price or key element`).toEqual([]);
+    expect(html, `${p}: no dialog`).not.toMatch(/<dialog\b|role="dialog"/);
+  }
+  // No script carries a key check, a checkout or a support prompt: the link is markup and nothing opens it for the visitor.
+  for (const f of ["captions/app/app.ts", "vertical/app/app.ts", "clipfinder/app/app.ts", "clips/app/app.ts", "operator/app/app.ts"].filter((f) => existsSync(join(ROOT, f)))) {
+    const src = code(read(f));
+    for (const bad of ["polar.sh", "/entitlements", "src/lib/unlock", "setLicensed", "licensed", "checkout_id", "support"]) expect(src, `${f}: ${bad}`).not.toContain(bad);
+  }
+  for (const t of ["captions", "vertical", "clipfinder", "clips"]) expect(existsSync(join(ROOT, `${t}/app/src/lib/unlock.ts`)), `${t}: the unlock module is gone`).toBe(false);
 });
 
 test("each page says it in one line: AI, on your device", () => {
@@ -253,13 +249,18 @@ test("each page says it in one line: AI, on your device", () => {
   expect(studio.match(/<title>([^<]*)<\/title>/)?.[1]).toMatch(/AI tools that run on your device/);
 });
 
-test("the line under the main button reads the same in the page and in the script", () => {
+test("the line under the main button is written once, in the page, and states the tool's limit", () => {
   // 2026-09-19: the page said "Free up to 60 seconds…" and the script, after a key was removed, wrote a different sentence.
+  // With no key there is one state, so the page holds the sentence and no script writes another.
   for (const [name, s] of Object.entries(SITES)) {
     const inPage = read(`${s.dist}/${s.page}`).match(/<p class="trust" id="trust">([^<]*)<\/p>/)?.[1];
     expect(inPage, `${name}: trust line`).toBeTruthy();
-    expect(code(read(s.copy)), `${name}: the script writes the page's sentence`).toContain(`"${inPage}"`);
+    expect(inPage!, `${name}: the trust line names no price or paid version`).not.toMatch(/\$\d|paid|Free up to/i);
+    expect(code(read(s.copy)), `${name}: no script writes the trust line`).not.toMatch(/(\$\("trust"\)|\btrust)\.textContent\s*=/);
   }
+  expect(read(SITES.captions.dist + "/index.html")).toContain('<p class="trust" id="trust">Clips up to five minutes.');
+  expect(read(SITES.vertical.dist + "/index.html")).toContain('<p class="trust" id="trust">Clips up to five minutes.');
+  expect(read(SITES.clipfinder.dist + "/index.html")).toContain('<p class="trust" id="trust">Recordings up to four hours.');
 });
 
 test("every sample clip is credited where it is shown, with the source its SOURCES.md names", () => {
@@ -358,8 +359,8 @@ test("each search page is its own page: address, title, description, one headlin
     expect(html, `${where}: no FAQPage markup (the rich result ended 7 May 2026)`).not.toContain('"@type":"FAQPage"');
     expect(html, `${where}: a breadcrumb, which still shows`).toContain('"@type":"BreadcrumbList"');
     expect(html, `${where}: no rating we do not have`).not.toContain("aggregateRating");
-    expect(html, `${where}: the first-screen price tag`).toMatch(new RegExp(`<a class="tag" id="tag" href="#price">[^<]*<b>\\${s.prices[0]} once</b></a>`));
-    expect(html, `${where}: the Saved box link`).toMatch(/<span id="rmark">[\s\S]*?<a id="rbuy" href="https:\/\/[^"]+"/);
+    expect(html, `${where}: Free in the header`).toContain(FREE_TAG);
+    expect(html, `${where}: the support line`).toContain(SUPPORT_LINE);
     const details = [...html.matchAll(/<details><summary>([^<]*)<\/summary><p>([\s\S]*?)<\/p><\/details>/g)];
     expect(details.length, `${where}: three questions`).toBe(3);
     for (const d of details) {
@@ -395,10 +396,11 @@ test("each host's sitemap, llms.txt and _headers know exactly the pages it serve
 
 test("the terms protect the studio: bounded refunds, a liability cap, no open-ended remedies", () => {
   // The principal, 2026-09-19: "this basically means that we will refund as long as there is an issue… be more protective of smaverk."
-  // The old line promised to "put it right or refund you" for any change, with no time limit. Refunds are bounded (14 days, once per person per tool),
-  // changes carry a best-effort fix only, liability is capped at the price paid, mandatory consumer rights are kept (a clause that removes them is void).
+  // Since 2026-10-17 nothing is sold: a support payment is a gift that buys and unlocks nothing; a mistaken one is refunded in
+  // 14 days; changes carry a best-effort fix only, liability is capped at what was paid in support, consumer rights are kept.
   const terms = text(read(LEGAL[1]!)).replace(/\s+/g, " ");
-  for (const must of [/first 14 days/, /once per person, per tool/, /After them we do not refund, unless the law of your country gives you a right we cannot set aside/, /given in its place and are the same length/, /provided as they are/, /as far as the law allows/i, /The most we can owe you in total for a tool is what you paid for it/, /not a promise that the tool will be offered/, /try to put it right/, /Do not share, publish, resell or rent/, /Swedish law applies/, /rights that the consumer law of your country gives you/, /By using a tool or buying a key you accept these terms/]) expect(terms).toMatch(must);
+  for (const must of [/Every tool is free to use in full, with no account and no key/, /it buys nothing and unlocks nothing/, /there is no subscription/, /in the first 14 days after you paid/, /After them we do not refund, unless the law of your country gives you a right we cannot set aside/, /Polar Software, Inc\., our merchant of record/, /provided as they are/, /as far as the law allows/i, /the most we can owe you in total is what you paid us in support payments in the 12 months before the claim/, /not a promise that the tool will be offered/, /try to put it right/, /Do not share, publish, resell or rent/, /Swedish law applies/, /rights that the consumer law of your country gives you/, /By using a tool or sending a support payment you accept these terms/]) expect(terms).toMatch(must);
+  expect(terms, "nothing left of the paid versions").not.toMatch(/paid version|free version|your key|a key opens|buying a key|price is on/i);
   for (const open of [/put it right or refund/i, /\bany time\b/i, /\bguarantee/i, /\blifetime\b/i, /\bunlimited\b/i, /money back whenever/i]) expect(terms).not.toMatch(open);
   // the one refund promise on the product pages is the bounded one, word for word
   for (const s of Object.values(SITES)) for (const f of readdirSync(join(ROOT, s.dist)).filter((f) => f.endsWith(".html") && !/^(google|privacy|terms)/.test(f))) { const t = text(read(`${s.dist}/${f}`)); for (const m of t.matchAll(/refund[^.]{0,60}/gi)) expect(`${f}: ${m[0].trim()}`).toMatch(/: Refund within 14 days/); }
@@ -408,7 +410,7 @@ test("the terms protect the studio: bounded refunds, a liability cap, no open-en
 // this tool and no other: a stricter list of words that would give away how it is built, a sample that is
 // public-domain rather than CC BY, a dist where nothing is content-addressed, and the free-while-new rail
 // with its one sleeping constant. A check that SITES already makes is not repeated.
-const CF = { dist: "clipfinder/app/dist", src: ["clipfinder/app/app.ts", "clipfinder/app/worker.ts"], price: "$29", host: "clipfinder.smaverk.com" };
+const CF = { dist: "clipfinder/app/dist", src: ["clipfinder/app/app.ts", "clipfinder/app/worker.ts"], host: "clipfinder.smaverk.com" };
 const cfPages = () => readdirSync(join(ROOT, CF.dist)).filter((f) => /\.(html|txt)$/.test(f) && !/^google/.test(f)).map((f) => `${CF.dist}/${f}`);
 
 test("Clip finder: no permanence wording, one word for where it runs, and nothing about how it is built", () => {
@@ -433,40 +435,17 @@ test("Clip finder: it says AI, it says where it runs, and it says the same thing
   expect(html.match(/<p class="sub">([^<]*)<\/p>/)?.[1], "line under the headline").toMatch(/^AI [^.]*on your device\./);
   expect(html.match(/<meta name="description" content="([^"]*)"/)?.[1], "description").toMatch(/\bAI\b.*on your device/);
   expect(read(`${CF.dist}/llms.txt`), "llms.txt").toMatch(/^> AI /m);
-  // The sentence under the main button is one sentence, written once, and the script hands back the same one.
-  // 2026-09-19: the page said one thing and the script, after a key was removed, wrote another. What matters is
-  // that they agree — not the shape of the expression that produces it, which used to be pinned and stopped the
-  // line being simplified when the free limit moved to #pricefine.
-  const trust = html.match(/<p class="trust" id="trust">([^<]*)<\/p>/)?.[1];
-  expect(trust, "trust line").toBeTruthy();
-  expect(code(read("clipfinder/app/src/lib/pricing.ts")), "the script writes the page's sentence").toContain(`trust: "${trust}"`);
+  // The sentence under the main button states the one limit, and says the recording stays on the device.
+  expect(html.match(/<p class="trust" id="trust">([^<]*)<\/p>/)?.[1], "trust line").toBe("Recordings up to four hours. English. Your recording stays on your device.");
 });
 
-test("Clip finder: the owner's price, stated once and the same everywhere", () => {
-  // Free while it was new from 2026-09-21; priced 2026-09-22 ($50 for an hour, then $29 from the evidence). The number lives in one named
-  // constant, the pages say the same one, and the script holds no second.
-  for (const f of ["index.html", "llms.txt"]) {
-    const found = [...new Set(text(read(`${CF.dist}/${f}`)).replace(/\$\d+ a month/g, " ").match(/\$\d+/g) ?? [])];
-    expect(found, `${f}: the price`).toEqual([CF.price]);
-  }
-  expect(read(CF.src[0]!), "the price is a single named constant in the script").toContain(`export const PRICE = "${CF.price}"`);
-  expect([...new Set(code(read(CF.src[0]!)).match(/\$\d+/g) ?? [])], "no second price anywhere in the script").toEqual([CF.price]);
-  expect(code(read("clipfinder/app/src/lib/pricing.ts")).match(/\$\d+/g) ?? [], "the paid sentences are written from the constant, not around it").toEqual([]);
-  expect(code(read(CF.src[0]!)), "the trial is off").toMatch(/const TRIAL = false;/);
-  // Hidden limits earn one-star reviews: both limits on the page, in llms.txt, and in the script that enforces them.
-  for (const f of ["index.html", "llms.txt"]) { const t = text(read(`${CF.dist}/${f}`)); expect(t, `${f}: the free limit`).toMatch(/30 minutes/); expect(t, `${f}: the paid limit`).toMatch(/four hours/); }
+test("Clip finder: free, four hours and every export for everyone, the same in the page, llms.txt and the script", () => {
+  // $29 once from 2026-09-22; free from 2026-10-17 (A). One limit, one constant, and no export waits for a payment.
+  for (const f of ["index.html", "llms.txt"]) { const t = text(read(`${CF.dist}/${f}`)); expect(t, `${f}: the limit`).toMatch(/four hours/); expect(t, `${f}: no old free limit`).not.toMatch(/30 minutes/); expect(t.replace(/\$\d+ a month/g, " ").match(/\$\d+/g) ?? [], `${f}: no price`).toEqual([]); }
   const app = read(CF.src[0]!);
-  expect(app, "the free limit in the script").toMatch(/FREE_S = 30 \* 60/);
-  expect(app, "the paid limit in the script").toMatch(/PAID_S = 4 \* 3600/);
-  // The price is in the header, on the first screen, and its target exists; the checkout is the production link.
-  const html = read(`${CF.dist}/index.html`);
-  expect(html.match(/<div class="top">[\s\S]*?<\/div>/)?.[0], "header tag").toContain(`<b>${CF.price} once</b>`);
-  expect(html, "the tag's target").toContain('<div class="price" id="price">');
-  const buy = html.match(/<a [^>]*id="buy"[^>]*>/)?.[0] ?? "";
-  expect(buy, "the buy link opens its own tab").toMatch(/target="_blank" rel="noopener"/);
-  expect(buy, "the buy link is shown").not.toMatch(/\shidden(\s|>)/);
-  expect(buy, "and goes to the production checkout").toMatch(/href="https:\/\/buy\.polar\.sh\/polar_cl_/);
-  expect(code(app), "the script knows the same checkout").toContain(buy.match(/href="([^"]+)"/)![1]!);
+  expect(app, "the limit is one constant").toMatch(/const LIMIT_S = 4 \* 3600;/);
+  expect(code(app), "no free and paid limits").not.toMatch(/FREE_S|PAID_S|TRIAL|PRICE|needsPaying|mustPay/);
+  expect(existsSync(join(ROOT, "clipfinder/app/src/lib/pricing.ts")), "the pricing module is gone").toBe(false);
 });
 
 test("Clip finder: it promises only what it measures", () => {
@@ -503,7 +482,7 @@ test("Clip finder: the links, the hosts and the credit", () => {
   }
   expect(bad).toEqual([]);
   // Every outside address the scripts know is one the privacy page already accounts for.
-  const KNOWN = ["api.polar.sh", "sandbox-api.polar.sh", "buy.polar.sh", "unlock.smaverk.com", "captions.smaverk.com", "vertical.smaverk.com", "clipfinder.smaverk.com", "smaverk.com"];
+  const KNOWN = ["captions.smaverk.com", "vertical.smaverk.com", "clipfinder.smaverk.com", "smaverk.com"];
   const unknown: string[] = [];
   for (const f of CF.src) for (const m of code(read(f)).matchAll(/https:\/\/([a-zA-Z0-9.-]+)/g)) if (!KNOWN.includes(m[1]!)) unknown.push(`${f}: ${m[1]}`);
   expect(unknown).toEqual([]);
@@ -533,122 +512,20 @@ test("Clip finder wears the studio's clothes: every style rule Captions also has
 });
 
 // ---------------------------------------------------------------------------------------------------------
-// Unlocking. Three tools each inventing their own is how one of them ended up hiding its key box inside a shut
-// fold-out, and another locked a paying customer out whenever the network was off. One file decides it now.
+// No keys (free since 2026-10-17). The unlock worker stays deployed and unused; no page talks to it or stores a key.
 // ---------------------------------------------------------------------------------------------------------
-
-const TOOLS = [
-  { name: "captions", dist: "captions/app/dist", app: "captions/app/app.ts" },
-  { name: "vertical", dist: "vertical/app/dist", app: "vertical/app/app.ts" },
-  { name: "clipfinder", dist: "clipfinder/app/dist", app: "clipfinder/app/app.ts" },
-  { name: "clips", dist: "clips/app/dist", app: "clips/app/app.ts" },
-] as const;
-const SHARED = TOOLS;
-const UNLOCK_SRC = SHARED.map((t) => `${t.app.replace(/app\.ts$/, "")}src/lib/unlock.ts`);
-
-test("unlocking cannot diverge: one unlock module, byte for byte, in every tool", () => {
-  const first = read(UNLOCK_SRC[0]!);
-  for (const p of UNLOCK_SRC.slice(1)) expect(read(p), `${p} differs from ${UNLOCK_SRC[0]}`).toBe(first);
-  // The mechanism lives there and nowhere else: no tool may grow its own key check again.
-  expect(first, "the module asks the worker what a key opens").toContain("/entitlements");
-  // The audit fixture lives in the shared file too, at the length Polar issues: the design review's overlapping
-  // tap targets only reproduced with a full-length key, because that is what wraps.
-  // Scoped to the SAMPLE_KEY block: several other maps in this file are keyed by tool name too.
-  const sample = first.slice(first.indexOf("export const SAMPLE_KEY"));
-  for (const tool of TOOLS.map((t) => t.name)) {
-    const m = sample.slice(0, sample.indexOf("};")).match(new RegExp(`${tool}: "([^"]+)"`));
-    expect(m?.[1], `SAMPLE_KEY.${tool}`).toBeTruthy();
-    expect(m![1]!.length, `SAMPLE_KEY.${tool} is a stub, not a real-length key`).toBeGreaterThanOrEqual(40);
+test("every page tells the same story: free, no key, no account, and no device count", () => {
+  for (const s of Object.values(SITES)) {
+    const llms = read(`${s.dist}/llms.txt`);
+    expect(llms, `${s.dist}/llms.txt: no key`).toContain("There is no key, account or paywall: everything is open to everyone.");
+    expect(llms, `${s.dist}/llms.txt: no unlock call`).not.toMatch(/unlock\.smaverk\.com|smaverk\.key|#keygo/);
+    expect(text(read(`${s.dist}/${s.page}`)), `${s.page}: no unlock story`).not.toMatch(/nothing to paste|paste your key|already paid/i);
   }
-  expect(first, "the checkout return is handled there").toContain("checkout_id");
-  expect(first, "the other tab's key is picked up there").toMatch(/addEventListener\("storage"/);
-  for (const t of SHARED) {
-    const app = code(read(t.app));
-    expect(app, `${t.name}: uses the shared module`).toMatch(/from "\.\/src\/lib\/unlock"/);
-    // A page may know the address of its own checkout; what it may no longer do is check a key itself.
-    expect(app, `${t.name}: no page keeps its own key-check`).not.toContain("license-keys");
-    expect(app, `${t.name}: no page asks Polar about a key`).not.toContain("customer-portal");
-    // Every tool can be driven into the paid state, or its paid panel cannot be audited — which is how that
-    // panel shipped unaudited in the first place. The clip finder lacked this and the phone UI gate found it.
-    expect(app, `${t.name}: no way to force the paid state for an audit`).toMatch(/dbg\.setLicensed = /);
-    expect(app, `${t.name}: the audit fixture is a real-length key, not a stub`).toContain(`SAMPLE_KEY.${t.name}`);
-  }
-});
-
-test("a key already on the device survives our own downtime", () => {
-  // The tools work offline once loaded, and the clip finder invites people to prove it by switching the network
-  // off. A paid key must not evaporate when the check cannot be made (it did, in the clip finder, until 2026-09-20).
-  const src = read(UNLOCK_SRC[0]!);
-  expect(src, "an unreachable worker is not an answer").toContain('"unreachable"');
-  // Design review, 2026-09-21: the status line is written with textContent, so a URL in it is plain text a
-  // person on a phone has to retype. The recovery link under the box is the tappable answer.
-  for (const m of src.matchAll(/(?:this\.set\(\{[\s\S]{0,80}?|return no\()(["`])([^"`]{20,})\1/g))
-    expect(m[2], "a status sentence hands out a URL to retype").not.toMatch(/https?:\/\//);
-  // The person who has just paid is told what they bought, in their own tool's words — "five minutes" for two of
-  // them and "four hours" for the third, so the sentence is composed from paidLine and never hard-coded.
-  expect(src, "the thank-you states what was bought").toContain("Thank you — nothing to paste. ${this.cfg.paidLine} Your key is above.");
-  expect(code(src), "a stored key turns the paid version on before the check is made").toMatch(/this\.set\(\{ on: true, key: saved[\s\S]{0,400}?await this\.ask\(saved\)/);
-  expect(code(src), "and an unreachable check leaves it on").toMatch(/if \(answer === "unreachable"\) return;/);
-});
-
-test("the key box is on the page, never behind a fold-out, and the key is readable once paid", () => {
-  for (const t of SHARED) {
-    const html = read(`${t.dist}/index.html`);
-    // Cold user, 2026-09-19: told the price, then made to hunt for where the key goes. It reached a paying customer.
-    const upToKeyrow = html.slice(0, html.indexOf('id="keyrow"'));
-    const openDetails = (upToKeyrow.match(/<details/g) ?? []).length - (upToKeyrow.match(/<\/details>/g) ?? []).length;
-    expect(openDetails, `${t.name}: the key box is inside a fold-out`).toBe(0);
-    expect(html, `${t.name}: the key box exists`).toContain('id="keyrow"');
-    expect(html, `${t.name}: somewhere to say how it went`).toContain('id="keystatus"');
-    // The key, in full, with a way to copy it: a masked key cannot be carried to a second device.
-    expect(html, `${t.name}: the key is shown`).toContain('id="paidkey"');
-    expect(html, `${t.name}: and can be copied`).toContain('id="keycopy"');
-    expect(code(read(t.app)), `${t.name}: the key is printed whole, not masked`).toContain('$("paidkey").textContent = s.key');
-    // Lost it: a way back that is not "search your email". Cold user, 2026-09-21: this link used to live inside
-    // #paidpanel, which is hidden from the one person who needs it — someone locked out on a second device.
-    expect(html, `${t.name}: a way to get the key again`).toContain('id="keylost"');
-    expect(html, `${t.name}: which points at Polar's own portal`).toContain("polar.sh/smaverk/portal");
-    // Polar's portal asks for the address the purchase was made with, so the page has to say which email, or
-    // someone who paid from a second address stalls there with nothing to go on.
-    expect(text(html).replace(/\s+/g, " "), `${t.name}: the recovery line names which email`).toContain("Lost your key? Get it again with the email you paid with.");
-    const panel = html.slice(html.indexOf('id="paidpanel"'), html.indexOf("</div>", html.indexOf('id="paidpanel"')));
-    expect(panel, `${t.name}: the recovery link is hidden inside the paid panel`).not.toContain('id="keylost"');
-    expect(html.indexOf('id="keylost"'), `${t.name}: the recovery link sits with the key box`).toBeGreaterThan(html.indexOf('id="keystatus"'));
-    expect(code(read(t.app)), `${t.name}: and it hides once they are paid`).toContain('$("keylostline").hidden = s.on');
-    // Removing the key wipes the only copy on screen, so it asks first.
-    expect(code(read(t.app)), `${t.name}: removing the key asks first`).toMatch(/removekey[\s\S]{0,200}confirm\(/);
-    // Design review, 2026-09-21: as an inline link on a 22 px line it shared its 44 px tap box with the link
-    // beside it, and won the hit test — so aiming at recovery destroyed the key. It gets its own row.
-    expect(html, `${t.name}: removing the key is a button on its own row, not an inline link`).toMatch(/<p class="keyline"><button class="btn quiet" id="removekey"/);
-    // The status sentence says "your key is above", so it has to render after the panel that holds the key.
-    expect(html.indexOf('id="keystatus"'), `${t.name}: the status sentence sits below the paid panel`).toBeGreaterThan(html.indexOf('id="paidpanel"'));
-    expect(html.indexOf('id="keystatus"'), `${t.name}: and above the box it labels`).toBeLessThan(html.indexOf('id="keyrow"'));
-    // A bundle key says what else it opens.
-    expect(html, `${t.name}: room to name the other tools a key opens`).toContain('id="keyalso"');
-    // The clip finder's state matrix failed on a 40 px Copy button, 2026-09-20. 44 px is the floor everywhere.
-    expect(html, `${t.name}: the Copy button meets the 44 px tap target`).toContain(".keyline .btn{width:auto;min-height:44px");
-  }
-});
-
-test("every page tells the same story about unlocking", () => {
-  // What every tool promises about unlocking, in the same words. The answer for a second device lives in the
-  // paid panel, which only a buyer sees, so it costs nothing against the page's word budget.
-  // What every tool promises about unlocking, in the same words — and the fold-out's summary carries the
-  // promise, because a closed fold-out shows only its summary and the next visible thing is the paste field.
-  const SAME = ["You come straight back, already unlocked. Nothing to paste.", "After paying: nothing to paste"];
-  for (const t of SHARED) {
-    const html = read(`${t.dist}/index.html`);
-    for (const s of SAME) expect(text(html).replace(/\s+/g, " "), `${t.name}: "${s.slice(0, 40)}…"`).toContain(s);
-    // The storage name is the same everywhere, and llms.txt says so.
-    expect(read(`${t.dist}/llms.txt`), `${t.name}: llms.txt names the storage`).toContain("`smaverk.key`");
-    expect(read(`${t.dist}/llms.txt`), `${t.name}: llms.txt names the entitlement call`).toContain("unlock.smaverk.com/entitlements");
-  }
-  // A device count nobody enforces is a promise we break. No page states one (no activation is ever consumed).
+  // A device count nobody enforces is a promise we break. No page states one.
   for (const p of [...pages(), ...cfPages(), STUDIO, ...LEGAL]) {
     expect(text(read(p)), `${p}: an unenforced device count`).not.toMatch(/\b(one|two|three|four|five|\d+)\s+devices\b/i);
   }
-  // Terms and privacy cover every tool that is sold, the clip finder included.
-  for (const p of LEGAL) for (const tool of ["Captions", "Vertical", "Clip finder", "Clips"]) expect(read(p), `${p}: covers ${tool}`).toContain(tool);
+  for (const p of LEGAL) for (const tool of ["Captions", "Vertical", "Clip finder", "Clips", "Operator"]) expect(read(p), `${p}: covers ${tool}`).toContain(tool);
 });
 
 // dist/studio-demo/ is GITIGNORED and made only by build.sh, and a Pages deploy uploads dist/ as ONE snapshot —
@@ -678,26 +555,28 @@ test("every studio card's data is produced by the build, together", () => {
   }
 });
 
-// Terms describes each tool's free and paid versions, and names no price: prices live on each tool's page.
-test("terms describes the clip finder's two versions, and names no price", () => {
+// Terms says what each tool does for everyone, and names no price.
+test("terms describes what every tool does for free, and names no price", () => {
   const terms = text(read(LEGAL[1]!)).replace(/\s+/g, " ");
-  expect(terms).toMatch(/In Clip finder the free version reads recordings up to 30 minutes/);
+  expect(terms).toMatch(/In Clip finder a recording can be up to four hours, and every export saves/);
+  expect(terms).toMatch(/In Captions and Vertical a clip can be up to five minutes/);
   expect(terms, "no price in the terms").not.toMatch(/\$\d+/);
   expect(terms, "nothing left from the free-while-new days").not.toMatch(/while it is new/i);
 });
 
 // The studio page exists to list the tools. A live tool missing from it is the failure this guards.
-test("the studio lists every tool that is live, with its price state", () => {
+test("the studio lists every tool that is live, each one free", () => {
   const studio = read(STUDIO); const t = text(studio).replace(/\s+/g, " ");
   for (const [name, host] of [["Captions", "captions"], ["Vertical", "vertical"], ["Clip finder", "clipfinder"], ["Clips", "clips"], ["Operator", "operator"]] as const) {
     expect(t, `the studio names ${name}`).toContain(name);
     expect(studio, `${name} links to its own host`).toContain(`https://${host}.smaverk.com/?src=studio`);
   }
   expect((studio.match(/<article class="tool/g) ?? []).length, "one card per tool").toBe(5);
-  // Every paid tool says its own price: free to try, then once. Operator is a free preview and says so in words.
-  expect(t, "the Operator card says it is free, in words").toContain("Free while it is a preview.");
-  expect(t, "the clip finder's card states its price").toContain("$29 once: up to four hours");
-  expect(t, "nothing left from the free-while-new days").not.toMatch(/while it is new/i);
+  // Every card says it is free, in words, and states its tool's limit.
+  const lines = [...studio.matchAll(/<p class="price">([^<]*)<\/p>/g)].map((m) => m[1]!);
+  expect(lines, "one line per card, each starting Free").toEqual(["Free. Clips up to five minutes, no mark.", "Free. Clips up to five minutes, no mark.", "Free. Recordings up to four hours, and every export.", "Free. Every clip saved, no mark.", "Free."]);
+  expect(t, "nothing left from the paid or preview days").not.toMatch(/while it is (new|a preview)|pay once|\bonce:/i);
+  expect(text(studio.match(/<p class="sub">[\s\S]*?<\/p>/)![0]).trim()).toBe("Five free tools, one job each.");
   // The true claim for a tool that reads recordings, not the absolute.
   expect(t, "the clip finder's claim is about the recording").toContain("Your recording stays on your device");
   // Anything a machine reads must know about it too.
@@ -802,8 +681,9 @@ opTest("Operator shows what it does in pictures: one moving diagram per mode, th
   const ctl = html.match(/<svg class="dg-ctl"[\s\S]*?<\/svg>/)?.[0] ?? "";
   for (const l of ["Turn off", "Light", "Shape", "Zoom", "What to film", "Switch camera", "Close-up time", "Hold to stop"]) expect(ctl, l).toContain(l);
   const t = text(html), llms = read(`${OP.dist}/llms.txt`);
-  for (const f of [/a still of each face/, /camera turns off when you leave the page/, /[Ff]ree while (in|it is a) preview/]) { expect(t, String(f)).toMatch(f); expect(llms, `llms.txt ${f}`).toMatch(f); }
-  expect(html, "JSON-LD: free while a preview").toMatch(/"price":"0","priceCurrency":"USD","description":"Free while in preview"/);
+  for (const f of [/a still of each face/, /camera turns off when you leave the page/]) { expect(t, String(f)).toMatch(f); expect(llms, `llms.txt ${f}`).toMatch(f); }
+  expect(llms, "llms.txt: free, no key").toMatch(/Free, with no account and no key/);
+  expect(t + llms, "no preview wording left").not.toMatch(/while (in|it is a) preview/i);
 });
 
 // ---------------------------------------------------------------------------------------------------------
@@ -826,10 +706,11 @@ test("Clips wears the studio's clothes: every style rule Captions also has is id
   expect(drift).toEqual([]);
 });
 
-test("Clips: the price and the cap are each one constant, and the page states the same ones", () => {
+test("Clips: the cap is one constant, the page states it, and every clip saves with no mark", () => {
   const app = read("clips/app/app.ts"), plan = read("clips/app/src/lib/plan.ts"), html = read("clips/app/dist/index.html");
-  expect(app).toContain('export const PRICE = "$49"');
-  expect([...new Set(code(app).match(/\$\d+/g) ?? [])], "no second price in the script").toEqual(["$49"]);
+  expect(code(app), "no price, free-save count or mark in the script").not.toMatch(/PRICE|freeSaved|FREE_KEY|mark: !|drawMark/);
+  expect(code(read("clips/app/src/make.ts")), "make.ts draws no mark").not.toMatch(/drawMark|job\.mark/);
+  expect(code(read("captions/app/src/draw.ts")), "the shared drawing has no mark").not.toMatch(/drawMark/);
   expect(plan, "the cap").toMatch(/export const MAX_CLIP_S = 90;/);
   expect(text(html), "the page states the cap").toMatch(/up to 90 seconds/);
   expect(text(read("clips/app/dist/llms.txt"))).toMatch(/up to 90 seconds/);
@@ -838,15 +719,8 @@ test("Clips: the price and the cap are each one constant, and the page states th
   for (const m of ["vertical/app/src/detect", "vertical/app/src/fastsave", "vertical/app/src/lib/track", "captions/app/src/draw", "captions/app/src/lib/lines", "clipfinder/app/src/lib/decode"]) expect(make, `make.ts uses ${m}`).toContain(`/${m}"`);
   expect(read("clips/app/finder.ts")).toContain('import "../../clipfinder/app/worker"');
   expect(read("clips/app/listen.ts")).toContain('import "../../captions/app/worker"');
-  // The checkout: the production link in the markup (it works before the script runs) and the same one in the script; no placeholder left.
-  const buy = html.match(/<a [^>]*id="buy"[^>]*>/)?.[0] ?? "";
-  expect(buy, "the buy link goes to the production checkout").toMatch(/href="https:\/\/buy\.polar\.sh\/polar_cl_/);
-  expect(code(app), "the script knows the same checkout").toContain(buy.match(/href="([^"]+)"/)![1]!);
-  expect(code(app), "no placeholder left").not.toMatch(/"__[A-Z_]+__"/);
-  // The studio key: a Clips key opens the three tools it is built from, and the page, llms.txt and the terms say so.
-  for (const [f, t] of [["page", text(html)], ["llms.txt", read("clips/app/dist/llms.txt")], ["terms", text(read(LEGAL[1]!))]] as const) expect(t, `${f} says what else the key opens`).toMatch(/also opens (the three tools Clips is built from: )?Captions, Vertical and Clip finder/);
-  // LAUNCH.md stays in the private repository (it names the worker and the rail), so this holds only where it is.
-  if (existsSync(join(ROOT, "clips/LAUNCH.md"))) expect(read("clips/LAUNCH.md"), "what to create is written down").toMatch(/__LINK__/);
+  // No key and no bundle: nothing says a key opens anything.
+  for (const [f, t] of [["page", text(html)], ["llms.txt", read("clips/app/dist/llms.txt")], ["terms", text(read(LEGAL[1]!))]] as const) expect(t, `${f}: no key story`).not.toMatch(/also opens|key opens|Clips key/i);
   // It promises only what it measures.
   const both = text(html) + read("clips/app/dist/llms.txt");
   for (const claim of [/\bviral/i, /best moments/i, /will perform/i, /\bengagement\b/i, /\bguarantee/i]) expect(both).not.toMatch(claim);
@@ -884,7 +758,6 @@ test("Clips: what comes out is stated the same everywhere, and is what the save 
   const terms = text(read(LEGAL[1]!)).replace(/\s+/g, " ");
   const places: [string, string][] = [
     ["the page, under the tool", html.match(/<p class="fine" id="caphint">([^<]*)</)?.[1] ?? ""],
-    ["the page, in the price box", html.match(/<div class="price"[\s\S]*?<\/div><\/div>/)?.[0] ?? ""],
     ["the page, what it does", html.match(/<summary>What it does[\s\S]*?<\/details>/)?.[0] ?? ""],
     ["description", meta("description")], ["og:description", meta("og:description")], ["twitter:description", meta("twitter:description")],
     ["JSON-LD", JSON.parse(ld).description], ["llms.txt", read("clips/app/dist/llms.txt")],
@@ -1045,7 +918,7 @@ test("quality pass: the pictures that replaced words, and the facts they carry",
   // Every tool: six facts, each an icon and a few words (was "How they work", over a list of promises; studio cold user 4).
   const facts = studio.match(/<ul class="facts">([\s\S]*?)<\/ul>/)?.[1] ?? "";
   const items = [...facts.matchAll(/<li><span class="ic" aria-hidden="true"><svg [\s\S]*?<\/svg><\/span>([^<]+)<\/li>/g)].map((m) => m[1]!);
-  expect(items).toEqual(["Works offline once loaded", "Nothing uploaded", "No account", "Pay once, through Polar", "Refund within 14 days", "Clips key opens every paid tool"]);
+  expect(items).toEqual(["Works offline once loaded", "Nothing uploaded", "No account", "Free, every tool in full", "No mark on your videos", "No ads"]);
   for (const i of items) expect(i.split(" ").length, i).toBeLessThanOrEqual(6);
   // The Operator card leads with the job, not a list of modes (A, 2026-09-30: "the operator does a lot more"): it works the
   // camera (each face, one person, whoever talks) and hands over the video with a still of every face. Kept to three lines
@@ -1104,7 +977,7 @@ test("Clip finder: the moment, not a caveat, on the studio card; its reasons in 
   const studio = read(STUDIO);
   expect(studio).not.toMatch(/m\.why\?\.\[0\]/); expect(studio).toMatch(/Math\.round\(m\.endS - m\.startS\)\} s · /);
   for (const f of ["clipfinder/app/src/lib/rank.ts", "clipfinder/app/dist/sample.json", "clips/app/dist/sample.json", "captions/app/dist/studio-demo/clipfinder-sample.json"].filter((f) => existsSync(join(ROOT, f)))) expect(read(f), f).not.toMatch(/line of setup/i);
-  expect(text(studio.split("<article").find((a) => /<h3>Clip finder<\/h3>/.test(a)) ?? "")).toMatch(/Free up to 30 minutes, to watch\./);
+  expect(text(studio.split("<article").find((a) => /<h3>Clip finder<\/h3>/.test(a)) ?? "")).toMatch(/Free\. Recordings up to four hours, and every export\./);
 });
 
 test("Captions: no seconds-left guess before the pace is measured; Clip finder's sample plays at rest; Clips names read as words", () => {

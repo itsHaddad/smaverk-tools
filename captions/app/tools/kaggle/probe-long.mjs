@@ -1,9 +1,9 @@
-// probe-long.mjs: on the Kaggle box, run a 5-minute English clip (paid limit) and a 60-second clip (free limit)
+// probe-long.mjs: on the Kaggle box, run a 5-minute English clip (the limit) and a 60-second clip
 // through the live page on WASM: decode, caption, save. Prints timings, word counts, coverage, memory, file sizes.
 import { chromium } from "playwright";
 import { writeFileSync } from "node:fs";
 const URL = process.env.CAP_URL ?? "https://captions.smaverk.com/";
-const CASES = [{ file: "/kaggle/working/long300.mp4", licensed: true, label: "paid-300s" }, { file: "/kaggle/working/short60.mp4", licensed: false, label: "free-60s" }];
+const CASES = [{ file: "/kaggle/working/long300.mp4", label: "300s" }, { file: "/kaggle/working/short60.mp4", label: "60s" }];
 const b = await chromium.launch({ headless: true, args: ["--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu", "--autoplay-policy=no-user-gesture-required"] });
 const results = [];
 for (const c of CASES) {
@@ -12,7 +12,6 @@ for (const c of CASES) {
   const t0 = Date.now(); const T = () => ((Date.now() - t0) / 1000).toFixed(0);
   await p.goto(URL, { waitUntil: "load" });
   await p.waitForFunction(() => window.__cap && window.__cap.words && window.__cap.words.length > 0, null, { timeout: 30000 });
-  await p.evaluate((lic) => { window.__cap.setLicensed(lic); }, c.licensed);
   await p.setInputFiles("#file", c.file);
   await p.waitForFunction(() => window.__cap.state === "loaded", null, { timeout: 60000 });
   const dur = await p.evaluate(() => document.getElementById("video").duration);

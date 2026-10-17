@@ -16,8 +16,8 @@ try {
   await p.waitForTimeout(6000); if (early.length) fail("downloads before any tap: " + early.slice(0, 3).join(" | ")); p.removeAllListeners("request");
   const ok = await p.waitForFunction(() => window.__cap && window.__cap.words && window.__cap.words.length > 0, null, { timeout: 15000 }).then(() => true).catch(() => false);
   if (!ok) fail("sample words did not load");
-  const st = await p.evaluate(() => ({ state: window.__cap?.state, action: document.getElementById("action")?.textContent, buy: document.getElementById("buy")?.href, workerOk: typeof Worker }));
-  if (st.state !== "sample") fail("state is " + st.state); if (!/Use my own clip/.test(st.action ?? "")) fail("action label " + st.action); if (!/polar\.sh/.test(st.buy ?? "")) fail("buy link " + st.buy);
+  const st = await p.evaluate(() => ({ state: window.__cap?.state, action: document.getElementById("action")?.textContent, support: document.querySelector("#support a")?.href, gates: ["price", "buy", "keyrow", "paidpanel"].filter((id) => document.getElementById(id)), workerOk: typeof Worker }));
+  if (st.state !== "sample") fail("state is " + st.state); if (!/Use my own clip/.test(st.action ?? "")) fail("action label " + st.action); if (!/^https:\/\/buy\.polar\.sh\//.test(st.support ?? "")) fail("support link " + st.support); if (st.gates.length) fail("a price or key box is on the page: " + st.gates.join(","));
   const html = await p.content(); const m = html.match(/src="app\.js\?v=(\d+)"/); if (!m) fail("app.js is not versioned");
   const js = await (await fetch(`http://localhost:${port}/app.js`)).text(); if (!/worker\.js\?v=\d+/.test(js)) fail("worker.js is not versioned");
   const w = await fetch(`http://localhost:${port}/worker.js`); if (w.status !== 200) fail("worker.js " + w.status);

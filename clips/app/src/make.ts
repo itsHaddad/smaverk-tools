@@ -14,7 +14,7 @@ import { scanClip, loadDetector } from "../../../vertical/app/src/detect";
 import { pickSpeaker, SPEAK, buildTrack, centreAt, cropRect, outputSize, windowFraction, type Point } from "../../../vertical/app/src/lib/track";
 import { fastSave, canFastSave } from "../../../vertical/app/src/fastsave";
 import { buildLines, lineAt, type Word } from "../../../captions/app/src/lib/lines";
-import { drawCaption, drawMark, type Style } from "../../../captions/app/src/draw";
+import { drawCaption, type Style } from "../../../captions/app/src/draw";
 import { Mono16kStream, SAMPLE_RATE } from "../../../clipfinder/app/src/lib/decode";
 import { alignToZero, sentenceEnd } from "./lib/plan";
 
@@ -41,7 +41,6 @@ export type MakeJob = {
   endS: number;
   /** The clip was cut to the cap, so it may end earlier, on a finished sentence. */
   capped: boolean;
-  mark: boolean;
   style: Style;
   listen: (audio: Float32Array) => Promise<Word[]>;
   onPhase: (p: Phase, done: number, of: number) => void;
@@ -165,7 +164,6 @@ export async function makeClip(job: MakeJob): Promise<Made> {
         const line = lineAt(lines, ts, 6);
         if (line) captionFrames++;
         drawCaption(g, W, H, line, job.style, { x: null, y: null });
-        if (job.mark) drawMark(g, W, H);
       },
       onProgress: (d, of) => job.onPhase("save", d, of),
       opts: { minSpeed: 0 }, // Clips has no real-time recorder to fall back to, so a slow device finishes slowly rather than giving up

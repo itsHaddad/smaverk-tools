@@ -3,33 +3,21 @@
 // It is the three Småverk tools in a row, each running its own code: the clip finder's worker reads the recording
 // and lists the moments (finder.ts), Vertical's scan and save frame each one, and Captions' worker hears it and
 // Captions' drawing writes the words (listen.ts, src/make.ts). One moment at a time, so a phone holds one clip's
-// work in memory, never the recording's. Nothing is uploaded. The only addresses this file knows are the checkout
-// and the page's own files; the key check is src/lib/unlock.ts, the same file in every tool.
+// work in memory, never the recording's. Nothing is uploaded. The only addresses this file knows are the page's
+// own files.
 
-import { planMoments, keptCount, trimTo, trimBounds, clipName, mayFreeSave, madeLine, tightPhone, afterReload, BUSY_KEY, type Busy, type Kept, type Moment } from "./src/lib/plan";
+import { planMoments, keptCount, trimTo, trimBounds, clipName, madeLine, tightPhone, afterReload, BUSY_KEY, type Busy, type Kept, type Moment } from "./src/lib/plan";
 import { makeClip, saveAvailable, warmFraming, type Made, type Phase } from "./src/make";
 import { clock, spoken, displayName } from "../../clipfinder/app/src/lib/naming";
 import { tidyStored } from "../../clipfinder/app/src/lib/rank";
 import type { Word } from "../../captions/app/src/lib/lines";
-import { Unlock, SAMPLE_KEY, type UnlockState } from "./src/lib/unlock";
 import { attachSeek } from "./src/seek";
 
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
-const SANDBOX = new URL(location.href).searchParams.get("rail") === "sandbox";
-// The checkout: Polar, both rails, created by the lead 2026-09-25. One benefit per rail, mapped in the unlock worker to all four tools (the studio key).
-const RAIL = SANDBOX
-  ? { product: "f55aaf67-7994-4b6c-ae37-47c46df2e947", link: "https://sandbox-api.polar.sh/v1/checkout-links/polar_cl_2xtlOWC5e2giQzLuC0ybMIE1ueKbjlIxpAH9t25imVH/redirect" }
-  : { product: "53db5e82-b793-4550-ba3d-e727befa8674", link: "https://buy.polar.sh/polar_cl_F3V7yz258g1v1W4e2VRDE13ljMAleNLcA8vKl0j1lxg" };
-const ready = (v: string) => !v.startsWith("__");
-
-/** The price, in one place. The owner's number; tests/site.test.ts fails if the page states another. */
-export const PRICE = "$49";
 /** How much of a recording is read. The reading is the clip finder's, which holds one window of sound at a time. */
 const READ_S = 4 * 3600;
 /** The clip finder's default clip length: moments of about a minute, which the 90-second cap then bounds. */
 const WANTED_S = 60;
-const TRUST_FREE = "Free to find and watch. Save one clip with a small mark. English. Your recording stays on your device.";
-const TRUST_PAID = "Every clip saved, no mark. English. Your recording stays on your device.";
 const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 const isPhone = isIOS || /Android/i.test(navigator.userAgent);
 const ASSET_V = (() => { try { return new URL(import.meta.url).search; } catch { return ""; } })();
@@ -41,7 +29,6 @@ let cards: Card[] = [];
 let file: File | null = null;
 let totalS = 0;
 let current = -1;
-let licensed = false;
 let sample: { title: string; credit: string; url: string; durationS: number; poster: string; moments: (Moment & { clip: string; lengthS: number })[] } | null = null;
 
 const reel = $<HTMLVideoElement>("reel");
@@ -64,7 +51,6 @@ const mark = () => {
   dbg.state = state;
   dbg.moments = cards.length;
   dbg.kept = keptCount(cards);
-  dbg.licensed = licensed;
   dbg.totalS = totalS;
   dbg.list = cards.map((c) => ({ startS: c.startS, endS: c.endS, keep: c.keep, capped: c.capped, why: c.why }));
   dbg.made = cards.flatMap((c, i) => (c.made ? [{ i, name: c.made.name, seconds: c.made.seconds, width: c.made.width, height: c.made.height, audio: c.made.audio, words: c.made.words, captionFrames: c.made.captionFrames, frames: c.made.frames, bytes: c.made.blob.size, startS: c.startS, endS: c.made.endS, found: c.made.found, ms: c.made.ms }] : []));
@@ -75,14 +61,6 @@ const busy = (what: Busy | null) => { try { if (what) sessionStorage.setItem(BUS
 // The memory messages go above the stage, where a small phone shows them without scrolling (design review 3, B7).
 const notice = (msg: string, kind: "" | "err" = "") => { const el = $("notice"); el.textContent = msg; el.className = "notice" + (kind ? ` ${kind}` : ""); el.hidden = !msg; };
 
-// ---------------------------------------------------------------------------------------------
-// The free save: one per device
-// ---------------------------------------------------------------------------------------------
-
-const FREE_KEY = "smaverk.clips.freesaved";
-let freeSavedHere = 0; // when storage is blocked the count lives for this visit only
-const freeSaved = () => { try { return Number(localStorage.getItem(FREE_KEY) ?? 0) || freeSavedHere; } catch { return freeSavedHere; } };
-const countFreeSave = () => { freeSavedHere++; try { localStorage.setItem(FREE_KEY, String(freeSaved() + 1)); } catch { /* blocked: counted for this visit */ } };
 
 // ---------------------------------------------------------------------------------------------
 // The list
@@ -373,7 +351,7 @@ async function makeAll() {
       $("s3b").style.width = `${Math.round(((k + (p === "save" ? 0.5 + 0.5 * (d / Math.max(of, 1)) : p === "listen" ? 0.4 : p === "frame" ? 0.1 + 0.3 * (d / Math.max(of, 1)) : 0)) / todo.length) * 100)}%`;
     };
     try {
-      const made = await makeClip({ file, startS: c.startS, endS: c.endS, capped: c.capped, mark: !licensed, style: "karaoke", listen, onPhase: label });
+      const made = await makeClip({ file, startS: c.startS, endS: c.endS, capped: c.capped, style: "karaoke", listen, onPhase: label });
       const name = clipName(file.name, i + 1, c.startS);
       c.made = { ...made, url: URL.createObjectURL(made.blob), name };
       render();
@@ -414,30 +392,19 @@ function download(name: string, blob: Blob) {
 }
 const sharable = (files: File[]) => { try { return isPhone && !!(navigator as any).canShare?.({ files }); } catch { return false; } };
 
-function needsPaying(): boolean {
-  if (licensed) return false;
-  const why = `The free version saves one clip. ${PRICE} once saves every clip, with no mark.`;
-  say(why);
-  $("pricefine").textContent = why; // where the scroll lands, as the clip finder does (S3)
-  $("price").scrollIntoView({ block: "center", behavior: "smooth" });
-  return true;
-}
 
 async function saveOne(i: number) {
   const c = cards[i];
   if (!c?.made) return;
-  if (!mayFreeSave(licensed, freeSaved())) return void needsPaying();
   const f = new File([c.made.blob], c.made.name, { type: "video/mp4" });
   if (sharable([f])) { try { await navigator.share({ files: [f], title: "Clip" }); } catch { return; } }
   else download(c.made.name, c.made.blob);
-  if (!licensed) countFreeSave();
   dbg.saved = [...(dbg.saved ?? []), c.made.name];
-  say(licensed ? `Saved ${c.made.name}.` : `Saved ${c.made.name}, with a small smaverk.com mark. That was the free clip.`, "ok");
+  say(`Saved ${c.made.name}.`, "ok");
   showResult();
 }
 
 $("saveall").addEventListener("click", async () => {
-  if (needsPaying()) return;
   const made = cards.filter((c) => c.made).map((c) => new File([c.made!.blob], c.made!.name, { type: "video/mp4" }));
   if (sharable(made)) { try { await navigator.share({ files: made, title: "Clips" }); } catch { return; } }
   else for (const f of made) { download(f.name, f); await new Promise((r) => setTimeout(r, 400)); } // one at a time: browsers refuse a burst of downloads
@@ -449,9 +416,9 @@ function showResult() {
   const made = cards.filter((c) => c.made);
   if (!made.length) return;
   $("rtitle").textContent = `${made.length} clip${made.length === 1 ? "" : "s"} ready`;
-  // What was made, and what the free version still allows (S4, S5).
+  // What was made (S4, S5).
   const format = `MP4, 9:16, ${made[0]!.made!.width}×${made[0]!.made!.height}. Saved as ${made[0]!.made!.name}${made.length > 1 ? " and so on" : ""}.`;
-  $("rline").textContent = licensed ? `${format} Save each one, or all of them at once.` : freeSaved() ? `Your free clip is saved. ${PRICE} once saves the rest, with no mark.` : `${format} The free version saves one, with a small smaverk.com mark.`;
+  $("rline").textContent = `${format} Save each one, or all of them at once.`;
   $("saveall").hidden = made.length < 2;
   $("result").classList.add("on");
 }
@@ -475,50 +442,6 @@ function showSample() {
   render();
 }
 
-// ---------------------------------------------------------------------------------------------
-// The paid version
-// ---------------------------------------------------------------------------------------------
-
-if (ready(RAIL.link)) ($("buy") as HTMLAnchorElement).href = RAIL.link;
-const unlock = new Unlock({ tool: "clips", sandbox: SANDBOX, paidLine: "Every clip saved, with no mark.", render: (s: UnlockState) => paintLicense(s) });
-function paintLicense(s: UnlockState) {
-  const was = licensed;
-  licensed = s.on;
-  $("keystatus").textContent = s.text;
-  $("keystatus").className = "fine" + (s.tone ? " " + s.tone : "");
-  $("keyrow").hidden = s.on;
-  $("price").hidden = s.on;
-  $("tag").hidden = s.on;
-  $("pricefine").hidden = s.on;
-  $("afterpay").hidden = s.on;
-  $("paidpanel").hidden = !s.on;
-  $("trust").textContent = s.on ? TRUST_PAID : TRUST_FREE;
-  $("paidkey").textContent = s.key;
-  $("keylost").setAttribute("href", unlock.portal);
-  $("keylostline").hidden = s.on;
-  const others = unlock.elsewhere;
-  $("keyalso").hidden = others.length === 0;
-  if (others.length) $("keyalso").innerHTML = `This key also opens ${others.map((o) => `<a href="${o.href}">${o.name}</a>`).join(", ")}.`;
-  // Clips made before the key arrived carry the mark. Say so, rather than leave marked files believed clean.
-  if (s.on && !was && cards.some((c) => c.made)) { state = "found"; action.textContent = `Make ${keptCount(cards)} clips`; say("The paid version is on. Make the clips again: the new ones have no mark.", "ok"); render(); }
-  if (s.on && s.became === "checkout") $("keystatus").scrollIntoView({ block: "center", behavior: "smooth" });
-  mark();
-}
-$("removekey").addEventListener("click", (e) => {
-  e.preventDefault();
-  if (confirm("Remove the key from this device? Copy it first if you have not: you will need it to unlock this device again.")) unlock.forget();
-});
-$("keycopy").addEventListener("click", async (e) => {
-  e.preventDefault();
-  try { await navigator.clipboard.writeText(unlock.state.key); $("keycopy").textContent = "Copied"; }
-  catch { getSelection()?.selectAllChildren($("paidkey")); $("keycopy").textContent = "Select it and copy"; }
-  setTimeout(() => ($("keycopy").textContent = "Copy"), 2500);
-});
-$("keygo").addEventListener("click", async () => { if (await unlock.paste($<HTMLInputElement>("key").value)) $<HTMLInputElement>("key").value = ""; });
-$("key").addEventListener("keydown", (e) => { if ((e as KeyboardEvent).key === "Enter") $("keygo").click(); });
-// For rigs that need the paid state without a rail: paints it as a real key would, and stores nothing.
-dbg.setLicensed = (on: boolean) => paintLicense({ on, key: on ? SAMPLE_KEY.clips : "", tools: on ? ["clips"] : [], expires: null, text: on ? "Paid version on this device." : "Already paid? Paste your key here.", tone: on ? "ok" : "", became: "" });
-void unlock.start();
 
 // For automations and agents (llms.txt): tick, make, and read what came out.
 (window as any).clips = { keep: (i: number, on: boolean) => { const c = cards[i]; if (c) { c.keep = on; render(); } }, make: makeAll, url: (i: number) => cards[i]?.made?.url ?? "", get state() { return state; } };
@@ -536,6 +459,5 @@ void unlock.start();
   }
 })();
 say("");
-$("trust").textContent = TRUST_FREE;
 // A page that starts while its tab says it was working was started again by the browser, most likely for memory.
 { let was: string | null = null; try { was = sessionStorage.getItem(BUSY_KEY); } catch { /* blocked */ } busy(null); const why = afterReload(was); if (why) { try { history.scrollRestoration = "manual"; } catch { /* read-only here: the notice still shows */ } scrollTo(0, 0); notice(why, "err"); dbg.reloadedWhile = was; } }

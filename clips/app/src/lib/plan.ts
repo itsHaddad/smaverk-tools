@@ -98,9 +98,6 @@ export function alignToZero(samples: Float32Array, firstS: number, rate: number)
 /** The file a clip is saved as: the recording's name, its place in the list and where it starts. */
 export const clipName = (sourceName: string, index: number, startS: number) => outputName(sourceName, index, startS, "mp4");
 
-/** The free version saves one clip on this device; the paid version saves every clip. */
-export const mayFreeSave = (licensed: boolean, freeSaved: number) => licensed || freeSaved < 1;
-
 /** The line under a finished clip. */
 export const madeLine = (lengthS: number, fromS: number, capped: boolean) => `${spoken(lengthS)} from ${clock(fromS)}.${capped ? " Cut to 90 seconds." : ""}`;
 

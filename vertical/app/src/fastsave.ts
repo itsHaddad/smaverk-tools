@@ -1,5 +1,5 @@
 // fastsave.ts: write the finished clip faster than real time. Frames are decoded with WebCodecs (through Mediabunny),
-// the caller draws each one (here: the moving 9:16 window) plus anything on top (the mark), the frames go into an
+// the caller draws each one (here: the moving 9:16 window) plus anything on top, the frames go into an
 // H.264 encoder and an mp4; the sound is copied packet for packet, never re-encoded. Everything stays on the device.
 // The page falls back to recording playback in real time when this path is unavailable, fails, or runs well under
 // real time on the device (some laptops hand every decoded frame to a software canvas at 10+ ms a frame).

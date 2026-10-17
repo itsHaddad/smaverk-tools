@@ -20,7 +20,6 @@ why. Everything the person's file touches runs in their browser.
 | Streaming | `src/lib/stream.ts` | which words a window may contribute, when to rank again, how long the clips should be for this recording | `tests/lib.test.ts` |
 | Exports | `src/lib/exports.ts` | EDL (CMX3600), Final Cut 7 XML (Premiere and Resolve), FCPXML, and a marker list | `tests/exports.test.ts`, `tests/e2e/verify-find.mjs` |
 | The cut clip | `app.ts` (`saveClip`) | mediabunny copies the chosen range out of the file, without re-encoding where it can | `tests/e2e/verify-find.mjs` (ffprobe on the saved file) |
-| Money | `src/lib/pricing.ts` | every sentence the page says about money, paid and trial side by side so neither rots; the key itself is `src/lib/unlock.ts`, the same file in all three tools | `tests/lib.test.ts`, `tests/e2e/verify-find.mjs` (the sandbox rail) |
 | Canvas colours | `src/lib/theme.ts` | resolves `light-dark(a,b)`, which a canvas silently drops and which made the map paint black on black | `tests/page.test.ts` |
 | Empty answers | `src/lib/advice.ts` | what to say when a recording holds nothing at this length — never a length that is not on the page | `tests/page.test.ts` |
 | Names | `src/lib/naming.ts` | clocks, spoken lengths, a long file name shortened in the middle, output file names | `tests/lib.test.ts` |
@@ -31,15 +30,13 @@ why. Everything the person's file touches runs in their browser.
 ## Invariants
 
 - Nothing carrying the recording leaves the device. The only network traffic is the one-off download of
-  the tool, the analytics ping, the Polar checkout (their page) and the key check (the key only).
+  the tool and the analytics ping. The optional support link opens Polar's own page.
   `tests/e2e/verify-find.mjs` records every request the page makes and fails on two things: a host that
   the privacy page does not account for, and any body over 8 KB — the fixture is a 2.3 MB recording, so
   nothing worth taking out of it fits under that bar.
 - With the tool already on the device, the whole thing works with the network off. That is in the gate.
-- $29 once since 2026-09-22 (set from the rivals' prices, what buyers said and the measured quality; see the ledger; free while new from 2026-09-21). Free reads 30 minutes and shows every
-  moment; paid reads four hours and opens every export. `PRICE` in `app.ts` is the one number and
-  `tests/site.test.ts` fails if a page states another or the script holds a second one. `TRIAL` turns the
-  free-while-new state back on; its copy stays tested in `src/lib/pricing.ts`.
+- Free since 2026-10-17 (A's decision; it was $29 once from 2026-09-22): every recording is read up to four hours and
+  every export saves, with no key. `LIMIT_S` in `app.ts` is the one limit; `tests/site.test.ts` fails if a page states a price.
 - The ranking never becomes a prediction. No score is shown, and the page may not say "viral",
   "engagement" or "will perform" — `tests/site.test.ts` fails the build if it does.
 - Every public string obeys `MarketingRules.md`; errors name the step and say what to do next.

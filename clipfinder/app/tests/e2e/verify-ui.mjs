@@ -11,7 +11,6 @@ import { spawn, execFileSync } from "node:child_process";
 import { mkdirSync, existsSync, copyFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-const PRICE = (await import("node:fs")).readFileSync(new URL("../../app.ts", import.meta.url), "utf8").match(/export const PRICE = "(\$\d+)"/)?.[1] ?? "(no price constant)";
 
 const skillTool = [process.env.PAI_DIR, process.env.PAI_DIR && `${process.env.PAI_DIR}/..`, `${process.env.HOME}/.claude`]
   .filter(Boolean)
@@ -154,8 +153,7 @@ try {
     await p.waitForTimeout(400);
   }
 
-  // What it costs is on the first phone screen, tall enough to tap, clear of the name and of the edge.
-  // It states the owner's price, the one constant in app.ts (free while new until 2026-09-22).
+  // The header says it is free, on the first phone screen: tall enough to tap, clear of the name and of the edge (free since 2026-10-17).
   {
     const t = await p.evaluate(() => {
       const el = document.getElementById("tag");
@@ -163,7 +161,12 @@ try {
       const brand = document.querySelector(".brand").getBoundingClientRect();
       return { text: el.textContent, top: a.top, bottom: a.bottom, h: a.height, right: a.right, gap: a.left - brand.right, vw: innerWidth, vh: innerHeight };
     });
-    check(t.top >= 0 && t.bottom <= t.vh && t.h >= 44 && t.gap >= 8 && t.right <= t.vw - 15 && t.text.includes(PRICE), `what it costs is on the first screen: "${t.text.trim()}" (${Math.round(t.h)} px tall, ${Math.round(t.gap)} px from the name)`);
+    check(t.top >= 0 && t.bottom <= t.vh && t.h >= 44 && t.gap >= 8 && t.right <= t.vw - 15 && t.text.trim() === "Free", `the header says it is free, on the first screen: "${t.text.trim()}" (${Math.round(t.h)} px tall, ${Math.round(t.gap)} px from the name)`);
+  }
+  // One quiet support link: a 44 px target that opens Polar in its own tab. No price, buy button, key box or paid panel on the page.
+  {
+    const s = await p.evaluate(() => { const a = document.querySelector("#support a"), q = a?.getBoundingClientRect(); return { href: a?.href ?? "", h: q?.height ?? 0, newTab: a?.target === "_blank", gates: ["price", "buy", "keyrow", "paidpanel", "afterpay"].filter((id) => document.getElementById(id)), money: document.body.innerText.match(/\$\d+/g) ?? [] }; });
+    check(/^https:\/\/buy\.polar\.sh\//.test(s.href) && s.newTab && s.h >= 43.5 && !s.gates.length && !s.money.length, `Clip finder: the support link opens Polar in its own tab (${Math.round(s.h)} px); no price or key box (${s.gates.join(",") || "none"}; prices ${s.money.join(",") || "none"})`);
   }
   // The main button sits whole inside the first screen.
   {
@@ -241,12 +244,7 @@ try {
   }
   await snap("5b-trimmed");
 
-  // What a key opens is decided by the unlock worker, which is off this page: stubbed here, real everywhere else.
-  await p.route(/unlock\.smaverk\.com\/entitlements/, (r) => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ status: "granted", tools: ["clipfinder"], expires: null }) }));
-  await p.fill("#key", "SMVCF-TEST-0000-0000");
-  await p.click("#keygo");
-  await p.waitForFunction(() => window.__cf?.licensed === true, null, { timeout: 15000 });
-
+  // Every export saves with no key and nothing paid (free since 2026-10-17).
   const [dl] = await Promise.all([p.waitForEvent("download", { timeout: 30000 }), p.click('[data-save="edl"]')]);
   await dl.saveAs(join(out, dl.suggestedFilename()));
   await p.waitForTimeout(400);
@@ -257,26 +255,6 @@ try {
 } catch (e) {
   check(false, String(e?.stack ?? e?.message ?? e));
 } finally {
-  // The paid panel is the one surface no state above reaches: at rest the page is locked and #paidpanel is hidden,
-  // so it had shipped without a single tap-target pass. The key comes from SAMPLE_KEY in the shared unlock module,
-  // at the length Polar actually issues — the overlapping tap targets only reproduced with a full-length key,
-  // because that is what wraps, and a short stub would have shown a tidy panel and certified a state nobody saw.
-  if (!(await p.evaluate(() => typeof window.__cf?.setLicensed === "function"))) {
-    // Say what is wrong, not "setLicensed is not a function" from inside an evaluate. An audit that cannot reach
-    // a state must fail loudly and name the reason: silently certifying a state it never saw is how the unlock
-    // panel shipped unaudited in the first place.
-    check(false, "this tool exposes no way to force the paid state (window.__cf.setLicensed), so the paid panel cannot be audited");
-  } else {
-    try {
-      await p.evaluate(() => window.__cf.setLicensed(true));
-      await p.waitForTimeout(250);
-      await snap("9-paid");
-      await p.evaluate(() => window.__cf.setLicensed(false));
-    } catch (e) {
-      check(false, `the paid panel could not be measured: ${String(e.message).slice(0, 110)}`);
-    }
-  }
-
   // What the guard saw, as data. A gate that fails with only screenshots costs whoever picks it up more than it
   // saves, so every state, width, control count and offending pair is written down (the lead, 2026-09-21).
   writeFileSync(join(out, "unlock-overlaps.json"), JSON.stringify({ tool: "clipfinder", states: overlaps }, null, 2));

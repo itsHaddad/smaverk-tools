@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>AI that turns a long recording into clips, on your device · Clips by Småverk</title>
-<meta name="description" content="AI that finds the moments in a long recording and makes them into 9:16 clips with captions (608×1080 MP4 from 1080p video), on your device. Nothing gets uploaded. Free to try; $49 once to save every clip.">
+<meta name="description" content="AI that finds the moments in a long recording and makes them into 9:16 clips with captions (608×1080 MP4 from 1080p video), on your device. Nothing gets uploaded. Free: every clip saved, with no mark.">
 <meta name="color-scheme" content="light dark">
 <script>/* theme: the device's setting until a tap picks light or dark, then that pick on every Småverk page (a cookie for .smaverk.com, as each tool is its own site; this site's storage as the fallback), applied before first paint */(function(){var d=document.documentElement,k="smaverk-theme",m=matchMedia("(prefers-color-scheme: dark)");function set(t){d.setAttribute("data-theme",t);d.style.colorScheme=t}function dark(){var t=d.getAttribute("data-theme");return t?t==="dark":m.matches}function sync(){var b=document.getElementById("theme");if(!b)return;var on=dark();b.setAttribute("aria-pressed",String(on));b.setAttribute("aria-label",on?"Switch to light mode":"Switch to dark mode")}var s=null;try{var c=document.cookie.match(/(?:^|; )smaverk-theme=(light|dark)/);s=c?c[1]:null}catch(e){}try{if(!s)s=localStorage.getItem(k)}catch(e){}if(s==="light"||s==="dark")set(s);m.addEventListener("change",sync);document.addEventListener("DOMContentLoaded",function(){var b=document.getElementById("theme");if(!b)return;sync();b.addEventListener("click",function(){var t=dark()?"light":"dark";set(t);try{localStorage.setItem(k,t)}catch(e){}try{document.cookie=k+"="+t+"; Path=/; Max-Age=31536000; SameSite=Lax; Secure"+(/(^|\.)smaverk\.com$/.test(location.hostname)?"; Domain=.smaverk.com":"")}catch(e){}sync();dispatchEvent(new Event("themechange"))})})})();</script>
 <meta name="google-site-verification" content="_eN1ywvXp9R-hebN0pJSivwAN8J8DuuaNGwfr_QqmnU">
@@ -16,8 +16,8 @@
 <link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="icon" type="image/png" sizes="64x64" href="/icon-64.png">
 <link rel="canonical" href="https://clips.smaverk.com/">
 <meta property="og:url" content="https://clips.smaverk.com/"><meta property="og:type" content="website"><meta property="og:site_name" content="Småverk">
-<meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="A long recording in, clips ready to post out."><meta name="twitter:description" content="Moments found, framed 9:16 and captioned, on your device: 608×1080 MP4 from 1080p video. Free to try, $49 once to save every clip."><meta name="twitter:image" content="https://clips.smaverk.com/poster.jpg?v=1790673918">
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Clips by Småverk","applicationCategory":"MultimediaApplication","operatingSystem":"Any (web browser)","description":"Finds the moments in a long recording and makes them into 9:16 MP4 clips with captions, on your device, as tall as the recording: 608×1080 from 1080p video. Nothing is uploaded.","offers":{"@type":"Offer","price":"49","priceCurrency":"USD","description":"One-time purchase"},"url":"https://clips.smaverk.com"}</script>
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="A long recording in, clips ready to post out."><meta name="twitter:description" content="Moments found, framed 9:16 and captioned, on your device: 608×1080 MP4 from 1080p video. Free, with no mark."><meta name="twitter:image" content="https://clips.smaverk.com/poster.jpg?v=1790673918">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Clips by Småverk","applicationCategory":"MultimediaApplication","operatingSystem":"Any (web browser)","description":"Finds the moments in a long recording and makes them into 9:16 MP4 clips with captions, on your device, as tall as the recording: 608×1080 from 1080p video. Nothing is uploaded.","offers":{"@type":"Offer","price":"0","priceCurrency":"USD","description":"Free"},"url":"https://clips.smaverk.com"}</script>
 <style>
 :root{color-scheme:light dark;
   --ground:light-dark(#F3F2F7,#0E0D12);--surface:light-dark(#FFFFFF,#18161F);--ink:light-dark(#16141D,#F2F0F7);--muted:light-dark(#67637A,#9D99AE);
@@ -29,7 +29,7 @@
 html{-webkit-text-size-adjust:100%}
 html,body{overflow-x:clip}
 .grid>*{min-width:0}
-.result,.status,.notice,.caplabel,.fine,.trust,#paidpanel,#afterpay,.moment,.says,.why{overflow-wrap:anywhere}
+.result,.status,.notice,.caplabel,.fine,.trust,.moment,.says,.why{overflow-wrap:anywhere}
 body{margin:0;background:var(--ground);color:var(--ink);font:16px/1.5 var(--body);padding-inline:max(16px,env(safe-area-inset-left)) max(16px,env(safe-area-inset-right));touch-action:manipulation}
 input,textarea{font-size:16px}
 a{color:inherit}
@@ -130,14 +130,7 @@ ul{padding-left:20px;margin:0 0 12px}li{margin-bottom:6px}
 .fine.err{color:var(--bad)}
 .grid section p:not(.foot) a:not(.btn),.grid section li a,.result span a{padding:13px 0;margin:-13px 0}.grid section li>a:only-child{display:inline-flex;align-items:center;min-height:44px;padding:0;margin:0}
 @media(min-width:900px){.grid section p:not(.foot) a:not(.btn),.grid section li a,.result span a{padding:6px 0;margin:-6px 0}}
-.price{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;margin:24px 0 10px}
-.price .amt{font:800 34px/1 var(--display);letter-spacing:-.02em}
-.price .amt small{font:600 15px var(--body);color:var(--muted);margin-left:8px}
-.price .btn{width:auto;min-width:180px}
 .fine{font-size:15px;color:var(--muted)}
-.key{display:flex;gap:10px;flex-wrap:wrap;margin:8px 0}
-.key input{flex:1 1 220px;min-height:48px;border:1.5px solid var(--line);border-radius:12px;padding:0 14px;font:16px var(--body);background:var(--surface);color:var(--ink)}
-.key .btn{width:auto;min-height:48px}.keyshow{font:600 15px ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--line);color:var(--ink);border-radius:8px;padding:4px 8px;user-select:all;overflow-wrap:anywhere}.keyline{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:8px 0}#keylostline{margin-top:16px}.keyline .btn{width:auto;min-height:44px;padding:0 16px;font-size:15px}
 .ok{color:var(--good);font-weight:600}
 .foot{color:var(--muted);font-size:15px;margin-top:36px;display:flex;gap:4px 18px;flex-wrap:wrap;align-items:center}
 .foot a{color:var(--muted);display:inline-flex;align-items:center;min-height:44px}
@@ -190,7 +183,7 @@ details p,details ul{margin:0 0 14px}
 @media (prefers-reduced-motion:reduce){.stage .seekbar i{transition:none}}
 /* /stage player */
 .reel video{display:block;width:100%;height:100%;object-fit:contain;background:#000}
-@media(max-width:480px){.reel{height:38svh}.price .btn{width:100%}}
+@media(max-width:480px){.reel{height:38svh}}
 .keep{grid-column:1/-1;display:flex;align-items:center;gap:10px;min-height:44px;font-size:15px;cursor:pointer}
 .keep input{width:44px;height:44px;accent-color:var(--hi);margin:0;flex:none}
 .made{grid-column:1/-1;display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0}
@@ -199,7 +192,7 @@ details p,details ul{margin:0 0 14px}
 </head>
 <body>
 <div class="wrap">
-  <div class="top"><a class="brand" href="https://smaverk.com"><i></i>Småverk <span>Clips</span></a><a class="tag" id="tag" href="#price">Free ·<b>$49 once</b></a><button class="theme" id="theme" type="button" aria-pressed="false" aria-label="Switch to dark mode"><svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg><svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/></svg></button></div>
+  <div class="top"><a class="brand" href="https://smaverk.com"><i></i>Småverk <span>Clips</span></a><a class="tag" id="tag" href="#support"><b>Free</b></a><button class="theme" id="theme" type="button" aria-pressed="false" aria-label="Switch to dark mode"><svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg><svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/></svg></button></div>
   <div class="grid">
     <div class="say">
       <h1>A long recording in, clips ready to post out. <mark>Your recording stays on your device.</mark></h1>
@@ -219,7 +212,7 @@ details p,details ul{margin:0 0 14px}
       </div>
       <input id="file" type="file" accept="video/*" hidden>
       <button class="btn primary" id="action">Use my own recording</button>
-      <p class="trust" id="trust">Free to find and watch. Save one clip with a small mark. English. Your recording stays on your device.</p>
+      <p class="trust" id="trust">Every clip saved, no mark. English. Your recording stays on your device.</p>
       <p class="fine" id="caphint">Each clip: up to 90 seconds, 608×1080 from 1080p.</p>
       <div class="status" id="status"></div>
       <div class="steps" id="steps" role="status" aria-live="polite">
@@ -237,13 +230,7 @@ details p,details ul{margin:0 0 14px}
     </section>
 
     <section class="rest">
-      <div class="price" id="price">
-        <div><div class="amt"><span id="amount">$49</span><small id="per">once</small></div><div class="fine">Every clip saved, no mark, 608×1080 from 1080p. The key also opens Captions, Vertical and Clip finder.</div><div class="fine" id="paytrust">Refund within 14 days.</div></div>
-        <a class="btn hi" id="buy" href="https://buy.polar.sh/polar_cl_F3V7yz258g1v1W4e2VRDE13ljMAleNLcA8vKl0j1lxg" target="_blank" rel="noopener" aria-label="Buy once — $49 (opens the checkout in a new tab)">Buy once — $49</a>
-      </div>
-      <p class="fine" id="pricefine"></p>
-
-      <div id="paidpanel" hidden><h2>Paid version on this device</h2><p class="fine">Your key, in full. Paste it on your own other devices to unlock them too.</p><p class="keyline"><b id="paidkey" class="keyshow"></b><button class="btn primary" id="keycopy" type="button">Copy</button></p><p class="fine" id="keyalso" hidden></p><p class="keyline"><button class="btn quiet" id="removekey" type="button">Remove the key from this device</button></p></div>
+      <p class="fine" id="support">Free. If it helped you, you can <a href="https://buy.polar.sh/polar_cl_dDSll8mftHzvbuFi5j0OMjqduigiYhMEw4NIm3HTCkb" target="_blank" rel="noopener">support Småverk</a>.</p>
 
       <details>
         <summary>What it does, and does not</summary>
@@ -261,10 +248,6 @@ details p,details ul{margin:0 0 14px}
         <p>Nowhere. It all runs in this page, on your device. There is no account and no upload.</p>
         <p>The tool itself is downloaded the first time you use it, from where it is published. Your recording is not part of that.</p>
       </details>
-      <details id="afterpay"><summary>After paying: nothing to paste</summary><ul><li>Pay on Polar: card, Apple Pay or Google Pay. Taxes included.</li><li>You come straight back, already unlocked. Nothing to paste.</li><li>Refund within 14 days, no questions.</li></ul></details>
-      <p class="fine" id="keystatus">Already paid? Paste your key here.</p>
-      <div class="key" id="keyrow"><input id="key" placeholder="Paste your key" autocomplete="off" spellcheck="false" aria-label="Your key"><button class="btn primary" id="keygo">Unlock</button></div>
-      <p class="fine" id="keylostline">Lost your key? <a id="keylost" href="https://polar.sh/smaverk/portal" target="_blank" rel="noopener">Get it again</a> with the email you paid with.</p>
 
       <p class="foot"><a href="mailto:hello@smaverk.com">hello@smaverk.com</a><a href="https://smaverk.com">smaverk.com</a><a href="https://smaverk.com/privacy">Privacy</a><a href="https://smaverk.com/terms">Terms</a><a href="https://clipfinder.smaverk.com/?src=clips">Clip finder</a><a href="https://vertical.smaverk.com/?src=clips">Vertical</a><a href="https://captions.smaverk.com/?src=clips">Captions</a><a href="llms.txt">For automations and agents</a><a id="samplesrc" href="https://images.nasa.gov/details/iss071m261311538_NASA_Astronaut_Matt_Dominick_Talks_with_KMGH_Denver_240510" rel="noopener">Sample: NASA, public domain</a></p>
     </section>

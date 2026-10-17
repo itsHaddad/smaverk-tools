@@ -81,9 +81,12 @@ const snap = async (tag) => { await unlockCheck(p, tag, check); const f = await 
 await p.goto(url, { waitUntil: "load" });
 await p.waitForFunction(() => window.__vert && window.__vert.state === "sample", null, { timeout: 30000 });
 await p.waitForTimeout(800); await snap("0-rest");
-// The price is on the first phone screen (both cold users, 2026-09-18): the tag in the header, tall enough to tap, clear of the name and of the edge.
+// The header says it is free, on the first phone screen: tall enough to tap, clear of the name and of the edge (free since 2026-10-17).
 { const t = await p.evaluate(() => { const el = document.getElementById("tag"), a = el.getBoundingClientRect(), b = document.querySelector(".brand").getBoundingClientRect(); return { text: el.textContent, top: a.top, bottom: a.bottom, h: a.height, right: a.right, gap: a.left - b.right, vw: innerWidth, vh: innerHeight }; });
-  check(t.top >= 0 && t.bottom <= t.vh && t.h >= 44 && t.gap >= 8 && t.right <= t.vw - 15 && /\$\d+ once/.test(t.text), `the price is on the first screen: "${t.text}" (${Math.round(t.h)} px tall, ${Math.round(t.gap)} px from the name)`); }
+  check(t.top >= 0 && t.bottom <= t.vh && t.h >= 44 && t.gap >= 8 && t.right <= t.vw - 15 && t.text.trim() === "Free", `the header says it is free, on the first screen: "${t.text}" (${Math.round(t.h)} px tall, ${Math.round(t.gap)} px from the name)`); }
+// One quiet support link: a 44 px target that opens Polar in its own tab. No price, buy button, key box or paid panel on the page.
+{ const s = await p.evaluate(() => { const a = document.querySelector("#support a"), q = a?.getBoundingClientRect(); return { href: a?.href ?? "", h: q?.height ?? 0, newTab: a?.target === "_blank", gates: ["price", "buy", "rbuy", "keyrow", "paidpanel", "afterpay"].filter((id) => document.getElementById(id)), money: (document.body.innerText.match(/\$\d+/g) ?? []) }; });
+  check(/^https:\/\/buy\.polar\.sh\//.test(s.href) && s.newTab && s.h >= 43.5 && !s.gates.length && !s.money.length, `Vertical: the support link opens Polar in its own tab (${Math.round(s.h)} px); no price or key box (${s.gates.join(",") || "none"}; prices ${s.money.join(",") || "none"})`); }
 for (const c of CLIPS) {
   await p.setInputFiles("#file", dir + "/" + c.name);
   await p.waitForFunction(() => window.__vert.state === "loaded" && document.getElementById("video").duration > 0, null, { timeout: 20000 });
@@ -119,8 +122,7 @@ for (const c of CLIPS) {
   const got = dl ? await dl : null; await p.waitForTimeout(600);
   check(await p.evaluate(() => !document.getElementById("video").paused && getComputedStyle(document.getElementById("playicon")).opacity === "0"), `${c.tag}: after a save the clip plays again and no play icon covers the result`);
   if (got && promised) check(got.suggestedFilename().split(".").pop() === promised[0].split(".").pop(), `${c.tag}: saved as promised (${got.suggestedFilename().split(".").pop()} vs ${promised[0].split(".").pop()})`); await snap(`4-exported-${c.tag}`);
-  { const r = await p.evaluate(() => { const a = document.getElementById("rbuy"), q = a.getBoundingClientRect(); return { text: a.textContent, h: q.height, href: a.href, newTab: a.target === "_blank" && document.getElementById("buy").target === "_blank", shown: q.width > 0 && !document.getElementById("rmark").hidden }; });
-    check(r.shown && r.newTab && r.h >= 44 && /polar\.sh/.test(r.href) && /\$\d+ once/.test(r.text), `${c.tag}: the Saved box states the price with a link that opens the checkout in its own tab, so the clip stays ("${r.text}", ${Math.round(r.h)} px)`); }
+  check(!(await p.evaluate(() => /\$\d|\bkey\b|smaverk\.com mark/i.test(document.getElementById("result").innerText))), `${c.tag}: the Saved box names no price, key or mark`);
   check(!(await p.evaluate(() => window.__vert.exportError)), `${c.tag}: exported (${await p.evaluate(() => window.__vert.exportPath)}), card shows "${await p.evaluate(() => document.getElementById("rname").textContent)}"`);
 }
 // Cold users, rounds 2 and 3: a window placed by hand must not be searched for. Drag it, and the page says it stays there;
@@ -148,25 +150,6 @@ for (const c of CLIPS) {
   check(h.mode === "hold" && h.skipped === false && Math.abs(h.x - h.mid) < 0.02, `Hold still without a drag ends on the speaker (window ${h.x?.toFixed?.(2)}, speaker ${h.mid?.toFixed?.(2)})`); await snap("6-hold-no-drag"); }
 check(!errs.length, `page errors: ${errs.length ? errs.join(" || ") : "none"}`);
 
-// The paid panel is the one surface no state above reaches: at rest the page is locked and #paidpanel is hidden,
-// so it had shipped without a single tap-target pass. The key comes from SAMPLE_KEY in the shared unlock module,
-// at the length Polar actually issues — the overlapping tap targets only reproduced with a full-length key,
-// because that is what wraps, and a short stub would have shown a tidy panel and certified a state nobody saw.
-if (!(await p.evaluate(() => typeof window.__vert?.setLicensed === "function"))) {
-  // Say what is wrong, not "setLicensed is not a function" from inside an evaluate. An audit that cannot reach a
-  // state must fail loudly and name the reason: silently certifying a state it never saw is how the unlock panel
-  // shipped unaudited in the first place.
-  check(false, "this tool exposes no way to force the paid state (window.__vert.setLicensed), so the paid panel cannot be audited");
-} else {
-  try {
-    await p.evaluate(() => window.__vert.setLicensed(true));
-    await p.waitForTimeout(250);
-    await snap("9-paid");
-    await p.evaluate(() => window.__vert.setLicensed(false));
-  } catch (e) {
-    check(false, `the paid panel could not be measured: ${String(e.message).slice(0, 110)}`);
-  }
-}
 
 // What the guard saw, as data. A gate that fails with only screenshots costs whoever picks it up more than it
 // saves, so every state, width, control count and offending pair is written down (the lead, 2026-09-21).

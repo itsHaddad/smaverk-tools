@@ -4,12 +4,11 @@
 //   bun tests/e2e/verify-make.mjs
 //
 //   1. The moments are found and the strongest three are ticked; each is 90 seconds or less.
-//   2. Two clips are made, one at a time, and the free save writes a real file: 9:16, a sound track, the moment's
+//   2. Two clips are made, one at a time, and a save writes a real file: 9:16, a sound track, the moment's
 //      length (ffprobe), and captions drawn on its frames.
-//   3. The free version saves one clip: a second save asks to be paid for and writes nothing.
-//   4. With a key (the unlock worker stubbed), the page says the clips must be made again, and the new ones save.
+//   3. Every clip saves, with no key and nothing paid (free since 2026-10-17): a second save writes a second file.
+//   4. No price, checkout or key box on the page; the one support link goes to Polar in its own tab.
 //   5. Nothing carrying the recording leaves the page: every host is accounted for, no body over 8 KB.
-//   6. The sandbox rail shows the price constant and buys at the sandbox checkout, in its own tab.
 import { chromium } from "playwright";
 import { spawn, execFileSync } from "node:child_process";
 import { mkdirSync, readFileSync } from "node:fs";
@@ -22,7 +21,6 @@ const root = join(here, "..", "..");
 const outDir = join(root, "tests", "e2e", "out");
 mkdirSync(outDir, { recursive: true });
 const fixture = makeFixture(root);
-const PRICE = readFileSync(join(root, "app.ts"), "utf8").match(/export const PRICE = "(\$\d+)"/)?.[1];
 
 const server = spawn("bun", [join(root, "serve.ts"), String(port)], { stdio: "ignore" });
 await new Promise((r) => setTimeout(r, 800));
@@ -91,42 +89,32 @@ try {
   else if (!(m.words > 0 && m.captionFrames > m.frames * 0.3)) fail(`captions: ${m.words} words, drawn on ${m.captionFrames} of ${m.frames} frames`);
   else ok(`${dl.suggestedFilename()}: ${v.width}x${v.height}, ${a.codec_name} sound, ${dur.toFixed(2)} s for a ${len.toFixed(2)} s moment, ${m.words} words, captions on ${m.captionFrames}/${m.frames} frames; cut ${m.ms.cut} ms, frame ${m.ms.frame} ms, listen ${m.ms.listen} ms, save ${m.ms.save} ms`);
 
-  // 3. The free version saves one.
+  // 3. Every clip saves: the second one too.
   if (made.length > 1) {
-    const second = page.waitForEvent("download", { timeout: 4000 }).then(() => "downloaded").catch(() => "blocked");
-    await page.click(".moment:nth-child(2) .save");
-    if ((await second) !== "blocked") fail("a second clip saved without paying");
-    else if (!new RegExp(`\\${PRICE} once`).test(await page.textContent("#status"))) fail(`the refusal does not state the price: "${await page.textContent("#status")}"`);
-    else ok("the second save asks to be paid for, with the price, and writes nothing");
+    const [dl2] = await Promise.all([page.waitForEvent("download", { timeout: 20000 }), page.click(".moment:nth-child(2) .save")]);
+    const f2 = join(outDir, dl2.suggestedFilename());
+    await dl2.saveAs(f2);
+    const v2 = probe(f2).streams.find((s) => s.codec_type === "video");
+    if (!v2 || Math.abs(v2.width / v2.height - 9 / 16) > 0.01) fail(`the second clip is ${v2?.width}x${v2?.height}, not 9:16`);
+    else ok(`the second clip saves too, with no key: ${dl2.suggestedFilename()}`);
   }
 
-  // 4. A key: the marked clips are made again.
-  await page.route(/unlock\.smaverk\.com\/entitlements/, (r) => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ status: "granted", tools: ["clips"], expires: null }) }));
-  await page.fill("#key", "SMVCL-TEST-0000-0000");
-  await page.click("#keygo");
-  await page.waitForFunction(() => window.__clips.licensed === true, null, { timeout: 15000 });
-  if (await page.evaluate(() => window.__clips.state) !== "found" || !/again/i.test(await page.textContent("#status"))) fail(`after the key the page does not ask to make the clips again: ${await page.textContent("#status")}`);
-  else ok("with a key, the page says the clips must be made again to lose the mark");
+  // 4. No price, checkout or key box; one support link to Polar, in its own tab.
+  {
+    const s = await page.evaluate(() => ({ href: document.querySelector("#support a")?.href ?? "", tab: document.querySelector("#support a")?.target, gates: ["price", "buy", "keyrow", "paidpanel"].filter((id) => document.getElementById(id)), money: document.body.innerText.match(/\$\d+/g) ?? [] }));
+    if (s.gates.length) fail(`a price or key box is on the page: ${s.gates.join(", ")}`);
+    else if (s.money.length) fail(`the page states a price: ${s.money.join(", ")}`);
+    else if (!/^https:\/\/buy\.polar\.sh\//.test(s.href) || s.tab !== "_blank") fail(`the support link is missing or opens in this tab: "${s.href}"`);
+    else ok("no price or key box, and one support link to Polar in its own tab");
+  }
 
   // 5. Nothing left with the recording.
-  const ALLOWED = /^(huggingface\.co|[\w.-]*\.hf\.co|cdn\.jsdelivr\.net|static\.cloudflareinsights\.com|cloudflareinsights\.com|unlock\.smaverk\.com|events\.smaverk\.com|[\w.-]*\.polar\.sh|polar\.sh|localhost:\d+)$/;
+  const ALLOWED = /^(huggingface\.co|[\w.-]*\.hf\.co|cdn\.jsdelivr\.net|static\.cloudflareinsights\.com|cloudflareinsights\.com|events\.smaverk\.com|localhost:\d+)$/;
   const strangers = sent.filter((s) => !ALLOWED.test(s.host)), heavy = sent.filter((s) => s.bytes > 8192);
   if (strangers.length) fail(`requests to hosts nothing accounts for: ${JSON.stringify(strangers.slice(0, 4))}`);
   if (heavy.length) fail(`requests carrying more than 8 KB: ${JSON.stringify(heavy.slice(0, 4))}`);
   if (!strangers.length && !heavy.length) ok(`${sent.length} request(s) off the page's own files, every host accounted for, the largest body ${Math.max(0, ...sent.map((s) => s.bytes))} bytes`);
 
-  // 6. The sandbox rail.
-  const railCtx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
-  const rail = await railCtx.newPage();
-  await rail.goto(`http://localhost:${port}/?rail=sandbox`, { waitUntil: "load" });
-  await rail.waitForFunction(() => window.__clips?.state === "sample", null, { timeout: 30000 });
-  const shown = await rail.evaluate(() => ({ tag: document.getElementById("tag").textContent, amount: document.getElementById("amount").textContent, buy: document.getElementById("buy").getAttribute("href") }));
-  if (!shown.tag.includes(PRICE) || shown.amount !== PRICE) fail(`the rail shows "${shown.tag}" / "${shown.amount}", the constant is ${PRICE}`);
-  const target = await rail.getAttribute("#buy", "target");
-  if (!/^https:\/\/sandbox-api\.polar\.sh\/v1\/checkout-links\/polar_cl_/.test(shown.buy ?? "")) fail(`the sandbox rail buys at ${shown.buy}`);
-  else if (target !== "_blank") fail("the checkout does not open in its own tab");
-  else ok(`the sandbox rail states ${PRICE} and buys at the sandbox checkout, in its own tab`);
-  await railCtx.close();
 
   if (errs.length) fail(errs.join(" | "));
   await page.screenshot({ path: join(outDir, "made.png"), fullPage: true });

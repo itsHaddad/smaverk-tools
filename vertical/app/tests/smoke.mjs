@@ -1,5 +1,5 @@
 // smoke.mjs: the deploy gate. Serves dist/ locally, opens it in headless Chromium, and fails on any page error,
-// a missing sample track, a broken script URL, an unfilled Polar link, or sideways scroll on a phone.
+// a missing sample track, a broken script URL, a missing support link, or sideways scroll on a phone.
 import { chromium } from "playwright";
 import { spawn } from "node:child_process";
 import { readdirSync, readFileSync } from "node:fs";
@@ -16,8 +16,8 @@ try {
   await p.waitForTimeout(6000); if (early.length) fail("downloads before any tap: " + early.slice(0, 3).join(" | ")); p.removeAllListeners("request");
   const ok = await p.waitForFunction(() => window.__vert && window.__vert.state === "sample" && window.__vert.track && window.__vert.track.length > 10, null, { timeout: 15000 }).then(() => true).catch(() => false);
   if (!ok) fail("sample track did not load");
-  const st = await p.evaluate(() => ({ action: document.getElementById("action")?.textContent, buy: document.getElementById("buy")?.href, out: window.__vert?.out }));
-  if (!/Use my own clip/.test(st.action ?? "")) fail("action label " + st.action); if (!/polar\.sh/.test(st.buy ?? "")) fail("buy link " + st.buy); if (!st.out || st.out.height < 360 || Math.abs(st.out.width / st.out.height - 9 / 16) > 0.02 /* the sample output is 9:16 whatever the sample's size */) fail("sample output " + JSON.stringify(st.out));
+  const st = await p.evaluate(() => ({ action: document.getElementById("action")?.textContent, support: document.querySelector("#support a")?.href, gates: ["price", "buy", "keyrow", "paidpanel"].filter((id) => document.getElementById(id)), out: window.__vert?.out }));
+  if (!/Use my own clip/.test(st.action ?? "")) fail("action label " + st.action); if (!/^https:\/\/buy\.polar\.sh\//.test(st.support ?? "")) fail("support link " + st.support); if (st.gates.length) fail("a price or key box is on the page: " + st.gates.join(",")); if (!st.out || st.out.height < 360 || Math.abs(st.out.width / st.out.height - 9 / 16) > 0.02 /* the sample output is 9:16 whatever the sample's size */) fail("sample output " + JSON.stringify(st.out));
   const html = await p.content(); if (!/src="app\.js\?v=\d+"/.test(html)) fail("app.js is not versioned");
   for (const f of ["mediapipe/vision_wasm_internal.wasm", "models/blaze_face_short_range.tflite", "sample.mp4", "poster.jpg", "llms.txt"]) { const r = await fetch(`http://localhost:${port}/${f}`, { method: "HEAD" }); if (r.status !== 200) fail(`${f} ${r.status}`); }
   const sideways = await p.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1); if (sideways) fail("page scrolls sideways at 390px");

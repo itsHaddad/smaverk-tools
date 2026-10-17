@@ -5,19 +5,14 @@ import { outputBase, fitName } from "./src/lib/naming";
 import { loadDetector, scanClip, delegate } from "./src/detect";
 import { fastSave, canFastSave, savedFps } from "./src/fastsave";
 import { attachSeek } from "./src/seek";
-import { Unlock, SAMPLE_KEY, type UnlockState } from "./src/lib/unlock";
 type State = "sample" | "loaded" | "tracking" | "ready" | "exporting" | "exported"; type Mode = "follow" | "hold";
 
 // Sample files are fetched under the page's version (app.js?v=…), so a replaced sample reaches visitors at once: Cloudflare's edge
 // kept serving a year-old "immutable" sample.mp4 after it was replaced (2026-09-18).
 const ASSET_V = (() => { try { return new URL(import.meta.url).search; } catch { return ""; } })();
-const SANDBOX = new URLSearchParams(location.search).get("rail") === "sandbox";
-const RAIL = SANDBOX
-  ? { product: "053f7bf2-a6ac-4749-98f1-92d840bbdf2e", link: "https://sandbox-api.polar.sh/v1/checkout-links/polar_cl_n8mJO32zNi3Tsyf4Ir5tOubvaQKYkAcZr0LgO0HqGiI/redirect" }
-  : { product: "eff2bec5-b235-4664-90cf-2038397749c8", link: "https://buy.polar.sh/polar_cl_mVsARzcnp4LFpUW1BsP2eXqQrFc5fSDu99afw3oTurT" };
-const UNLOCK = "https://unlock.smaverk.com"; // the unlock worker: the only address this page knows about keys
 const DEBUG = new URLSearchParams(location.search).has("debug");
-const limit = () => (licensed ? 300 : 60);
+// Five minutes for everyone (free since 2026-10-17): the most a phone tab holds today (the clip-length measurement, 2026-09-19).
+const LIMIT_S = 300;
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const stage = $("stage"), video = $<HTMLVideoElement>("video"), canvas = $<HTMLCanvasElement>("canvas"), poster = $<HTMLImageElement>("poster");
@@ -27,10 +22,9 @@ const sound = $<HTMLButtonElement>("sound"), soundtxt = $("soundtxt");
 const seek = $<HTMLInputElement>("seek"); attachSeek(seek, $("seekbar"), video);
 const chips = [...document.querySelectorAll<HTMLButtonElement>(".chip")];
 const ctx = canvas.getContext("2d", { alpha: false })!;
-if (RAIL.link && !RAIL.link.startsWith("__")) for (const id of ["buy", "rbuy"]) (document.getElementById(id) as HTMLAnchorElement).href = RAIL.link; // the price box and the Saved box open the same checkout
 
 let state: State = "sample", mode: Mode = "follow", holdX = 0.5, track: Point[] = [], samples: Sample[] = [], srcW = 16, srcH = 9;
-let currentFile: File | null = null, licensed = false, lastBlob: Blob | null = null, lastName = "";
+let currentFile: File | null = null, lastBlob: Blob | null = null, lastName = "";
 const dbg: any = ((window as any).__vert = {});
 const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 const isPhone = isIOS || /Android/i.test(navigator.userAgent);
@@ -46,11 +40,11 @@ function setState(s: State) {
   reset.hidden = s === "sample" || s === "exported"; trust.hidden = s !== "sample";
   hint.textContent = hintFor(s);
   if (s !== "exported") result.classList.remove("on");
-  // What you are about to get, before you commit: name, size, length, format, and where the mark is.
+  // What you are about to get, before you commit: name, size, length and format.
   // The container the save will write, so the name shown at "ready" is the name that downloads (design review 3, B5).
   const recorderMp4 = () => typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported("video/mp4;codecs=avc1,mp4a.40.2");
   const plannedExt = () => canFastSave() || recorderMp4() ? "mp4" : "webm";
-  const outEl = $("out"); if (s === "ready" && currentFile) { const o = outputSize(srcW, srcH); const d = Math.min(video.duration || 0, limit()); outEl.textContent = `${outputBase(currentFile.name)}-vertical.${plannedExt()} · ${o.width} × ${o.height} · ${Math.floor(d / 60)}:${String(Math.round(d % 60)).padStart(2, "0")} · ${plannedExt().toUpperCase()}${licensed ? "" : " · with a small smaverk.com mark"}`; outEl.hidden = false; } else outEl.hidden = true;
+  const outEl = $("out"); if (s === "ready" && currentFile) { const o = outputSize(srcW, srcH); const d = Math.min(video.duration || 0, LIMIT_S); outEl.textContent = `${outputBase(currentFile.name)}-vertical.${plannedExt()} · ${o.width} × ${o.height} · ${Math.floor(d / 60)}:${String(Math.round(d % 60)).padStart(2, "0")} · ${plannedExt().toUpperCase()}`; outEl.hidden = false; } else outEl.hidden = true;
   dbg.state = s;
 }
 const say = (t: string, tone: boolean | "ok" = false) => { status.textContent = t; status.className = "status" + (tone === true ? " err" : tone ? " ok" : ""); }; // true: something went wrong; "ok": good news
@@ -76,7 +70,7 @@ function touched() { if (state === "exported") { setState("ready"); if (video.pa
 // ---------- sample at rest ----------
 (async () => {
   try { track = await (await fetch("sample-track.json" + ASSET_V)).json(); } catch { track = []; } insetSide = clearSide();
-  dbg.track = track; video.src = "sample.mp4" + ASSET_V; video.muted = true; video.loop = true; video.play().catch(() => {}); loadLicense();
+  dbg.track = track; video.src = "sample.mp4" + ASSET_V; video.muted = true; video.loop = true; video.play().catch(() => {});
 })();
 // The stage shows the whole source with the 9:16 window drawn on it and the vertical result inset, so the person sees what is cut and why. While the recorder fallback runs, the stage becomes the output itself.
 let view: "source" | "output" = "source";
@@ -95,12 +89,10 @@ video.addEventListener("ended", () => stage.classList.remove("playing"));
 sound.addEventListener("click", () => { video.muted = !video.muted; sound.setAttribute("aria-pressed", String(!video.muted)); soundtxt.textContent = video.muted ? "Sound off" : "Sound on"; sound.setAttribute("aria-label", video.muted ? "Sound is off. Turn it on" : "Sound is on. Turn it off"); if (video.paused) video.play().catch(() => {}); });
 
 // ---------- drawing ----------
-const FONT = '"Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif';
 function centre(t: number) { return mode === "follow" && track.length ? centreAt(track, t) : { cx: holdX, cy: 0.5 }; }
-function mark(c: CanvasRenderingContext2D, W: number, H: number) { c.font = `700 ${Math.round(Math.min(W, H) * 0.045)}px ${FONT}`; c.textAlign = "right"; c.textBaseline = "alphabetic"; c.lineWidth = 3; c.lineJoin = "round"; c.strokeStyle = "rgba(0,0,0,.5)"; c.fillStyle = "rgba(255,255,255,.85)"; c.strokeText("smaverk.com", W - 12, H - 16); c.fillText("smaverk.com", W - 12, H - 16); }
 let fastSaving = false;
 (function loop() { if (video.readyState >= 2 && !fastSaving) { const { cx, cy } = centre(video.currentTime); const r = cropRect(cx, cy, srcW, srcH); const W = canvas.width, H = canvas.height;
-  if ((view as "source" | "output") === "output") { ctx.drawImage(video, r.sx, r.sy, r.sw, r.sh, 0, 0, W, H); if (sound.dataset.side !== "bottom") sound.dataset.side = "bottom"; if (!licensed) mark(ctx, W, H); }
+  if ((view as "source" | "output") === "output") { ctx.drawImage(video, r.sx, r.sy, r.sw, r.sh, 0, 0, W, H); if (sound.dataset.side !== "bottom") sound.dataset.side = "bottom"; }
   else {
     ctx.drawImage(video, 0, 0, W, H);
     // The sound button keeps out of the crop window: the top-right corner, else the top-left, else (a clip that is already
@@ -110,7 +102,7 @@ let fastSaving = false;
     ctx.fillStyle = "rgba(0,0,0,.32)"; ctx.fillRect(0, 0, r.sx, H); ctx.fillRect(r.sx + r.sw, 0, W - r.sx - r.sw, H); ctx.fillRect(r.sx, 0, r.sw, r.sy); ctx.fillRect(r.sx, r.sy + r.sh, r.sw, H - r.sy - r.sh);
     ctx.lineWidth = Math.max(3, W * 0.004); ctx.strokeStyle = "#FFD84D"; ctx.strokeRect(r.sx, r.sy, r.sw, r.sh);
     dbg.inset = r.sw < W - 4 && (track.length > 0 || mode === "hold"); // read by the phone UI gate
-    if (r.sw < W - 4 && (track.length || mode === "hold")) { const ih = H * 0.62, iw = (ih * r.sw) / r.sh, side = mode === "follow" && insetSide ? insetSide : r.sx + r.sw / 2 > W / 2 ? "left" : "right", ix = side === "left" ? W * 0.02 : W - iw - W * 0.02, iy = H - ih - H * 0.03; ctx.drawImage(video, r.sx, r.sy, r.sw, r.sh, ix, iy, iw, ih); ctx.lineWidth = 2; ctx.strokeStyle = "#fff"; ctx.strokeRect(ix, iy, iw, ih); if (!licensed) { ctx.save(); ctx.translate(ix, iy); mark(ctx, iw, ih); ctx.restore(); } }
+    if (r.sw < W - 4 && (track.length || mode === "hold")) { const ih = H * 0.62, iw = (ih * r.sw) / r.sh, side = mode === "follow" && insetSide ? insetSide : r.sx + r.sw / 2 > W / 2 ? "left" : "right", ix = side === "left" ? W * 0.02 : W - iw - W * 0.02, iy = H - ih - H * 0.03; ctx.drawImage(video, r.sx, r.sy, r.sw, r.sh, ix, iy, iw, ih); ctx.lineWidth = 2; ctx.strokeStyle = "#fff"; ctx.strokeRect(ix, iy, iw, ih); }
   } } requestAnimationFrame(loop); })();
 
 // ---------- own clip ----------
@@ -124,7 +116,7 @@ function load(f: File) {
   showName(clipname, f.name); poster.hidden = true; steps.classList.remove("on");
   video.onloadedmetadata = () => { sized(); const d = video.duration; const tall = srcW / srcH <= 9 / 16 + 0.01;
     const note = tall ? " This clip is already vertical, so there is nothing to cut; it is saved as it is." : "";
-    if (isFinite(d) && d > limit() + 1) say(licensed ? `That clip is longer than five minutes, so this takes the first five.` + note : `That clip is longer than 60 seconds, so this takes the first minute. The paid version takes up to five minutes.` + note); else say((isFinite(d) ? `${Math.round(d)}-second clip loaded.` : "Clip loaded.") + note); };
+    if (isFinite(d) && d > LIMIT_S + 1) say(`That clip is longer than five minutes, so this takes the first five.` + note); else say((isFinite(d) ? `${Math.round(d)}-second clip loaded.` : "Clip loaded.") + note); };
   video.onerror = () => say("That file could not be opened. Try an mp4 or mov from your camera roll.", true);
   setState("loaded");
 }
@@ -146,7 +138,7 @@ async function run() {
   try {
     stageNow = "tracker"; const tStart = performance.now(); await loadDetector(); dbg.detector = delegate; dbg.detectorMs = Math.round(performance.now() - tStart); step(1, "done", "ready");
     stageNow = "scan"; step(2, "active", "starting");
-    const scan = await scanClip(currentFile, limit(), (d, tot) => { const pct = Math.round((d / tot) * 100); $("s2b").style.width = pct + "%"; step(2, "active", `${pct}%`); });
+    const scan = await scanClip(currentFile, LIMIT_S, (d, tot) => { const pct = Math.round((d / tot) * 100); $("s2b").style.width = pct + "%"; step(2, "active", `${pct}%`); });
     // Two people and sound: the window follows whoever is talking, and steps across when the turn changes. One person, a
     // second face in too few samples, or a clip with no sound: the same calm pan over one face as before (2026-09-19).
     const picked = pickSpeaker(scan.speakers, TWO ? SPEAK : { ...SPEAK, bothMin: 2 }); dbg.two = TWO;
@@ -181,7 +173,7 @@ async function recordSave(): Promise<{ blob: Blob; ext: string }> {
   await recCtx.resume().catch(() => {}); const dest = recCtx.createMediaStreamDestination(); recSrc!.connect(dest); for (const t of dest.stream.getAudioTracks()) stream.addTrack(t);
   const rec = new MediaRecorder(stream, mime ? { mimeType: mime, videoBitsPerSecond: 6_000_000 } : undefined); const chunks: Blob[] = []; rec.ondataavailable = (e) => e.data.size && chunks.push(e.data);
   const done = new Promise<void>((res) => (rec.onstop = () => res()));
-  video.pause(); video.currentTime = 0; await new Promise((r) => (video.onseeked = r)); const total = Math.min(video.duration, limit()); const wasMuted = video.muted; video.muted = false;
+  video.pause(); video.currentTime = 0; await new Promise((r) => (video.onseeked = r)); const total = Math.min(video.duration, LIMIT_S); const wasMuted = video.muted; video.muted = false;
   view = "output"; sized(); rec.start(250); await video.play(); const tick = setInterval(() => say(`Writing your video. About ${Math.max(0, Math.ceil(total - video.currentTime))} s left.`), 500);
   try { await new Promise<void>((res) => { const end = () => { if (video.ended || video.currentTime >= total) res(); else requestAnimationFrame(end); }; end(); }); }
   finally { clearInterval(tick); video.pause(); rec.stop(); await done; recSrc!.disconnect(dest); video.muted = wasMuted; view = "source"; sized(); }
@@ -194,11 +186,10 @@ async function exportVideo() {
     if (canFastSave()) {
       try {
         video.pause(); say("Writing your video."); fastSaving = true;
-        const r = await fastSave({ file: currentFile, maxSeconds: limit(), output: (w, h) => outputSize(w, h),
+        const r = await fastSave({ file: currentFile, maxSeconds: LIMIT_S, output: (w, h) => outputSize(w, h),
           drawFrame: (s, c, W, H, t) => { const { cx, cy } = centre(t); const rc = cropRect(cx, cy, s.displayWidth, s.displayHeight);
             // Cropping straight from the decoded frame is one fast draw; Mediabunny's own region draw costs over 100 ms a frame. Rotated or flipped sources take the slow, correct path.
             if (s.rotation === 0 && !s.flip) { const vf = s.toVideoFrame(); c.drawImage(vf, rc.sx, rc.sy, rc.sw, rc.sh, 0, 0, W, H); if (vf !== (s as any)._data) vf.close(); } else s.draw(c, rc.sx, rc.sy, rc.sw, rc.sh, 0, 0, W, H); },
-          paintOver: (c, W, H) => { if (!licensed) mark(c, W, H); },
           onProgress: (d, tot) => { say(`Writing your video. ${Math.round(d)} of ${Math.round(tot)} s.`); dbg.exportTrace.push([+d.toFixed(1), Math.round(performance.now() - t0)]); }, opts: { ...(typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported("video/mp4;codecs=avc1,mp4a.40.2") ? {} : { minSpeed: 0 }), ...(dbg.fastOpts ?? {}) } });
         saved = r; dbg.exportPath = "webcodecs"; dbg.exportCodec = r.codec; dbg.exportAudio = r.audio; dbg.exportFrames = r.frames; dbg.exportTiming = r.timing; dbg.exportSize = [r.width, r.height];
       } catch (e: any) { dbg.fastSaveError = String(e?.message ?? e); if (e?.timing) dbg.exportTiming = e.timing; } finally { fastSaving = false; }
@@ -207,11 +198,11 @@ async function exportVideo() {
       // The recorder writes in real time; a slow device loses frames. Say so, with the number read from the file itself.
       if (fps && fps < 20) lostFrames = ` This device kept about ${Math.round(fps)} frames a second, so the clip may look jerky. A shorter clip or a newer device keeps them all.`; }
     dbg.exportMs = performance.now() - t0; lastBlob = saved.blob; lastName = `${outputBase(currentFile.name)}-vertical.${saved.ext}`; dbg.exportBytes = lastBlob.size; say("");
-    if (DEBUG) { const secs = Math.min(video.duration || 0, limit()); const x = secs ? (secs / (dbg.exportMs / 1000)).toFixed(1) : "?"; const t = dbg.exportTiming ? ` draw ${dbg.exportTiming.draw} ms, encode ${dbg.exportTiming.encode} ms, decode ${dbg.exportTiming.decode} ms` : ""; $("rmark").insertAdjacentText("beforebegin", `Debug: ${dbg.exportPath === "webcodecs" ? "fast save" : "recorded"} ${x}× real time (${(dbg.exportMs / 1000).toFixed(1)} s for ${Math.round(secs)} s), ${dbg.exportCodec ?? ""} ${dbg.exportAudio ?? ""};${t}${dbg.fastSaveError ? "; fast save gave up: " + dbg.fastSaveError : ""}; tracker ${dbg.detector ?? "?"} ${dbg.scanMs ? Math.round(dbg.scanMs / 1000) + " s" : ""}. `); }
+    if (DEBUG) { const secs = Math.min(video.duration || 0, LIMIT_S); const x = secs ? (secs / (dbg.exportMs / 1000)).toFixed(1) : "?"; const t = dbg.exportTiming ? ` draw ${dbg.exportTiming.draw} ms, encode ${dbg.exportTiming.encode} ms, decode ${dbg.exportTiming.decode} ms` : ""; $("rline").insertAdjacentText("afterend", `Debug: ${dbg.exportPath === "webcodecs" ? "fast save" : "recorded"} ${x}× real time (${(dbg.exportMs / 1000).toFixed(1)} s for ${Math.round(secs)} s), ${dbg.exportCodec ?? ""} ${dbg.exportAudio ?? ""};${t}${dbg.fastSaveError ? "; fast save gave up: " + dbg.fastSaveError : ""}; tracker ${dbg.detector ?? "?"} ${dbg.scanMs ? Math.round(dbg.scanMs / 1000) + " s" : ""}. `); }
     const size = `${(lastBlob.size / 1e6).toFixed(1)} MB`;
     if (phoneShare(lastBlob, lastName)) { $("rtitle").textContent = "Your video is ready"; $("rline").textContent = `${size}. Save it to Photos or send it straight to the app you post from.` + lostFrames; share.hidden = false; share.textContent = "Save to Photos / share"; share.className = "btn hi"; again.textContent = "Download the file instead"; $("rios").hidden = true; }
     else { saveBlob(lastBlob, lastName); $("rtitle").textContent = "Saved"; $("rline").textContent = `${size}. Check your Downloads.` + lostFrames; share.hidden = true; again.textContent = "Save again"; $("rios").hidden = !isIOS; }
-    $("rmark").hidden = licensed; steps.classList.remove("on"); result.classList.add("on"); setState("exported"); if (video.paused) video.play().catch(() => {}); /* the clip plays again after a save, so no play icon covers the result */ showName($("rname"), lastName);
+    steps.classList.remove("on"); result.classList.add("on"); setState("exported"); if (video.paused) video.play().catch(() => {}); /* the clip plays again after a save, so no play icon covers the result */ showName($("rname"), lastName);
     result.scrollIntoView({ block: "nearest", behavior: "smooth" });
   } catch (e: any) { dbg.exportError = String(e); say("The video did not save. Reload the page and try again.", true); setState("ready"); }
 }
@@ -220,49 +211,7 @@ function saveBlob(b: Blob, name: string) { const a = document.createElement("a")
 again.addEventListener("click", (e) => { e.preventDefault(); if (lastBlob) saveBlob(lastBlob, lastName); });
 share.addEventListener("click", async () => { if (!lastBlob) return; try { await navigator.share({ files: [new File([lastBlob], lastName, { type: lastBlob.type })], title: "Vertical clip" }); } catch {} });
 
-// ---------- paid version: one key, checked by the unlock worker (src/lib/unlock.ts, the same file in all three tools) ----------
-const unlock = new Unlock({
-  tool: "vertical",
-  sandbox: SANDBOX,
-  paidLine: "No mark on your videos, and clips up to five minutes.",
-  render: (s: UnlockState) => paintLicense(s),
-});
-function paintLicense(s: UnlockState) {
-  licensed = s.on; dbg.licensed = s.on; dbg.unlockTools = s.tools;
-  $("keystatus").textContent = s.text; $("keystatus").className = "fine" + (s.tone ? " " + s.tone : "");
-  $("keyrow").hidden = s.on; $("buy").parentElement!.hidden = s.on; $("tag").hidden = s.on; $("pricefine").hidden = s.on; $("afterpay").hidden = s.on; $("paidpanel").hidden = !s.on;
-  // The key in full, so it can be carried to another device. Masking it protected nothing: it is the person's own
-  // key and it is in their email, and a masked key cannot be typed into a second device (cold user, 2026-09-20).
-  $("paidkey").textContent = s.key;
-  $("keylost").setAttribute("href", unlock.portal);
-  $("keylostline").hidden = s.on; // the paid panel shows the key itself, so this is for whoever is locked out
-  // A key that opens more than this tool says so, and the link carries it across in one click.
-  const others = unlock.elsewhere;
-  $("keyalso").hidden = others.length === 0;
-  if (others.length) $("keyalso").innerHTML = `This key also opens ${others.map((o) => `<a href="${o.href}">${o.name}</a>`).join(" and ")}.`;
-  trust.textContent = s.on ? "Up to five minutes. Nothing leaves your device." : "Free up to 60 seconds. Nothing leaves your device.";
-  // The checkout opens in its own tab, so a clip being worked on stays here (cold user, 2026-09-19). When the key
-  // arrives from that tab and a marked copy has already been saved, say so rather than leave a stale file believed good.
-  if (s.on && s.became === "another-tab" && state === "exported") { touched(); say("The paid version is on. Save the video again: the new copy has no mark.", "ok"); }
-  if (s.on && s.became === "checkout") $("keystatus").scrollIntoView({ block: "center", behavior: "smooth" });
-}
-// Removing the key wipes the only copy on this screen, so it asks first (cold user, 2026-09-21).
-$("removekey").addEventListener("click", (e) => { e.preventDefault(); if (confirm("Remove the key from this device? Copy it first if you have not: you will need it to unlock this device again.")) unlock.forget(); });
-$("keycopy").addEventListener("click", async (e) => {
-  e.preventDefault();
-  try { await navigator.clipboard.writeText(unlock.state.key); $("keycopy").textContent = "Copied"; }
-  catch { getSelection()?.selectAllChildren($("paidkey")); $("keycopy").textContent = "Select it and copy"; } // no clipboard permission: hand them the selection instead
-  setTimeout(() => ($("keycopy").textContent = "Copy"), 2500);
-});
-$("keygo").addEventListener("click", async () => { if (await unlock.paste($<HTMLInputElement>("key").value)) $<HTMLInputElement>("key").value = ""; });
-$("key").addEventListener("keydown", (e) => { if ((e as KeyboardEvent).key === "Enter") $("keygo").click(); });
-const loadLicense = () => unlock.start();
-(async () => { try { if (RAIL.product.startsWith("__")) return; const r = await fetch(`${UNLOCK}/count?product=${encodeURIComponent(RAIL.product)}`); const j = r.ok ? await r.json() : null; if (typeof j?.paid !== "number") return; const left = Math.max(0, 100 - j.paid); $("founding").textContent = left >= 100 ? "Founding price for the first 100 buyers, then $29." : left > 0 ? `Founding price for the first 100 buyers, then $29. ${left} left.` : "The founding price has ended: $29 once."; dbg.foundingLeft = left; } catch {} })();
-
 // ---------- for automations and agents ----------
-// For rigs that need the paid state without a rail: paints it, exactly as a real key would. It does not store a key,
-// so a reload goes back to whatever the device actually holds.
-dbg.setLicensed = (on: boolean) => paintLicense({ on, key: on ? SAMPLE_KEY.vertical : "", tools: on ? ["vertical"] : [], expires: null, text: on ? "Paid version on this device." : "Already paid? Paste your key here.", tone: on ? "ok" : "", became: "" });
 dbg.outputBase = outputBase;
 dbg.centreAt = (t: number) => centre(t); // where the window is at time t, the same answer the preview and the save use (the gate asks this)
 let probeTs = 0;

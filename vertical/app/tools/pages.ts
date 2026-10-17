@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 // pages.ts: the search pages of this tool, made from dist/index.html and pages/*.json.
 // One look, one fix: everything except the words listed below is copied from the home page byte for byte, so a change
-// to the home page (a price, a control, a style rule) reaches every page at the next build and none of them can drift.
+// to the home page (a control, a style rule) reaches every page at the next build and none of them can drift.
 // build.sh runs this AFTER the version stamps, so a generated page carries the same app.js and media stamps as the home
 // page without a second sed. Running it twice changes nothing: each page is a function of dist/index.html and its json.
 // Both tools carry the same copy of this file (tests/site.test.ts: "shared parts are the same file in every tool").
@@ -72,14 +72,11 @@ export function renderPage(index: string, page: Page): string {
   html = swap(html, /<h1>[\s\S]*?<\/h1>/, `<h1>${inline(page.h1)}</h1>`, "the headline");
   html = swap(html, /<p class="sub">[\s\S]*?<\/p>/, `<p class="sub">${esc(page.sub)}</p>`, "the line under the headline");
 
-  // everything under the key box, down to the footer: this page's own words. The price box, the pay steps and the key
-  // box above it stay as they are on the home page.
-  // The anchor is the LAST line of that block — the "lost your key" line, which sits under the box. It used to be
-  // the status line, and when the status line moved above the box (design review, 2026-09-21) this cut silently
-  // took the key box off every generated page. tests/pages.test.ts is what caught it.
-  const keyEnd = html.indexOf("</p>", html.indexOf(`<p class="fine" id="keylostline">`));
+  // everything under the support line, down to the footer: this page's own words. The sample, the main button and the
+  // support line above it stay as they are on the home page.
+  const keyEnd = html.indexOf("</p>", html.indexOf(`<p class="fine" id="support">`));
   const foot = html.indexOf(`<p class="foot">`);
-  if (keyEnd < 0 || foot < 0 || foot < keyEnd) throw new Error("pages.ts: the key box or the footer moved in dist/index.html");
+  if (keyEnd < 0 || foot < 0 || foot < keyEnd) throw new Error("pages.ts: the support line or the footer moved in dist/index.html");
   const I = "\n      ";
   const sections = [
     ...page.body.map((p) => `<p>${inline(p)}</p>`),

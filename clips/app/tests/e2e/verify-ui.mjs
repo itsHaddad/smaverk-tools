@@ -12,7 +12,6 @@ import { makeFixture } from "./fixture.mjs";
 
 const here = new URL(".", import.meta.url).pathname;
 const root = join(here, "..", "..");
-const PRICE = readFileSync(join(root, "app.ts"), "utf8").match(/export const PRICE = "(\$\d+)"/)?.[1] ?? "(no price constant)";
 const skillTool = [process.env.PAI_DIR, process.env.PAI_DIR && `${process.env.PAI_DIR}/..`, `${process.env.HOME}/.claude`].filter(Boolean).map((d) => `${d}/skills/Missions/Tools/uiaudit.mjs`).find((f) => existsSync(f));
 if (!skillTool) { console.error("uiaudit.mjs not found next to PAI_DIR or in ~/.claude/skills"); process.exit(1); }
 const { auditPage, judge } = await import(skillTool);
@@ -77,7 +76,9 @@ try {
   await taps("0-rest");
   {
     const t = await p.evaluate(() => { const el = document.getElementById("tag"), a = el.getBoundingClientRect(), brand = document.querySelector(".brand").getBoundingClientRect(); return { text: el.textContent, top: a.top, bottom: a.bottom, h: a.height, right: a.right, gap: a.left - brand.right, vw: innerWidth, vh: innerHeight }; });
-    check(t.top >= 0 && t.bottom <= t.vh && t.h >= 44 && t.gap >= 8 && t.right <= t.vw - 15 && t.text.includes(PRICE), `what it costs is on the first screen: "${t.text.trim()}"`);
+    check(t.top >= 0 && t.bottom <= t.vh && t.h >= 44 && t.gap >= 8 && t.right <= t.vw - 15 && t.text.trim() === "Free", `the header says it is free, on the first screen: "${t.text.trim()}"`);
+    const s = await p.evaluate(() => { const a = document.querySelector("#support a"), q = a?.getBoundingClientRect(); return { href: a?.href ?? "", h: q?.height ?? 0, newTab: a?.target === "_blank", gates: ["price", "buy", "keyrow", "paidpanel", "afterpay"].filter((id) => document.getElementById(id)), money: document.body.innerText.match(/\$\d+/g) ?? [] }; });
+    check(/^https:\/\/buy\.polar\.sh\//.test(s.href) && s.newTab && s.h >= 43.5 && !s.gates.length && !s.money.length, `Clips: the support link opens Polar in its own tab (${Math.round(s.h)} px); no price or key box (${s.gates.join(",") || "none"}; prices ${s.money.join(",") || "none"})`);
     const m = await p.evaluate(() => { const r = document.getElementById("action").getBoundingClientRect(), v = document.getElementById("reel").getBoundingClientRect(); return { below: Math.round(r.bottom - innerHeight), reelTop: Math.round(v.top), reelBottom: Math.round(v.bottom) }; });
     check(m.below <= 0, `the main button is on the first screen (${m.below <= 0 ? `${-m.below} px of room` : `${m.below} px below`}), the finished clip above it (${m.reelTop}–${m.reelBottom} px)`);
   }
@@ -191,8 +192,6 @@ try {
 } catch (e) {
   check(false, String(e?.stack ?? e?.message ?? e));
 } finally {
-  try { await p.evaluate(() => window.__clips.setLicensed(true)); await p.waitForTimeout(250); await snap("9-paid"); await p.evaluate(() => window.__clips.setLicensed(false)); }
-  catch (e) { check(false, `the paid panel could not be measured: ${String(e.message).slice(0, 110)}`); }
   writeFileSync(join(out, "unlock-overlaps.json"), JSON.stringify({ tool: "clips", states: overlaps }, null, 2));
   const clashes = overlaps.filter((o) => o.bad.length);
   check(!clashes.length, clashes.length ? `${clashes.length} state(s) with overlapping controls — see unlock-overlaps.json` : `no overlapping controls in ${overlaps.length} states`);

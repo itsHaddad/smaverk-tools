@@ -22,7 +22,7 @@ test("dist holds exactly the pages that pages/ names", () => {
   expect(made, "a generated page whose json is gone, or a json with no page").toEqual(pages.map((p) => `${p.slug}.html`).sort());
 });
 
-test("every search page carries the home page's version stamps, its styles and its price and key boxes", () => {
+test("every search page carries the home page's version stamps, its styles and its support line", () => {
   // build.sh stamps dist/index.html and then generates; a page built the other way round would serve a stale script.
   const stamp = index.match(/src="app\.js\?v=(\d+)"/)?.[1];
   expect(stamp, "the home page is stamped").toBeTruthy();
@@ -32,8 +32,8 @@ test("every search page carries the home page's version stamps, its styles and i
     expect(html, `${p.slug}: the script stamp`).toContain(`src="app.js?v=${stamp}"`);
     expect([...html.matchAll(/(sample\.mp4|poster\.(?:jpg|webp)|sample-words\.json)\?v=(\d+)/g)].map((m) => m[0]).sort(), `${p.slug}: the media stamps`).toEqual(media);
     expect(styles(html), `${p.slug}: one look with the home page`).toBe(styles(index));
-    expect(html, `${p.slug}: the price box`).toContain('<div class="price" id="price">');
-    expect(html, `${p.slug}: the key box`).toContain('<div class="key" id="keyrow">');
+    expect(html, `${p.slug}: the support line`).toContain('<p class="fine" id="support">');
+    expect(html, `${p.slug}: no price box or key box`).not.toMatch(/id="(price|keyrow|buy)"/);
     expect(html, `${p.slug}: the sample and the main button`).toContain('<button class="btn primary" id="action">');
   }
 });

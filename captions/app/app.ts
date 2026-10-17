@@ -6,21 +6,15 @@ import { outputBase, fitName } from "./src/lib/naming";
 import { toMono16k, estimateFactor } from "./src/lib/audio";
 import { fastSave, canFastSave, savedFps } from "./src/fastsave";
 import { attachSeek } from "./src/seek";
-import { Unlock, SAMPLE_KEY, type UnlockState } from "./src/lib/unlock";
-import { drawCaption, drawMark, FONT, type Style } from "./src/draw";
+import { drawCaption, FONT, type Style } from "./src/draw";
 type State = "sample" | "loaded" | "working" | "captioned" | "exporting" | "exported";
 
 // Sample files are fetched under the page's version (app.js?v=…), so a replaced sample reaches visitors at once: Cloudflare's edge
 // kept serving a year-old "immutable" sample.mp4 after it was replaced (2026-09-18).
 const ASSET_V = (() => { try { return new URL(import.meta.url).search; } catch { return ""; } })();
-const SANDBOX = new URLSearchParams(location.search).get("rail") === "sandbox";
-const RAIL = SANDBOX
-  ? { link: "https://sandbox-api.polar.sh/v1/checkout-links/polar_cl_cr0egFs5EiYRoVHF9bm5AZghunw0Lnoe43szJ0ptTkQ/redirect" }
-  : { link: "https://buy.polar.sh/polar_cl_EmfkZumlwFomZ7kIizVE6Xh0WnY0AEmn8LaS10NaemR" };
-if (RAIL.link) for (const id of ["buy", "rbuy"]) (document.getElementById(id) as HTMLAnchorElement).href = RAIL.link; // the price box and the Saved box open the same checkout
-const UNLOCK = "https://unlock.smaverk.com"; // the unlock worker: the only address this page knows about keys
 const DEBUG = new URLSearchParams(location.search).has("debug");
-const limit = () => (licensed ? 300 : 60); // seconds: free 60, paid 300
+// Five minutes for everyone (free since 2026-10-17): the most a phone tab holds today (the clip-length measurement, 2026-09-19).
+const LIMIT_S = 300;
 let capY: number | null = null; // where the person dragged the captions to (0 = top, 1 = bottom); null = the style's default
 let capX: number | null = null; // sideways position of the caption centre (0 = left, 1 = right); null = centred
 
@@ -33,7 +27,7 @@ const seek = $<HTMLInputElement>("seek"); attachSeek(seek, $("seekbar"), video);
 const chips = [...document.querySelectorAll<HTMLButtonElement>(".chip")];
 const ctx = canvas.getContext("2d")!;
 
-let words: Word[] = [], state: State = "sample", style: Style = "bar", currentFile: File | null = null, asr: any = null, licensed = false;
+let words: Word[] = [], state: State = "sample", style: Style = "bar", currentFile: File | null = null, asr: any = null;
 let sampleWords: Word[] = []; let chipsDrawn = false; let lastBlob: Blob | null = null; let lastName = "";
 const dbg: any = ((window as any).__cap = { words: [] as Word[] });
 const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
@@ -61,7 +55,6 @@ const say = (t: string, tone: boolean | "ok" = false) => { status.textContent = 
   words = sampleWords; dbg.words = words;
   video.src = "sample.mp4" + ASSET_V; video.muted = true; video.loop = true;
   video.play().catch(() => {});
-  loadLicense();
 })();
 
 video.addEventListener("loadedmetadata", () => {
@@ -82,14 +75,13 @@ video.addEventListener("ended", () => stage.classList.remove("playing"));
 sound.addEventListener("click", () => { video.muted = !video.muted; sound.setAttribute("aria-pressed", String(!video.muted)); soundtxt.textContent = video.muted ? "Sound off" : "Sound on"; sound.setAttribute("aria-label", video.muted ? "Sound is off. Turn it on" : "Sound is on. Turn it off"); if (video.paused) video.play().catch(() => {}); });
 
 // ---------- drawing ----------
-// The caption and the mark are drawn by src/draw.ts, which Clips uses too, so a caption looks the same in both tools.
+// The caption is drawn by src/draw.ts, which Clips uses too, so a caption looks the same in both tools.
 let lines: Line[] = []; let linesFor: Word[] | null = null; let linesLen = 0;
 function lineAt(t: number, span = 6) { if (linesFor !== words || linesLen !== words.length) { lines = buildLines(words); linesFor = words; linesLen = words.length; } return lineAtIn(lines, t, span); }
 function relines() { linesFor = null; }
-function paint(c: CanvasRenderingContext2D, W: number, H: number, t: number, st: Style, mark: boolean, source: CanvasImageSource | null, thumb = false, keep = false) {
+function paint(c: CanvasRenderingContext2D, W: number, H: number, t: number, st: Style, source: CanvasImageSource | null, thumb = false, keep = false) {
   if (!keep) c.clearRect(0, 0, W, H); if (source) c.drawImage(source, 0, 0, W, H);
   drawCaption(c, W, H, lineAt(t, thumb ? 3 : 6), st, { x: capX, y: capY }, thumb);
-  if (mark) drawMark(c, W, H);
 }
 
 function drawChips() {
@@ -98,13 +90,13 @@ function drawChips() {
   for (const ch of chips) { const cv = ch.querySelector("canvas")!; const cc = cv.getContext("2d")!; const W = cv.width, H = cv.height;
     cc.save(); const ar = video.videoWidth / video.videoHeight; const sw = ar > W / H ? video.videoHeight * (W / H) : video.videoWidth; const sh = ar > W / H ? video.videoHeight : video.videoWidth / (W / H);
     cc.drawImage(video, (video.videoWidth - sw) / 2, (video.videoHeight - sh) / 2, sw, sh, 0, 0, W, H); cc.restore();
-    words = saved; paint(cc, W, H, (w.start + w.end) / 2, ch.dataset.style as Style, false, null, true);
+    words = saved; paint(cc, W, H, (w.start + w.end) / 2, ch.dataset.style as Style, null, true);
   }
   chipsDrawn = true;
 }
 let markTick = 0;
 let fastSaving = false; // the stage stays as it is during the fast save so the encoder has the whole CPU; the recorder fallback needs the repaint
-(function loop() { if (video.readyState >= 2 && !fastSaving) { paint(ctx, canvas.width, canvas.height, video.currentTime, style, !licensed, video); if (!chipsDrawn && video.currentTime > 0.3 && words.length) drawChips(); if (!wordlist.hidden && ++markTick % 10 === 0) markLine(); } requestAnimationFrame(loop); })(); // the stage stays as it is while a save runs, so the encoder has the whole CPU
+(function loop() { if (video.readyState >= 2 && !fastSaving) { paint(ctx, canvas.width, canvas.height, video.currentTime, style, video); if (!chipsDrawn && video.currentTime > 0.3 && words.length) drawChips(); if (!wordlist.hidden && ++markTick % 10 === 0) markLine(); } requestAnimationFrame(loop); })(); // the stage stays as it is while a save runs, so the encoder has the whole CPU
 document.fonts?.load(`800 40px ${FONT}`).then(() => { chipsDrawn = false; }).catch(() => {});
 
 // Fixing a misheard word: the list under the stage is editable; timings stay, an emptied word is dropped.
@@ -140,7 +132,7 @@ function load(f: File) {
   showName(clipname, f.name); poster.hidden = true; steps.classList.remove("on");
   video.onloadedmetadata = () => { canvas.width = video.videoWidth || 720; canvas.height = video.videoHeight || 1280; stage.style.setProperty("--ar", String((video.videoWidth || 9) / (video.videoHeight || 16)));
     const d = video.duration; const first = engineReady || engineCached ? "" : " First time here: the tool downloads to your device once (about 45 MB) and stays. Nothing goes the other way.";
-    if (isFinite(d) && d > limit() + 1) say(licensed ? `That clip is longer than five minutes, so this captions the first five.` + first : `That clip is longer than 60 seconds, so this captions the first minute. The paid version takes up to five minutes.` + first); else say((isFinite(d) ? `${Math.round(d)}-second clip loaded.` : "Clip loaded.") + first); };
+    if (isFinite(d) && d > LIMIT_S + 1) say(`That clip is longer than five minutes, so this captions the first five.` + first); else say((isFinite(d) ? `${Math.round(d)}-second clip loaded.` : "Clip loaded.") + first); };
   video.onerror = () => say("That file could not be opened. Try an mp4 or mov from your camera roll.", true);
   setState("loaded");
 }
@@ -199,7 +191,7 @@ async function remuxAudioOnly(f: File): Promise<ArrayBuffer> {
   if (!buf) throw new Error("remux produced nothing"); return buf;
 }
 async function decodeAudio(f: File): Promise<Float32Array> {
-  const max = limit(); const tried: string[] = [];
+  const max = LIMIT_S; const tried: string[] = [];
   try { const a = await decodeViaWebCodecs(f, max); dbg.decode = "webcodecs"; return a; } catch (e: any) { tried.push("webcodecs: " + (e?.message ?? e)); }
   const data = await f.arrayBuffer();
   try { const a = await decodeViaAudioContext(data, max); dbg.decode = "decodeAudioData"; return a; } catch (e: any) { tried.push("decodeAudioData: " + (e?.name ?? "") + " " + (e?.message ?? e)); }
@@ -302,7 +294,7 @@ async function recordSave(): Promise<{ blob: Blob; ext: string }> {
   const chunks: Blob[] = []; rec.ondataavailable = (e) => e.data.size && chunks.push(e.data);
   const done = new Promise<void>((res) => (rec.onstop = () => res()));
   video.pause(); video.currentTime = 0; await new Promise((r) => (video.onseeked = r));
-  const total = Math.min(video.duration, limit()); const wasMuted = video.muted; video.muted = false;
+  const total = Math.min(video.duration, LIMIT_S); const wasMuted = video.muted; video.muted = false;
   rec.start(250); await video.play();
   const tick = setInterval(() => say(`Writing your video. About ${Math.max(0, Math.ceil(total - video.currentTime))} s left.`), 500);
   try { await new Promise<void>((res) => { const end = () => { if (video.ended || video.currentTime >= total) res(); else requestAnimationFrame(end); }; end(); }); }
@@ -317,7 +309,7 @@ async function exportVideo() {
     if (canFastSave()) {
       try {
         video.pause(); say("Writing your video."); fastSaving = true;
-        const r = await fastSave(currentFile, limit(), (c, W, H, t) => paint(c, W, H, t, style, !licensed, null, false, true), (d, tot) => { say(`Writing your video. ${Math.round(d)} of ${Math.round(tot)} s.`); dbg.exportTrace.push([+d.toFixed(1), Math.round(performance.now() - t0)]); }, dbg.fastOpts ?? {});
+        const r = await fastSave(currentFile, LIMIT_S, (c, W, H, t) => paint(c, W, H, t, style, null, false, true), (d, tot) => { say(`Writing your video. ${Math.round(d)} of ${Math.round(tot)} s.`); dbg.exportTrace.push([+d.toFixed(1), Math.round(performance.now() - t0)]); }, dbg.fastOpts ?? {});
         saved = r; dbg.exportPath = "webcodecs"; dbg.exportCodec = r.codec; dbg.exportAudio = r.audio; dbg.exportFrames = r.frames; dbg.exportTiming = r.timing;
       } catch (e: any) { dbg.fastSaveError = String(e?.message ?? e); if (e?.timing) dbg.exportTiming = e.timing; } finally { fastSaving = false; }
     }
@@ -328,7 +320,7 @@ async function exportVideo() {
     lastBlob = saved.blob; lastName = `${outputBase(currentFile.name)}-captions.${saved.ext}`;
     dbg.exportBytes = lastBlob.size; say("");
     // ?debug on the URL: one plain line about how the save ran, for checking a real phone without developer tools.
-    if (DEBUG) { const secs = Math.min(video.duration || 0, limit()); const x = secs ? (secs / (dbg.exportMs / 1000)).toFixed(1) : "?"; const t = dbg.exportTiming ? ` draw ${dbg.exportTiming.draw} ms, encode ${dbg.exportTiming.encode} ms, decode ${dbg.exportTiming.decode} ms` : ""; $("rmark").insertAdjacentText("beforebegin", `Debug: ${dbg.exportPath === "webcodecs" ? "fast save" : "recorded"} ${x}× real time (${(dbg.exportMs / 1000).toFixed(1)} s for ${Math.round(secs)} s), ${dbg.exportCodec ?? ""} ${dbg.exportAudio ?? ""};${t}${dbg.fastSaveError ? "; fast save gave up: " + dbg.fastSaveError : ""}; engine ${dbg.device ?? "?"} ${dbg.ms ? Math.round(dbg.ms / 1000) + " s" : ""}. `); }
+    if (DEBUG) { const secs = Math.min(video.duration || 0, LIMIT_S); const x = secs ? (secs / (dbg.exportMs / 1000)).toFixed(1) : "?"; const t = dbg.exportTiming ? ` draw ${dbg.exportTiming.draw} ms, encode ${dbg.exportTiming.encode} ms, decode ${dbg.exportTiming.decode} ms` : ""; $("rline").insertAdjacentText("afterend", `Debug: ${dbg.exportPath === "webcodecs" ? "fast save" : "recorded"} ${x}× real time (${(dbg.exportMs / 1000).toFixed(1)} s for ${Math.round(secs)} s), ${dbg.exportCodec ?? ""} ${dbg.exportAudio ?? ""};${t}${dbg.fastSaveError ? "; fast save gave up: " + dbg.fastSaveError : ""}; engine ${dbg.device ?? "?"} ${dbg.ms ? Math.round(dbg.ms / 1000) + " s" : ""}. `); }
     const size = `${(lastBlob.size / 1e6).toFixed(1)} MB`;
     if (phoneShare(lastBlob, lastName)) {
       // On a phone the share sheet puts the clip in Photos or straight into the app; Downloads is the wrong place.
@@ -339,7 +331,6 @@ async function exportVideo() {
       $("rtitle").textContent = "Saved"; $("rline").textContent = `${size}. Check your Downloads.` + lostFrames;
       share.hidden = true; again.textContent = "Save again"; $("rios").hidden = !isIOS;
     }
-    $("rmark").hidden = licensed;
     steps.classList.remove("on"); result.classList.add("on"); setState("exported"); if (video.paused) video.play().catch(() => {}); /* the clip plays again after a save, so no play icon covers the result */
     showName($("rname"), lastName); // once the card is visible, so the name is fitted to the card's real width; the ending stays readable
     result.scrollIntoView({ block: "nearest", behavior: "smooth" });
@@ -352,54 +343,7 @@ function saveBlob(b: Blob, name: string) { const a = document.createElement("a")
 again.addEventListener("click", (e) => { e.preventDefault(); if (lastBlob) saveBlob(lastBlob, lastName); });
 share.addEventListener("click", async () => { if (!lastBlob) return; try { await navigator.share({ files: [new File([lastBlob], lastName, { type: lastBlob.type })], title: "Captioned clip" }); } catch {} });
 
-// ---------- paid version: one key, checked by the unlock worker (src/lib/unlock.ts, the same file in all three tools) ----------
-const unlock = new Unlock({
-  tool: "captions",
-  sandbox: SANDBOX,
-  paidLine: "No mark on your videos, and clips up to five minutes.",
-  render: (s: UnlockState) => paintLicense(s),
-});
-function paintLicense(s: UnlockState) {
-  licensed = s.on; dbg.licensed = s.on; dbg.unlockTools = s.tools;
-  $("keystatus").textContent = s.text; $("keystatus").className = "fine" + (s.tone ? " " + s.tone : "");
-  $("keyrow").hidden = s.on; $("buy").parentElement!.hidden = s.on; $("tag").hidden = s.on; $("pricefine").hidden = s.on; $("afterpay").hidden = s.on; $("paidpanel").hidden = !s.on;
-  // The key in full, so it can be carried to another device. Masking it protected nothing: it is the person's own
-  // key and it is in their email, and a masked key cannot be typed into a second device (cold user, 2026-09-20).
-  $("paidkey").textContent = s.key;
-  $("keylost").setAttribute("href", unlock.portal);
-  $("keylostline").hidden = s.on; // the paid panel shows the key itself, so this is for whoever is locked out
-  // A key that opens more than this tool says so, and the link carries it across in one click.
-  const others = unlock.elsewhere;
-  $("keyalso").hidden = others.length === 0;
-  if (others.length) $("keyalso").innerHTML = `This key also opens ${others.map((o) => `<a href="${o.href}">${o.name}</a>`).join(" and ")}.`;
-  trust.textContent = s.on ? "Up to five minutes. English. Nothing leaves your device." : "Free up to 60 seconds. English. Nothing leaves your device.";
-  // The checkout opens in its own tab, so a clip being worked on stays here (cold user, 2026-09-19). When the key
-  // arrives from that tab and a marked copy has already been saved, say so rather than leave a stale file believed good.
-  if (s.on && s.became === "another-tab" && state === "exported") { touched(); say("The paid version is on. Save the video again: the new copy has no mark.", "ok"); }
-  if (s.on && s.became === "checkout") $("keystatus").scrollIntoView({ block: "center", behavior: "smooth" });
-}
-// Removing the key wipes the only copy on this screen, so it asks first (cold user, 2026-09-21).
-$("removekey").addEventListener("click", (e) => { e.preventDefault(); if (confirm("Remove the key from this device? Copy it first if you have not: you will need it to unlock this device again.")) unlock.forget(); });
-$("keycopy").addEventListener("click", async (e) => {
-  e.preventDefault();
-  try { await navigator.clipboard.writeText(unlock.state.key); $("keycopy").textContent = "Copied"; }
-  catch { getSelection()?.selectAllChildren($("paidkey")); $("keycopy").textContent = "Select it and copy"; } // no clipboard permission: hand them the selection instead
-  setTimeout(() => ($("keycopy").textContent = "Copy"), 2500);
-});
-$("keygo").addEventListener("click", async () => { if (await unlock.paste($<HTMLInputElement>("key").value)) $<HTMLInputElement>("key").value = ""; });
-$("key").addEventListener("keydown", (e) => { if ((e as KeyboardEvent).key === "Enter") $("keygo").click(); });
-const loadLicense = () => unlock.start();
-
-// ---------- founding offer: $19 for the first 100 buyers, counted from real orders ----------
-(async () => {
-  try { const r = await fetch(`${UNLOCK}/count`); const j = r.ok ? await r.json() : null; if (typeof j?.paid !== "number") return;
-    const left = Math.max(0, 100 - j.paid); $("founding").textContent = left >= 100 ? "Founding price for the first 100 buyers." : left > 0 ? `Founding price for the first 100 buyers. ${left} left.` : "Founding price ended; the price goes up on the next batch."; dbg.foundingLeft = left; } catch {}
-})();
-
 // ---------- for automations ----------
-// For rigs that need the paid state without a rail: paints it, exactly as a real key would. It does not store a key,
-// so a reload goes back to whatever the device actually holds.
-dbg.setLicensed = (on: boolean) => paintLicense({ on, key: on ? SAMPLE_KEY.captions : "", tools: on ? ["captions"] : [], expires: null, text: on ? "Paid version on this device." : "Already paid? Paste your key here.", tone: on ? "ok" : "", became: "" });
 (window as any).captions = {
   load: (f: File) => load(f), run, export: exportVideo, style: pickStyle,
   get words() { return words; }, get state() { return state; },

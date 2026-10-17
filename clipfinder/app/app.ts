@@ -1,64 +1,18 @@
 // app.ts: everything the person sees and touches. The reading itself happens in worker.ts.
 //
 // The page has one job and shows it at rest: a real recording, already read, with the moments it found.
-// Nothing here uploads anything. The only addresses this file knows are the checkout and the page's own
-// files; the key check lives in src/lib/unlock.ts, which every Småverk tool shares.
+// Nothing here uploads anything. The only addresses this file knows are the page's own files.
 
 import { FORMATS, type ExportMedia, type ExportMoment, type Format } from "./src/lib/exports";
 import { clock, spoken, displayName, outputName, timelineName } from "./src/lib/naming";
 import { tidyStored } from "./src/lib/rank";
-import { mustPay, priceCopy, readLimitS, TRIAL_COPY } from "./src/lib/pricing";
 import { pickScheme } from "./src/lib/theme";
 import { nothingFoundLine } from "./src/lib/advice";
-import { Unlock, SAMPLE_KEY, type UnlockState } from "./src/lib/unlock";
 
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
-const SANDBOX = new URL(location.href).searchParams.get("rail") === "sandbox";
-const RAIL = SANDBOX
-  ? { product: "af85b197-a67c-42cf-9f69-daabad01debf", link: "https://sandbox-api.polar.sh/v1/checkout-links/polar_cl_dDfF99RbC2SQYgy850ft0RluXsfNUTSrLrFYx0lpn9e/redirect" }
-  : { product: "04316d81-3ff4-4aba-93e0-3b8b420db085", link: "https://buy.polar.sh/polar_cl_CeiGjaPBZWG6oU9e66wtcNieFV1SNBNgwRqmZ4G9X4L" };
 
-/**
- * The price, in one place.
- *
- * It is the owner's number and nobody else's, so it is a single constant rather than a string scattered
- * through the page, and `tests/site.test.ts` fails if a number ever appears on the page that is not
- * this one. Set 2026-09-22 from the evidence (clipfinder ledger): rivals $14–15 a month, buyers said $19–30, the studio band $19–29.
- */
-export const PRICE = "$29";
-
-/**
- * Free while it is new ran from launch (2026-09-21) to 2026-09-22, when the owner set the price. The free
- * version is the 30-minute one again. Turning the trial back on is this one line; the trial's copy stays in
- * `src/lib/pricing.ts`, tested, so it cannot rot while it is off.
- */
-const TRIAL = false;
-
-/** Free reads half an hour. Paid, and the trial, read four. One place decides, so the page and the worker cannot disagree. */
-const FREE_S = 30 * 60;
-const PAID_S = 4 * 3600;
-let licensed = false;
-const limit = () => readLimitS(TRIAL, licensed, FREE_S, PAID_S);
-
-if (!RAIL.link.startsWith("__")) ($("buy") as HTMLAnchorElement).href = RAIL.link;
-
-/** While there is a price, the page states it — every sentence of it written in one place. */
-function showPrice(price: string) {
-  const copy = priceCopy(price);
-  $("tag").innerHTML = `Free ·<b>${price} once</b>`;
-  $("amount").textContent = copy.amount;
-  $("per").textContent = copy.per;
-  // The line under the main button is the one a visitor actually reads before picking a file, so it states
-  // the limit in force. The find gate failed on this: the paid rail was still saying the free one's sentence.
-  $("trust").textContent = copy.trust;
-  $("paytrust").textContent = "Refund within 14 days.";
-  $("afterpay").hidden = false;
-  const buy = $<HTMLAnchorElement>("buy");
-  buy.hidden = false;
-  buy.textContent = copy.buy;
-  buy.setAttribute("aria-label", `${copy.buy} (opens the checkout in a new tab)`);
-}
-if (!TRIAL) showPrice(PRICE);
+/** Every recording is read up to four hours, for everyone (free since 2026-10-17). One place decides, so the page and the worker cannot disagree. */
+const LIMIT_S = 4 * 3600;
 
 // ---------------------------------------------------------------------------------------------
 // What is on screen
@@ -116,7 +70,6 @@ const mark = () => {
   dbg.heardS = heardS;
   dbg.totalS = totalS;
   dbg.current = current;
-  dbg.licensed = licensed;
   dbg.list = moments.map((m) => ({ startS: m.startS, endS: m.endS, why: m.why }));
 };
 
@@ -471,7 +424,7 @@ function onWorker(m: any) {
       media.fps = m.fps || 30;
     }
     if (m.limitS && totalS > m.limitS + 1)
-      say(limit() === PAID_S ? `That recording is longer than four hours, so this reads the first four.` : `That recording is longer than 30 minutes, so this reads the first 30. The paid version reads four hours.`);
+      say(`That recording is longer than four hours, so this reads the first four.`);
     drawMap();
   } else if (m.type === "reading") {
     heardS = m.heardS;
@@ -518,7 +471,7 @@ function finish(m: any) {
     $("s3t").textContent = `${moments.length} moment${moments.length === 1 ? "" : "s"} found`;
     // The truncation notice was shown when the file was opened and then written over by this line, so a
     // free visitor reached the end believing the whole recording had been read.
-    const cut = m.truncated ? ` Only the first ${spoken(m.heardS)} of ${spoken(m.durationS)} was read${limit() === PAID_S ? "" : "; the paid version reads four hours"}.` : "";
+    const cut = m.truncated ? ` Only the first ${spoken(m.heardS)} of ${spoken(m.durationS)} was read.` : "";
     // A short recording cannot hold a clip of the length asked for — the reading caps the target at a
     // quarter of the recording — and the line under the buttons says moments come back at that length or
     // longer. So when the recording is what decided, the page says so instead of quietly breaking its own
@@ -582,7 +535,7 @@ $("file").addEventListener("change", async (e) => {
   $("s3t").textContent = "Done";
   say("Nothing is uploaded. This all happens on your device.");
   warm();
-  engine().postMessage({ type: "run", file: picked, wantedS: targetS, maxSeconds: limit(), count: 8 });
+  engine().postMessage({ type: "run", file: picked, wantedS: targetS, maxSeconds: LIMIT_S, count: 8 });
 });
 
 $("reset").addEventListener("click", () => {
@@ -628,7 +581,7 @@ for (const chip of document.querySelectorAll<HTMLButtonElement>(".chip")) {
       step(3, "");
       $("s3t").textContent = "Done";
       say(`Reading it again for ${spoken(targetS)} clips. The moments you had are gone until it is done.`);
-      engine().postMessage({ type: "run", file, wantedS: targetS, maxSeconds: limit(), count: 8 });
+      engine().postMessage({ type: "run", file, wantedS: targetS, maxSeconds: LIMIT_S, count: 8 });
     }
   });
 }
@@ -655,21 +608,10 @@ function showResult(title: string, name: string, line: string) {
   $("result").classList.add("on");
 }
 
-function needsPaying(): boolean {
-  if (!mustPay(TRIAL, licensed)) return false;
-  say(`Saving is the paid half. ${PRICE} once, and every export is open.`, "");
-  $("exporthint").textContent = `Saving is the paid half: ${PRICE} once. The price and the key box are just below.`;
-  $("pricefine").textContent = priceCopy(PRICE).fine;
-  // The price and the key box are both on the page, never behind a fold-out: a paying customer who is told the
-  // price and then has to hunt for where the key goes is the finding that reached a real buyer (cold user, 2026-09-19).
-  $("price").scrollIntoView({ block: "center", behavior: "smooth" });
-  return true;
-}
 
 $("exportbox").addEventListener("click", async (e) => {
   const btn = (e.target as HTMLElement).closest<HTMLButtonElement>("[data-save]");
   if (!btn || !media || !moments.length) return;
-  if (needsPaying()) return;
   const kind = btn.dataset.save!;
   const all: ExportMoment[] = moments.map((m) => ({ startS: m.startS, endS: m.endS, why: m.why, opening: m.opening }));
   if (kind === "clip") {
@@ -708,85 +650,6 @@ async function saveClip(i: number) {
   }
 }
 
-// ---------------------------------------------------------------------------------------------
-// The paid version: one key, checked by the unlock worker.
-//
-// src/lib/unlock.ts is the same file in all three tools, so what a key does here is what it does in
-// Captions and Vertical. A key opens whatever it is entitled to: one tool today, several the day a
-// bundle is sold, and the page needs no change for that.
-// ---------------------------------------------------------------------------------------------
-
-const unlock = new Unlock({
-  tool: "clipfinder",
-  sandbox: SANDBOX,
-  paidLine: "Recordings up to four hours, and every export.",
-  render: (s: UnlockState) => paintLicense(s),
-});
-
-function paintLicense(s: UnlockState) {
-  licensed = s.on;
-  dbg.licensed = s.on;
-  dbg.unlockTools = s.tools;
-  $("keystatus").textContent = s.text;
-  $("keystatus").className = "fine" + (s.tone ? " " + s.tone : "");
-  $("keyrow").hidden = s.on;
-  // While it is free the block says so and stays: it is the price story, and hiding it would leave the
-  // first screen with nothing about what this costs.
-  $("price").hidden = s.on && !TRIAL;
-  $("tag").hidden = s.on && !TRIAL;
-  $("pricefine").hidden = s.on && !TRIAL;
-  $("paidpanel").hidden = !s.on || TRIAL;
-  $("trust").textContent = TRIAL ? TRIAL_COPY.trust : s.on ? "Up to four hours. English. Nothing leaves your device." : priceCopy(PRICE).trust;
-  // The key in full, so it can be carried to another device. Masking it protected nothing: it is the person's
-  // own key and it is in their email, and a masked key cannot be typed into a second device.
-  $("paidkey").textContent = s.key;
-  $("keylost").setAttribute("href", unlock.portal);
-  $("keylostline").hidden = s.on; // the paid panel shows the key itself, so this is for whoever is locked out
-  // A key that opens more than this tool says so, and the link carries it across in one click.
-  const others = unlock.elsewhere;
-  $("keyalso").hidden = others.length === 0;
-  if (others.length) $("keyalso").innerHTML = `This key also opens ${others.map((o) => `<a href="${o.href}">${o.name}</a>`).join(" and ")}.`;
-  mark();
-  // The checkout opens in its own tab so the recording being read stays here. When the key arrives from that
-  // tab, say so: the exports that were refused a moment ago are open now.
-  if (s.on && s.became === "another-tab") say("The paid version is on. Every export is open.", "ok");
-  if (s.on && s.became === "checkout") $("keystatus").scrollIntoView({ block: "center", behavior: "smooth" });
-}
-
-// Removing the key wipes the only copy on this screen, so it asks first (cold user, 2026-09-21).
-$("removekey").addEventListener("click", (e) => {
-  e.preventDefault();
-  if (confirm("Remove the key from this device? Copy it first if you have not: you will need it to unlock this device again.")) unlock.forget();
-});
-
-$("keycopy").addEventListener("click", async (e) => {
-  e.preventDefault();
-  try {
-    await navigator.clipboard.writeText(unlock.state.key);
-    $("keycopy").textContent = "Copied";
-  } catch {
-    // No clipboard permission in this browser: select it instead, so it can still be copied by hand.
-    getSelection()?.selectAllChildren($("paidkey"));
-    $("keycopy").textContent = "Select it and copy";
-  }
-  setTimeout(() => ($("keycopy").textContent = "Copy"), 2500);
-});
-
-$("keygo").addEventListener("click", async () => {
-  if (await unlock.paste($<HTMLInputElement>("key").value)) $<HTMLInputElement>("key").value = "";
-});
-$("key").addEventListener("keydown", (e) => {
-  if ((e as KeyboardEvent).key === "Enter") $("keygo").click();
-});
-
-// For rigs that need the paid state without a rail: paints it, exactly as a real key would. It does not store a
-// key, so a reload goes back to whatever the device actually holds. Captions and Vertical have had this; the
-// clip finder did not, and the phone UI gate went red reaching for it (2026-09-21).
-dbg.setLicensed = (on: boolean) =>
-  paintLicense({ on, key: on ? SAMPLE_KEY.clipfinder : "", tools: on ? ["clipfinder"] : [], expires: null, text: on ? "Paid version on this device." : "Already paid? Paste your key here.", tone: on ? "ok" : "", became: "" });
-
-// Nothing is sold while the tool is free, so nothing is checked or remembered about keys then.
-if (!TRIAL) void unlock.start();
 // ---------------------------------------------------------------------------------------------
 // Start
 // ---------------------------------------------------------------------------------------------

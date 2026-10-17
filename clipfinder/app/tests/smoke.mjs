@@ -50,7 +50,7 @@ try {
     const poster = stage && !stage.hidden ? document.getElementById("audio").getAttribute("poster") : "none needed";
     return {
       action: btn.textContent.trim(),
-      buy: document.getElementById("buy")?.getAttribute("href"),
+      support: document.querySelector("#support a")?.getAttribute("href"),
       below: Math.round(r.bottom - innerHeight),
       sideways: document.documentElement.scrollWidth > innerWidth + 1,
       words: (document.body.innerText ?? "").split(/\s+/).filter(Boolean).length,

@@ -1,6 +1,6 @@
 # Clips by Småverk
 
-> AI that turns a long recording into clips ready to post, on your device, in the page at https://clips.smaverk.com: it finds the moments, makes each one 9:16 with the speaker in frame, and writes the captions in. The recording is not uploaded. Free to find the moments and watch the clips, and to save one clip with a small smaverk.com mark. $49 once saves every clip, with no mark. There is no account. The same key also opens the three tools Clips is built from: Captions, Vertical and Clip finder.
+> AI that turns a long recording into clips ready to post, on your device, in the page at https://clips.smaverk.com: it finds the moments, makes each one 9:16 with the speaker in frame, and writes the captions in. The recording is not uploaded. Free: every clip saved, with no mark. There is no account.
 
 Clips is one of the tools by Småverk; https://smaverk.com lists them all. It runs the other three in a row: Clip finder finds the moments, Vertical frames them, Captions writes the words.
 
@@ -26,14 +26,14 @@ const made = await page.evaluate(() => window.__clips.made); // [{name, seconds,
 ```
 
 - `window.__clips.state` is `sample` / `reading` / `found` / `making` / `made`; `list` holds the moments, `made` the finished clips.
-- A paid key is applied by filling `#key` and clicking `#keygo`; it is kept in `localStorage` under `smaverk.key`, the same name in every Småverk tool. What a key opens is decided by `POST https://unlock.smaverk.com/entitlements` with `{key, rail}`, which answers `{status, tools, expires}`. Coming back from a checkout with `?checkout_id=…` unlocks the page by itself; nothing is pasted.
+- There is no key, account or paywall: everything is open to everyone. Each page links one optional support payment (`#support`, any amount, through Polar); it unlocks nothing.
 - The light/dark button (`#theme`) keeps the choice in a `smaverk-theme` cookie for `.smaverk.com` (and in `localStorage`), so it carries across the studio and every tool. It holds nothing else.
 
 ## The other tools
 - https://clipfinder.smaverk.com — the moments worth posting in a long recording, and timeline files for editing programs.
 - https://vertical.smaverk.com — a wide clip cut to 9:16 with the speaker in frame.
 - https://captions.smaverk.com — captions burned onto a short clip.
-- https://operator.smaverk.com — an AI camera operator on the device: pointed at a group, it picks the shot, moves in on each face, follows one person or cuts to whoever is talking, and gives the video with a still of every face. Free while it is a preview.
+- https://operator.smaverk.com — an AI camera operator on the device: pointed at a group, it picks the shot, moves in on each face, follows one person or cuts to whoever is talking, and gives the video with a still of every face. Every Småverk tool is free.
 
 ## Contact
 hello@smaverk.com
