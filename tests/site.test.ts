@@ -86,7 +86,10 @@ test("no permanence wording in the drafts the principal will paste (the > lines 
 
 test("Privacy and Terms links open the studio's own pages, from every page", () => {
   const bad: string[] = [];
-  for (const p of pages()) for (const m of read(p).matchAll(/href="([^"]*\b(privacy|terms)\b[^"]*)"/g)) if (!/^https:\/\/smaverk\.com\/(privacy|terms)$/.test(m[1]!)) bad.push(`${p}: ${m[1]}`);
+  // Maindesk keeps its own Terms and Privacy (A, 27 Oct 2026: the studio presents it); the studio's own two pages point
+  // a Maindesk reader there, and no other page may.
+  const own = (p: string, href: string) => /^https:\/\/smaverk\.com\/(privacy|terms)$/.test(href) || (LEGAL.includes(p) && /^https:\/\/maindesk\.smaverk\.com\/(privacy|terms)$/.test(href));
+  for (const p of pages()) for (const m of read(p).matchAll(/href="([^"]*\b(privacy|terms)\b[^"]*)"/g)) if (!own(p, m[1]!)) bad.push(`${p}: ${m[1]}`);
   expect(bad).toEqual([]);
   for (const l of LEGAL) { const h = read(l); expect(h).toContain(`<link rel="canonical" href="https://smaverk.com/`); for (const tool of ["Captions", "Vertical"]) expect(h).toContain(tool); }
 });
@@ -282,8 +285,10 @@ test("each page says it in one line: AI, on your device", () => {
     for (const f of search(s)) expect(read(`${s.dist}/${f}`).match(/<p class="sub">([^<]*)<\/p>/)?.[1], `${f} line under the headline`).toMatch(/^AI [^.]*on your device\./);
   }
   const studio = read(STUDIO);
-  expect(text(studio.match(/<h1>[\s\S]*?<\/h1>/)![0]).replace(/\s+/g, " ").trim()).toBe("Short videos for your socials, made on your device."); // studio cold user 4: say what they are for
-  expect(studio.match(/<title>([^<]*)<\/title>/)?.[1]).toMatch(/AI tools that run on your device/);
+  // A, 27 Oct 2026: the studio is Småverk's home for Maindesk and the video tools, so the headline covers both: the agent's
+  // own computers in the cloud, the tools on the visitor's device. The title names both (studio cold user 4: say what they are for).
+  expect(text(studio.match(/<h1>[\s\S]*?<\/h1>/)![0]).replace(/\s+/g, " ").replace(/ ,/g, ",").trim()).toBe("AI that works for you, in the cloud or on your device.");
+  expect(studio.match(/<title>([^<]*)<\/title>/)?.[1]).toMatch(/Maindesk and free AI video tools/);
 });
 
 test("the line under the main button is written once, in the page, and states the tool's limit", () => {
@@ -616,7 +621,8 @@ test("the studio lists every tool that is live, each one free", () => {
   const lines = [...studio.matchAll(/<p class="price">([^<]*)<\/p>/g)].map((m) => m[1]!);
   expect(lines, "one line per card, each starting Free").toEqual(["Free. It captions the first five minutes of a clip.", "Free. It works on the first five minutes of a clip.", "Free. It reads up to four hours of a recording.", "Free. Every clip saved.", "Free."]);
   expect(t, "nothing left from the paid or preview days").not.toMatch(/while it is (new|a preview)|pay once|\bonce:/i);
-  expect(text(studio.match(/<p class="sub">[\s\S]*?<\/p>/)![0]).trim()).toBe("Five free tools, one job each.");
+  // The tools sit under a heading of their own, after Maindesk (A, 27 Oct 2026), and it says they are free.
+  expect(studio, "the tools' own heading").toMatch(/<h2 id="tools-h">Free video tools<\/h2>\s*<section class="tools" aria-labelledby="tools-h">/);
   // The true claim for a tool that reads recordings, not the absolute.
   expect(t, "the clip finder's claim is about the recording").toContain("Your recording stays on your device");
   // Anything a machine reads must know about it too.
@@ -630,6 +636,40 @@ test("the studio lists every tool that is live, each one free", () => {
     if (!text(read(`${app}/app/dist/index.html`)).match(/\bEnglish\b/)) continue;
     expect(text(card), `the ${name} card carries the English limit its tool page states`).toMatch(/\bEnglish\b/);
   }
+});
+
+// A, 27 Oct 2026: "we need to update smaverk.com as well as it doesnt say anything about maindesk". Maindesk is Småverk's
+// paid service: the studio shows it first, says what it does for the person, links it with the studio's ?src tag as every
+// tool link is, and names no price (its own page shows its plans). Everything else that says what Småverk is names it too.
+test("the studio presents Maindesk first: what it does, one tagged link, no price; and every description of Småverk names it", () => {
+  const studio = read(STUDIO);
+  const md = studio.match(/<section class="md" aria-labelledby="md-h">([\s\S]*?)<\/section>/)?.[1] ?? "";
+  expect(md, "a Maindesk section").toBeTruthy();
+  expect(studio.indexOf('<section class="md"'), "Maindesk comes before the tools").toBeLessThan(studio.indexOf('<section class="tools"'));
+  expect(md).toContain('<h2 id="md-h">Maindesk</h2>');
+  const t = text(md).replace(/\s+/g, " ");
+  for (const f of [/its own computers/, /keeps working/]) expect(t, String(f)).toMatch(f);
+  const links = [...md.matchAll(/<a [^>]*href="([^"]+)"[^>]*>([^<]*)<\/a>/g)].map((m) => [m[1], m[2]]);
+  expect(links, "one link, tagged like the tool links").toEqual([["https://maindesk.smaverk.com/?src=studio", "Open Maindesk"]]);
+  expect(md, "the link is a button like the cards'").toContain('<a class="btn" href="https://maindesk.smaverk.com/?src=studio">Open Maindesk</a>');
+  // No price, and nothing that reads as free: the free wording belongs to the tools.
+  expect(t, "a price or free wording in the Maindesk section").not.toMatch(/\$|€|£|\bUSD\b|\bSEK\b|\bkr\b|a month|per month|\bfree\b|\btrial\b/i);
+  // Its picture is drawn, named for a screen reader, and still for visitors who asked for less motion.
+  expect(md).toMatch(/<div class="pic" role="img" aria-label="[^"]{40,}"><svg viewBox="0 0 320 180" aria-hidden="true">/);
+  expect(studio).toContain("@media(prefers-reduced-motion:reduce){.pic .bar,.pic .ping,.pic .flow{animation:none}}");
+  // The video tools' promises (free, no account, nothing uploaded) are said of the video tools, so none reads as Maindesk's.
+  expect(studio).toContain("<h2>Every video tool</h2>");
+  const meta = (p: string) => studio.match(new RegExp(`<meta (?:name|property)="${p}" content="([^"]*)"`))?.[1] ?? "";
+  const ld = JSON.parse(studio.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)![1]!).description as string;
+  for (const [where, v] of [["title", studio.match(/<title>([^<]*)<\/title>/)?.[1] ?? ""], ["description", meta("description")], ["og:title", meta("og:title")], ["og:description", meta("og:description")], ["twitter:title", meta("twitter:title")], ["twitter:description", meta("twitter:description")], ["JSON-LD", ld]] as const)
+    expect(v, `${where} names Maindesk`).toMatch(/Maindesk/);
+  expect(read(`${SITES.captions.dist}/llms.txt`), "smaverk.com/llms.txt (Captions' file) names Maindesk").toContain("https://maindesk.smaverk.com");
+  // The legal pages send a Maindesk reader to its own pages, and the support payment is the tools' only money, not Småverk's.
+  expect(read(LEGAL[0]!)).toContain('<a href="https://maindesk.smaverk.com/privacy">');
+  expect(read(LEGAL[1]!)).toContain('<a href="https://maindesk.smaverk.com/terms">');
+  expect(text(read(LEGAL[0]!)), "privacy: the only money we take").not.toMatch(/the only money we take/);
+  const lastmod = read("captions/app/dist/studio-sitemap.xml").match(/<loc>https:\/\/smaverk\.com\/<\/loc><lastmod>([\d-]+)</)?.[1] ?? "";
+  expect(lastmod >= "2026-10-27", `the studio's sitemap dates the change (lastmod ${lastmod})`).toBe(true);
 });
 
 // ---------------------------------------------------------------------------------------------------------
