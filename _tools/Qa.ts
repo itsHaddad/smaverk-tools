@@ -29,7 +29,9 @@ const contexts: Ctx[] = [
 
 function syllables(w: string) { w = w.toLowerCase().replace(/[^a-z]/g, ""); if (!w) return 0; if (w.length <= 3) return 1; w = w.replace(/(?:[^laeiouy]es|ed|[^laeiouy]e)$/, "").replace(/^y/, ""); return Math.max(1, (w.match(/[aeiouy]{1,2}/g) ?? []).length); }
 function fkGrade(text: string) {
-  const sentences = Math.max(1, (text.match(/[.!?]+(\s|$)/g) ?? []).length);
+  // a line break ends a sentence too: innerText puts each block (a heading, a button, a list row, a chart label) on its own
+  // line, and without this a page of short labels read as one endless sentence (smaverk.com, design review r12 S6, 27 Oct 2026)
+  const sentences = Math.max(1, text.split(/\n+/).map((l) => l.trim()).filter(Boolean).reduce((n, l) => n + (l.match(/[.!?]+(\s|$)/g) ?? []).length + (/[.!?]$/.test(l) ? 0 : 1), 0));
   const words = text.split(/\s+/).filter((w) => /[A-Za-z]/.test(w)); if (words.length < 20) return 0;
   const syl = words.reduce((a, w) => a + syllables(w), 0);
   return Math.round((0.39 * (words.length / sentences) + 11.8 * (syl / words.length) - 15.59) * 10) / 10;
@@ -56,7 +58,8 @@ async function audit(page: Page, c: Ctx) {
     const selects = [...document.querySelectorAll("select")].filter(vis).length;
     const textEls = [...document.querySelectorAll("p, li, span, label, div, a, button, h1, h2, h3, small")].filter((el) => vis(el) && [...el.childNodes].some((n) => n.nodeType === 3 && (n.textContent ?? "").trim().length > 2));
     const small = textEls.map((el) => ({ px: parseFloat(getComputedStyle(el).fontSize), text: (el.textContent ?? "").trim().slice(0, 40) })).filter((t) => t.px < 15);
-    const media = [...document.querySelectorAll("img, video, canvas, svg, picture")].filter((el) => { const r = el.getBoundingClientRect(); return vis(el) && r.width >= 120 && r.height >= 120 && inFold(el); }).length;
+    // [data-demo]: a demo made of HTML (smaverk.com's evening log, 27 Oct 2026) is the demo as much as a video is; the page declares it
+    const media = [...document.querySelectorAll("img, video, canvas, svg, picture, [data-demo]")].filter((el) => { const r = el.getBoundingClientRect(); return vis(el) && r.width >= 120 && r.height >= 120 && inFold(el); }).length;
     // A row of sibling cards (same parent, same class, same top) must line up: equal heights and their last button on one line. Learned on the studio page 2026-09-18 (floated posters inside flex cards, buttons at different heights).
     const rows = []; for (const parent of new Set([...document.querySelectorAll("[class]")].map((e) => e.parentElement).filter(Boolean))) { const kids = [...parent.children].filter((k) => vis(k) && typeof k.className === "string" && k.className.trim()); const byClass = new Map(); for (const k of kids) { const key = k.className.trim().split(/\s+/)[0]; if (!byClass.has(key)) byClass.set(key, []); byClass.get(key).push(k); } for (const [key, group] of byClass) { if (group.length < 2) continue; const rects = group.map((k) => k.getBoundingClientRect()); if (!rects.every((r) => Math.abs(r.top - rects[0].top) < 2)) continue; const hs = rects.map((r) => Math.round(r.height)); const bots = group.map((k) => { const b = [...k.querySelectorAll("button, a.btn, [role=button]")].filter(vis).pop(); return b ? Math.round(b.getBoundingClientRect().bottom) : null; }); const hDiff = Math.max(...hs) - Math.min(...hs); const bs = bots.filter((b) => b !== null); const bDiff = bs.length > 1 ? Math.max(...bs) - Math.min(...bs) : 0; if (hDiff > 6 || bDiff > 6) rows.push(`.${key} x${group.length} heights ${hs.join("/")} button bottoms ${bots.join("/")}`); } }
     const sideways = document.documentElement.scrollWidth > window.innerWidth + 1;
@@ -71,6 +74,27 @@ async function audit(page: Page, c: Ctx) {
   }, { vh: c.viewport.height });
   const shot = join(out, `${c.name}.png`); await page.screenshot({ path: shot, fullPage: true });
   const fold = join(out, `${c.name}-fold.png`); await page.screenshot({ path: fold, fullPage: false });
+  // Text inside a [data-demo] never runs into other text, at the widths between phone and desktop where layouts switch
+  // (smaverk.com r12 B2, 27 Oct 2026: chart labels overlapped at 720-990 px, every iPad in portrait). Desktop context only, once.
+  const overlaps: string[] = [];
+  if (c.name === "desktop-light" && (await page.locator("[data-demo]").count()) > 0) {
+    for (const w of [720, 768, 834, 1024]) {
+      await page.setViewportSize({ width: w, height: c.viewport.height }); await page.waitForTimeout(300);
+      overlaps.push(...(await page.evaluate((w) => {
+        const vis = (el: Element) => { const r = el.getBoundingClientRect(); const s = getComputedStyle(el); return r.width > 0 && r.height > 0 && s.visibility !== "hidden" && s.display !== "none"; };
+        const leaves = [...document.querySelectorAll("body *")].filter((el) => vis(el) && [...el.childNodes].some((n) => n.nodeType === 3 && (n.textContent ?? "").trim().length > 1));
+        const boxes = leaves.map((el) => { const r = el.getBoundingClientRect(); return { el, demo: !!el.closest("[data-demo]"), text: (el.textContent ?? "").trim().slice(0, 30), l: r.left, r: r.right, t: r.top, b: r.bottom }; });
+        const out: string[] = [];
+        for (let i = 0; i < boxes.length; i++) for (let j = i + 1; j < boxes.length; j++) {
+          const a = boxes[i]!, b = boxes[j]!;
+          if (!a.demo && !b.demo) continue; if (a.el.contains(b.el) || b.el.contains(a.el)) continue;
+          if (Math.min(a.r, b.r) - Math.max(a.l, b.l) > 1 && Math.min(a.b, b.b) - Math.max(a.t, b.t) > 1) out.push(`${w}px: "${a.text}" x "${b.text}"`);
+        }
+        return out;
+      }, w)));
+    }
+    await page.setViewportSize(c.viewport); await page.waitForTimeout(200);
+  }
   const grade = fkGrade(dom.text);
   const minTarget = Math.min(...dom.targets.map((t) => t.h), 999);
   const blockers: string[] = [];
@@ -82,9 +106,10 @@ async function audit(page: Page, c: Ctx) {
   if (grade > maxGrade) blockers.push(`reading grade ${grade} (max ${maxGrade})`);
   const words = dom.text.split(/\s+/).filter(Boolean).length; if (words > 240) blockers.push(`too many words: ${words} (max 240 at rest; the principal: "so many words")`);
   if (dom.disabledAtRest.length) blockers.push(`${dom.disabledAtRest.length} button(s) disabled at rest: ${dom.disabledAtRest.join(", ")}`);
-  if (c.isMobile && dom.mediaInFold === 0) blockers.push("no image/video/canvas in the first phone screen");
+  if (c.isMobile && dom.mediaInFold === 0) blockers.push("no image/video/canvas/[data-demo] in the first phone screen");
   if (dom.mainAction && dom.mainAction.bottom > dom.mainAction.fold) blockers.push(`the main button "${dom.mainAction.text}" ends ${dom.mainAction.bottom - dom.mainAction.fold} px below the first screen`);
   if (dom.rows?.length) blockers.push(`row of cards misaligned: ${dom.rows.join(" | ")}`);
+  if (overlaps.length) blockers.push(`text runs into other text in the demo: ${overlaps.slice(0, 6).join(" | ")}`);
   if (dom.lcp !== null && dom.lcp > 2500) blockers.push(`LCP ${Math.round(dom.lcp)} ms (max 2500)`);
   return { context: c.name, url, loadMs, lcpMs: dom.lcp === null ? null : Math.round(dom.lcp), transferKB: Math.round(dom.bytes / 1024), grade, words: dom.text.split(/\s+/).filter(Boolean).length, minTargetPx: minTarget, smallText: dom.small.slice(0, 8), disabledAtRest: dom.disabledAtRest, nativeSelects: dom.selects, mediaInFold: dom.mediaInFold, sideways: dom.sideways, consoleErrors, failedRequests: failed, screenshots: [shot, fold], blockers };
 }

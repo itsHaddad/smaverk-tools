@@ -22,10 +22,10 @@
 @font-face{font-family:"Geist";font-weight:600;font-display:swap;src:url(fonts/geist-600.woff2) format("woff2")}
 @font-face{font-family:"Geist Mono";font-weight:400;font-display:swap;src:url(fonts/geist-mono-400.woff2) format("woff2")}
 /* smaverk.com, direction B (A approved it 27 Oct 2026: "design is nice"). Maindesk's own identity: its grounds, its blue, Geist, and its task states as the only colours. The chart is a real
-   evening from our own task log (Monday 26 Oct 2026, CET, one Linux desk): nothing on it is invented. */
+   evening from our own task log (Monday 26 Oct 2026, CET, one Linux desk): nothing on it is invented. Colours and the mark are Maindesk's own (its shared/tokens.ts). */
 :root{color-scheme:light dark;
-  --bg:light-dark(#FAFAFA,#0B0B0D);--ink:light-dark(#141518,#EDEDF0);--soft:light-dark(#5E626B,#9A9EA8);--line:light-dark(#E2E3E6,#24262C);
-  --run:light-dark(#3D5AFE,#8197FF);--live:light-dark(#B8620F,#F0A04B);--done:light-dark(#23845A,#4CC38A);
+  --bg:light-dark(#fafafa,#0b0b0d);--ink:light-dark(#18181b,#ededef);--soft:light-dark(#6b6b74,#9b9ba4);--line:light-dark(#e4e4e7,#26262c);
+  --run:light-dark(#3d5afe,#8197ff);--live:light-dark(#a15c00,#f0a33a);--done:light-dark(#16834f,#4cc38a);
   --body:"Geist",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;--mono:"Geist Mono",ui-monospace,SFMono-Regular,Menlo,monospace}
 :root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
 *{box-sizing:border-box}html{-webkit-text-size-adjust:100%}html,body{overflow-x:clip}
@@ -36,9 +36,10 @@ a{color:inherit}a:focus-visible,button:focus-visible{outline:3px solid var(--run
 .brand{display:flex;align-items:center;gap:10px;min-height:44px;text-decoration:none;font:600 16px var(--body)}
 .brand svg{width:24px;height:24px}.brand small{font:400 15px var(--body);color:var(--soft)}
 .hero{display:grid;gap:18px;margin-bottom:40px}.txt{display:grid;gap:14px;align-content:start}
-.kick{font:400 15px var(--mono);color:var(--soft);margin:0}
-h1{font:600 clamp(38px,7vw,80px)/1 var(--body);letter-spacing:-.045em;margin:0;max-width:11ch}
-.lead{color:var(--soft);font-size:18px;max-width:30em;margin:0}
+.cap{font:15px/1.45 var(--body);color:var(--soft);margin:0 0 12px;max-width:40em}
+.note{color:var(--soft);font-size:15px;margin:0}
+h1{font:600 clamp(38px,7vw,80px)/1 var(--body);letter-spacing:-.045em;margin:0;max-width:11ch;text-wrap:balance}
+.lead{color:var(--soft);font-size:18px;max-width:30em;margin:0;text-wrap:pretty}
 .acts{display:flex;flex-wrap:wrap;align-items:center;gap:8px 24px}
 .go{display:inline-flex;align-items:center;justify-content:center;min-height:52px;padding:0 24px;border-radius:8px;background:var(--run);color:var(--bg);font:600 16px var(--body);text-decoration:none}
 .more{display:inline-flex;align-items:center;min-height:44px}
@@ -47,34 +48,46 @@ h1{font:600 clamp(38px,7vw,80px)/1 var(--body);letter-spacing:-.045em;margin:0;m
 /* the evening, as a chart (720px and up): one row per task, started at the time on the left */
 .chart{display:none;position:relative;border-top:1px solid var(--line);padding-top:8px}
 .axis,.lane{display:grid;grid-template-columns:104px 1fr;align-items:center}
-.axis b{font:400 12px var(--mono);color:var(--soft)}
-.axis .t{position:relative;height:28px;font:12px var(--mono);color:var(--soft)}
-.axis .t span{position:absolute;transform:translateX(-50%)}
+.axis{position:relative;z-index:1}
+.axis b{font:400 13px var(--mono);color:var(--soft)}
+.axis .t{position:relative;height:28px;font:13px var(--mono);color:var(--soft)}
+.axis .t span{position:absolute;transform:translateX(-50%);background:var(--bg);padding:0 3px}
 .lane{min-height:58px;border-top:1px solid var(--line)}
 .lane>b{font:400 13px var(--mono);color:var(--soft)}
 .track{position:relative;height:58px}
 .bar{position:absolute;top:30px;height:12px;border-radius:3px;background:var(--done)}
-.bar span{position:absolute;bottom:15px;left:0;white-space:nowrap;font:13px var(--body);color:var(--ink)}
+.bar span{position:absolute;bottom:15px;left:0;white-space:nowrap;font:14px var(--body);color:var(--ink)}
 .tail{position:absolute;top:35px;border-top:2px dashed var(--run)}
-.tail span{position:absolute;left:10px;bottom:4px;white-space:nowrap;font:12px var(--mono);color:var(--soft)}
+.tail span{position:absolute;left:10px;top:5px;line-height:1;white-space:nowrap;font:13px var(--body);color:var(--soft)}
 .mg{position:absolute;top:30px;width:12px;height:12px;margin-left:-6px;background:var(--run);transform:rotate(45deg);border-radius:2px}
 .push{position:absolute;top:30px;width:12px;height:12px;margin-left:-6px;border-radius:50%;background:var(--done);box-shadow:0 0 0 4px color-mix(in srgb,var(--done) 22%,transparent)}
 .vline{position:absolute;top:0;bottom:0;pointer-events:none;left:calc(104px + (100% - 104px) * var(--x))}
 .live{border-left:2px dashed var(--live)}
-.live span{position:absolute;bottom:-24px;right:8px;white-space:nowrap;font:13px var(--mono);color:var(--live)}
-.now{width:1.5px;background:var(--ink);--x:.9185}
-.now::before{content:"now";position:absolute;top:-2px;left:6px;font:11px var(--mono);color:var(--ink)}
-@media(prefers-reduced-motion:no-preference){.now{animation:sweep 18s linear infinite}@keyframes sweep{from{left:104px}to{left:100%}}}
-.key{display:none;flex-wrap:wrap;gap:6px 22px;margin:14px 0 0 104px;font:13px var(--mono);color:var(--soft)}
+.live span{position:absolute;bottom:-24px;right:8px;white-space:nowrap;font:13px var(--body);color:var(--live)}
+/* a replay of the evening: the head reveals it, the rest stays veiled until the head reaches it, then the whole evening holds (design review r12, B3) */
+.now{display:none;width:1.5px;background:var(--ink)}
+@media(prefers-reduced-motion:no-preference){
+  .now{display:block;animation:sweep 14s linear infinite}
+  .chart::after{content:"";position:absolute;top:0;bottom:-28px;right:0;pointer-events:none;background:color-mix(in srgb,var(--bg) 85%,transparent);animation:sweep 14s linear infinite}
+  @keyframes sweep{0%{left:104px}70%,100%{left:100%}}
+}
+.key{display:none;flex-wrap:wrap;gap:6px 22px;margin:36px 0 0 104px;font:13px var(--body);color:var(--soft)}
 .key i{display:inline-block;width:10px;height:10px;margin-right:8px;vertical-align:-1px;border-radius:2px;background:var(--done)}
 .key .k-mg i{background:var(--run);transform:rotate(45deg)}.key .k-push i{border-radius:50%}
 /* the evening, as a log (phones) */
 .log{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
 .log li{display:grid;grid-template-columns:52px 14px 1fr;gap:10px;align-items:baseline;padding:11px 0;border-bottom:1px solid var(--line);font-size:16px}
 .log time{font:15px var(--mono);color:var(--soft)}
-.log i{width:10px;height:10px;border-radius:2px;background:var(--done);align-self:center}
+.log i{width:10px;height:10px;border-radius:2px;background:var(--done);align-self:start;margin-top:7px}
 .log .l i{background:var(--live)}
 .log small{color:var(--soft);font-size:15px;display:block}
+@media(max-width:719px){
+  .log li{position:relative;padding-bottom:26px}
+  /* the bar: the text column starts at 52+10+14+10 = 86px; the track runs from there to the right edge, 18:00 to 03:00 */
+  .log li::after{content:"";position:absolute;bottom:12px;height:6px;border-radius:3px;background:var(--done);left:calc(86px + (100% - 86px) * var(--a));width:max(6px,calc((100% - 86px) * (var(--e) - var(--a))))}
+  .log .l::after{background:var(--live)}
+  .log li::before{content:"";position:absolute;bottom:8px;height:14px;border-left:2px dashed var(--live);left:calc(86px + (100% - 86px) * .9185)}
+}
 @media(min-width:720px){.chart{display:block}.key{display:flex}.log{display:none}}
 footer{display:flex;flex-wrap:wrap;gap:4px 20px;margin-top:40px;padding-top:12px;border-top:1px solid var(--line);color:var(--soft);font-size:15px}
 footer a,footer span{display:inline-flex;align-items:center;min-height:44px;min-width:44px}
@@ -94,19 +107,20 @@ footer .pair{gap:20px} /* Privacy and Terms wrap together (design review r11, H4
 </head>
 <body>
 <div class="wrap">
-  <div class="top"><a class="brand" href="https://smaverk.com"><svg viewBox="0 0 16 16" aria-hidden="true"><rect width="16" height="16" rx="3.5" fill="var(--run)"/><path d="M3 4h10v2H3zM3 6h2v6H3zM11 6h2v6h-2zM7 6h2v3H7z" fill="var(--bg)"/></svg>Maindesk <small>by Småverk</small></a><button class="theme" id="theme" type="button" aria-pressed="false" aria-label="Switch to dark mode"><svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg><svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/></svg></button></div>
+  <div class="top"><a class="brand" href="https://smaverk.com"><svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="var(--run)"/><path d="M7 8h18a1 1 0 0 1 1 1v3H6V9a1 1 0 0 1 1-1zM6 12h4v11a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1zM22 12h4v11a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1zM14 12h4v5a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1z" fill="var(--bg)"/></svg>Maindesk <small>by Småverk</small></a><button class="theme" id="theme" type="button" aria-pressed="false" aria-label="Switch to dark mode"><svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg><svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/></svg></button></div>
   <section class="hero">
     <div class="txt">
-      <p class="kick">One evening on our own desk, 26 Oct 2026</p>
       <h1>Computers for your AI agent.</h1>
     </div>
     <div class="txt">
-      <p class="lead">Linux, Windows and a Mac in the cloud. Close your laptop and your agent keeps working. Answer it from your phone.</p>
+      <p class="lead">Linux, Windows and a Mac in the cloud for Claude Code, Codex or any agent. Close your laptop and your agent keeps working. Answer it from your phone.</p>
       <div class="acts"><a class="go" href="https://maindesk.smaverk.com/?src=smaverk">Open Maindesk</a><a class="more" href="https://video.smaverk.com/?src=smaverk">Free video tools →</a></div>
+      <p class="note">Invite only for now. The live demo needs no account.</p>
     </div>
   </section>
 
-  <section class="chart" aria-label="Monday 26 Oct 2026 on our own Linux desk: five agents worked from 18:13, the queue merged three changes, and the release went live at 02:16.">
+  <p class="cap">Monday 26 Oct on our own Linux computer: five agents worked from 18:13, and the release went live at 02:16.</p>
+  <section class="chart" data-demo="evening" aria-label="Monday 26 Oct 2026 on our own Linux desk: five agents worked from 18:13, the queue merged three changes, and the release went live at 02:16.">
     <div class="axis"><b>started</b><div class="t"><span style="left:0;transform:none">18:00</span><span style="left:22.22%">20:00</span><span style="left:44.44%">22:00</span><span style="left:66.67%">00:00</span><span style="left:88.89%">02:00</span><span style="left:100%;transform:translateX(-100%)">03:00</span></div></div>
     <div class="lane"><b>18:13</b><div class="track"><div class="bar" style="left:2.41%;width:60.74%"><span>Rewrite the docs · done 23:41</span></div></div></div>
     <div class="lane"><b>18:13</b><div class="track"><div class="bar" style="left:2.41%;width:32.03%"><span>Refresh the demo and the sign-in logos · done 21:06</span></div><div class="mg" style="left:36.48%" title="merged 21:17"></div></div></div>
@@ -118,13 +132,13 @@ footer .pair{gap:20px} /* Privacy and Terms wrap together (design review r11, H4
   </section>
   <p class="key"><span><i></i>agent at work, then done</span><span class="k-mg"><i></i>merged by the queue</span><span><i style="background:none;border-top:2px dashed var(--run);border-radius:0;height:0;width:18px;vertical-align:3px"></i>review fixes</span></p>
 
-  <ol class="log" aria-label="Monday 26 Oct 2026 on our own Linux desk">
-    <li><time>18:13</time><i></i><span>Rewrite the docs<small>done 23:41</small></span></li>
-    <li><time>18:13</time><i></i><span>Refresh the demo and the sign-in logos<small>done 21:06 · merged 21:17</small></span></li>
-    <li><time>20:57</time><i></i><span>Agent setup page<small>done that night · review fixes until 18:26 next day</small></span></li>
-    <li><time>20:57</time><i></i><span>Fix the sidebar<small>done 21:26 · merged 21:44</small></span></li>
-    <li><time>21:11</time><i></i><span>Repair the nightly check<small>done 21:37 · merged 22:19</small></span></li>
-    <li class="l"><time>02:16</time><i></i><span>Live on the site<small>the release</small></span></li>
+  <ol class="log" data-demo="evening" aria-label="Monday 26 Oct 2026 on our own Linux desk">
+    <li style="--a:.0241;--e:.6315"><time>18:13</time><i></i><span>Rewrite the docs<small>done 23:41</small></span></li>
+    <li style="--a:.0241;--e:.3444"><time>18:13</time><i></i><span>Refresh the demo and the sign-in logos<small>done 21:06 · merged 21:17</small></span></li>
+    <li style="--a:.3278;--e:.5556"><time>20:57</time><i></i><span>Agent setup page<small>done that night · review fixes until 18:26 next day</small></span></li>
+    <li style="--a:.3278;--e:.3815"><time>20:57</time><i></i><span>Fix the sidebar<small>done 21:26 · merged 21:44</small></span></li>
+    <li style="--a:.3537;--e:.4019"><time>21:11</time><i></i><span>Repair the nightly check<small>done 21:37 · merged 22:19</small></span></li>
+    <li class="l" style="--a:.9185;--e:.9185"><time>02:16</time><i></i><span>Live on the site<small>the release</small></span></li>
   </ol>
 
   <footer><span>Småverk, Sweden</span><a href="mailto:hello@smaverk.com">hello@smaverk.com</a><span class="pair"><a href="https://smaverk.com/privacy">Privacy</a><a href="https://smaverk.com/terms">Terms</a></span></footer>

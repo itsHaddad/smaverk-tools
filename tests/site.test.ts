@@ -647,7 +647,9 @@ const HOST_MW = "captions/app/functions/_middleware.js";
 const EVENING = [["18:13", "Rewrite the docs", "done 23:41"], ["18:13", "Refresh the demo and the sign-in logos", "done 21:06 · merged 21:17"], ["20:57", "Agent setup page", "done that night · review fixes until 18:26 next day"], ["20:57", "Fix the sidebar", "done 21:26 · merged 21:44"], ["21:11", "Repair the nightly check", "done 21:37 · merged 22:19"], ["02:16", "Live on the site", "the release"]];
 test("smaverk.com leads with Maindesk, shows one real evening on our desk as it happened, links Open Maindesk and the video tools, no price", () => {
   const home = read(HOME), t = text(home.slice(home.indexOf("<body"))).replace(/\s+/g, " ");
-  expect(home.match(/<p class="kick">([^<]*)<\/p>\s*<h1>/)?.[1]).toBe("One evening on our own desk, 26 Oct 2026");
+  const at = (hm: string) => { const [h, m] = hm.split(":").map(Number); return (((h! + 24 - 18) % 24) * 60 + m!) / 540 * 100; };
+  // design review r12 B1: the evening says who worked and when, on screen at every width, right above the chart and the log
+  expect(home.match(/<p class="cap">([^<]*)<\/p>\s*<section class="chart"/)?.[1]).toBe("Monday 26 Oct on our own Linux computer: five agents worked from 18:13, and the release went live at 02:16.");
   expect(text(home.match(/<h1>[\s\S]*?<\/h1>/)![0]).trim()).toBe("Computers for your AI agent.");
   for (const f of [/Linux, Windows and a Mac in the cloud/, /keeps working/, /from your phone/]) expect(t, String(f)).toMatch(f);
   expect(wordsAtRest(home), "under the 240-word budget (chart and log both counted)").toBeLessThan(240);
@@ -656,10 +658,17 @@ test("smaverk.com leads with Maindesk, shows one real evening on our desk as it 
   expect(links).toContainEqual(["https://video.smaverk.com/?src=smaverk", "Free video tools →"]);
   expect(t.replace("Free video tools", ""), "a price or free wording on smaverk.com").not.toMatch(/\$|€|£|\bUSD\b|\bSEK\b|\bkr\b|a month|per month|\bfree\b|\btrial\b/i);
   // the log (phones) is the task log, word for word
+  // the chart and the log are the page's demo (Qa.ts counts [data-demo] in the first screen), and each log row draws its bar on the same 18:00-03:00 scale (r12 B1)
+  expect(home).toMatch(/<section class="chart" data-demo="evening"/); expect(home).toMatch(/<ol class="log" data-demo="evening"/);
+  const rows = [...home.matchAll(/<li(?: class="l")? style="--a:([\d.]+);--e:([\d.]+)"><time>/g)];
+  expect(rows.length).toBe(EVENING.length);
+  // each row draws the bar its chart lane draws (start, end), and the release row sits on the 02:16 line
+  const bars = [...home.matchAll(/<div class="bar" style="left:([\d.]+)%;width:([\d.]+)%">/g)].map((m) => [Number(m[1]), Number(m[1]) + Number(m[2])]);
+  rows.forEach((r, i) => { const [a, e] = i < 5 ? bars[i]! : [at("02:16"), at("02:16")];
+    expect(Number(r[1]) * 100, `log row ${i + 1} starts where its bar does`).toBeCloseTo(a!, 1); expect(Number(r[2]) * 100, `log row ${i + 1} ends where its bar does`).toBeCloseTo(e!, 1); });
   const log = [...home.matchAll(/<li[^>]*><time>([^<]+)<\/time><i><\/i><span>([^<]+)<small>([^<]+)<\/small><\/span><\/li>/g)].map((m) => [m[1], m[2], m[3]]);
   expect(log).toEqual(EVENING);
   // the chart (720px and up) says the same, and each bar, merge and the live line sits at its time on an 18:00-03:00 axis
-  const at = (hm: string) => { const [h, m] = hm.split(":").map(Number); return (((h! + 24 - 18) % 24) * 60 + m!) / 540 * 100; };
   const lanes = [...home.matchAll(/<div class="lane"><b>([^<]+)<\/b><div class="track">([\s\S]*?)<\/div><\/div>/g)];
   expect(lanes.map((l) => l[1])).toEqual(EVENING.slice(0, 5).map((e) => e[0]));
   lanes.forEach((l, i) => {
