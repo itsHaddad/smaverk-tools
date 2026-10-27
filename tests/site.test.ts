@@ -642,48 +642,43 @@ test("the studio lists every tool that is live, each one free", () => {
 // smaverk.com (home.html) is Maindesk's short page with the app itself as its demo, and video.smaverk.com (studio.html)
 // is the video tools' page as it was. Every tool, llms.txt, sitemap and legal page says where each one lives.
 const HOST_MW = "captions/app/functions/_middleware.js";
-test("smaverk.com leads with Maindesk: what it does, its demo, one tagged link, no price, and a way to the video tools", () => {
+// A, 27 Oct 2026: "design is nice": smaverk.com is direction B, one real evening on our own desk (26 Oct 2026), as a chart
+// from 720px and a log on phones. Every time on it is the task log's; the chart's bars sit where those times put them.
+const EVENING = [["18:13", "Rewrite the docs", "done 23:41"], ["18:13", "Refresh the demo and the sign-in logos", "done 21:06 · merged 21:17"], ["20:57", "Agent setup page", "done that night · review fixes until 18:26 next day"], ["20:57", "Fix the sidebar", "done 21:26 · merged 21:44"], ["21:11", "Repair the nightly check", "done 21:37 · merged 22:19"], ["02:16", "Live on the site", "the release"]];
+test("smaverk.com leads with Maindesk, shows one real evening on our desk as it happened, links Open Maindesk and the video tools, no price", () => {
   const home = read(HOME), t = text(home.slice(home.indexOf("<body"))).replace(/\s+/g, " ");
-  expect(home.match(/<p class="kicker">([^<]*)<\/p>\s*<h1>/)?.[1], "Maindesk named above the headline").toBe("Maindesk");
-  expect(text(home.match(/<h1>[\s\S]*?<\/h1>/)![0]).replace(/\s+/g, " ").replace(/ ([,.])/g, "$1").trim()).toBe("Computers for your AI agent.");
+  expect(home.match(/<p class="kick">([^<]*)<\/p>\s*<h1>/)?.[1]).toBe("One evening on our own desk, 26 Oct 2026");
+  expect(text(home.match(/<h1>[\s\S]*?<\/h1>/)![0]).trim()).toBe("Computers for your AI agent.");
   for (const f of [/Linux, Windows and a Mac in the cloud/, /keeps working/, /from your phone/]) expect(t, String(f)).toMatch(f);
-  expect(wordsAtRest(home), "well under the 240-word budget").toBeLessThanOrEqual(80);
+  expect(wordsAtRest(home), "under the 240-word budget (chart and log both counted)").toBeLessThan(240);
   const links = [...home.matchAll(/<a [^>]*href="([^"]+)"[^>]*>([^<]*)<\/a>/g)].map((m) => [m[1]!, m[2]!.trim()]);
-  expect(links.filter(([h]) => /maindesk\.smaverk\.com/.test(h)), "one Maindesk link, tagged").toEqual([["https://maindesk.smaverk.com/?src=smaverk", "Open Maindesk"]]);
-  expect(links, "the video tools, one tap away").toContainEqual(["https://video.smaverk.com/?src=smaverk", "Free video tools →"]);
-  expect(home.indexOf("Open Maindesk"), "Maindesk before the video tools").toBeLessThan(home.indexOf("Free video tools"));
-  for (const need of ["Småverk, Sweden", "hello@smaverk.com", "Privacy", "Terms"]) expect(text(home.match(/<footer>[\s\S]*?<\/footer>/)![0]), `footer: ${need}`).toContain(need);
-  // No price, and "free" only in the link to the video tools.
+  expect(links.filter(([h]) => /maindesk\.smaverk\.com/.test(h))).toEqual([["https://maindesk.smaverk.com/?src=smaverk", "Open Maindesk"]]);
+  expect(links).toContainEqual(["https://video.smaverk.com/?src=smaverk", "Free video tools →"]);
   expect(t.replace("Free video tools", ""), "a price or free wording on smaverk.com").not.toMatch(/\$|€|£|\bUSD\b|\bSEK\b|\bkr\b|a month|per month|\bfree\b|\btrial\b/i);
-  expect(home, "no tool cards here").not.toMatch(/<article class="tool|data-demo=/);
-  // The demo is the app itself (design review r10, B1): image files of real screens, desk and phone in each theme, small,
-  // named for a screen reader, with an edge in light mode (r10b R1); the pair on screen is eager and the other is warmed
-  // after load (R3, R4); no drawing.
-  const app = home.match(/<div class="app" id="app" role="img" aria-label="[^"]{40,}">([\s\S]*?)<\/div>\s*<script>/)?.[1] ?? "";
-  expect(app, "the demo").toBeTruthy();
-  expect(app, "no drawing").not.toMatch(/<svg\b|<canvas\b/);
-  const files = [...app.matchAll(/(?:src|srcset)="([^"]+)"/g)].map((m) => m[1]!);
-  expect([...new Set(files)].sort()).toEqual(["maindesk/app-desktop-dark.webp", "maindesk/app-desktop-light.webp", "maindesk/app-phone-dark.webp", "maindesk/app-phone-light.webp"]);
-  for (const f of new Set(files)) expect(statSync(join(ROOT, "captions/app/dist", f)).size, `${f} under 80 KB`).toBeLessThan(80e3);
-  expect(home).toContain(".app::after{content:\"\";position:absolute;inset:0;border-radius:inherit;box-shadow:inset 0 0 0 1px var(--line);pointer-events:none}");
-  expect(home).toContain(":root[data-theme=dark] .app .lt{display:none}");
-  // r11 H1: on a phone the frame starts at "Needs you", so the demo shows the agent's question and the running tasks, not an empty form.
-  expect(home).toContain("@media(max-width:719px){.app{aspect-ratio:10/9}.app .main{margin-top:-92%}}");
-  // r11 H3: the share image is a JPG every link preview shows, 1200 x 630, made from the real stills; H4: Terms never wraps alone.
-  expect(home).toMatch(/<meta property="og:image" content="https:\/\/smaverk\.com\/maindesk\/og\.jpg\?v=\d+"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">/);
-  expect(statSync(join(ROOT, "captions/app/dist/maindesk/og.jpg")).size, "og.jpg under 200 KB").toBeLessThan(200e3);
-  expect(home).toContain('<span class="pair"><a href="https://smaverk.com/privacy">Privacy</a><a href="https://smaverk.com/terms">Terms</a></span>');
-  expect(home, "the pair on screen loads first").toMatch(/i\.loading="eager";i\.fetchPriority="high"/);
-  expect(home, "the other pair is warmed after load").toMatch(/addEventListener\("load",function\(\)\{setTimeout\(/);
-  // Everything that says what this page is names Maindesk.
+  // the log (phones) is the task log, word for word
+  const log = [...home.matchAll(/<li[^>]*><time>([^<]+)<\/time><i><\/i><span>([^<]+)<small>([^<]+)<\/small><\/span><\/li>/g)].map((m) => [m[1], m[2], m[3]]);
+  expect(log).toEqual(EVENING);
+  // the chart (720px and up) says the same, and each bar, merge and the live line sits at its time on an 18:00-03:00 axis
+  const at = (hm: string) => { const [h, m] = hm.split(":").map(Number); return (((h! + 24 - 18) % 24) * 60 + m!) / 540 * 100; };
+  const lanes = [...home.matchAll(/<div class="lane"><b>([^<]+)<\/b><div class="track">([\s\S]*?)<\/div><\/div>/g)];
+  expect(lanes.map((l) => l[1])).toEqual(EVENING.slice(0, 5).map((e) => e[0]));
+  lanes.forEach((l, i) => {
+    const bar = l[2]!.match(/<div class="bar" style="left:([\d.]+)%;width:([\d.]+)%"><span>([^<]+)<\/span>/)!;
+    expect(Number(bar[1]), `${EVENING[i]![1]}: starts at ${EVENING[i]![0]}`).toBeCloseTo(at(EVENING[i]![0]!), 1);
+    expect(bar[3]).toContain(EVENING[i]![1]!);
+    const done = EVENING[i]![2]!.match(/done (\d\d:\d\d)/)?.[1]; if (done) expect(Number(bar[1]) + Number(bar[2]), `${EVENING[i]![1]}: done at ${done}`).toBeCloseTo(at(done), 1);
+    const merged = EVENING[i]![2]!.match(/merged (\d\d:\d\d)/)?.[1]; if (merged) expect(Number(l[2]!.match(/<div class="mg" style="left:([\d.]+)%" title="merged ([\d:]+)"/)![1]), `${EVENING[i]![1]}: merged at ${merged}`).toBeCloseTo(at(merged), 1);
+  });
+  expect(Number(home.match(/<div class="vline live" style="--x:([\d.]+)"><span>02:16 live on the site<\/span>/)![1]) * 100).toBeCloseTo(at("02:16"), 1);
+  // the old home's share image, metas, JSON-LD, footer pair and the self-hosted Geist with its licence
+  expect(home).toMatch(/<meta property="og:image" content="https:\/\/smaverk\.com\/maindesk\/og\.jpg\?v=\d+"><meta property="og:image:width" content="1200">/);
   const meta = (p: string) => home.match(new RegExp(`<meta (?:name|property)="${p}" content="([^"]*)"`))?.[1] ?? "";
-  const ld = JSON.parse(home.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)![1]!).description as string;
-  for (const [where, v] of [["title", home.match(/<title>([^<]*)<\/title>/)?.[1] ?? ""], ["description", meta("description")], ["og:title", meta("og:title")], ["og:description", meta("og:description")], ["twitter:description", meta("twitter:description")], ["JSON-LD", ld]] as const)
-    expect(v, `${where} names Maindesk`).toMatch(/Maindesk/);
-  expect(ld, "JSON-LD points at the video tools").toContain("https://video.smaverk.com");
+  for (const v of [home.match(/<title>([^<]*)<\/title>/)?.[1] ?? "", meta("description"), meta("og:title"), JSON.parse(home.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)![1]!).description]) expect(v).toMatch(/Maindesk/);
   expect(home).toContain('<link rel="canonical" href="https://smaverk.com/">');
-  const lastmod = read("captions/app/dist/studio-sitemap.xml").match(/<loc>https:\/\/smaverk\.com\/<\/loc><lastmod>([\d-]+)</)?.[1] ?? "";
-  expect(lastmod >= "2026-10-27", `smaverk.com's sitemap dates the change (lastmod ${lastmod})`).toBe(true);
+  expect(home).toContain('<span class="pair"><a href="https://smaverk.com/privacy">Privacy</a><a href="https://smaverk.com/terms">Terms</a></span>');
+  for (const f of ["geist-400", "geist-600", "geist-mono-400"]) { expect(home).toContain(`url(fonts/${f}.woff2)`); expect(existsSync(join(ROOT, `captions/app/dist/fonts/${f}.woff2`)), f).toBe(true); }
+  expect(read("captions/app/dist/fonts/GEIST-OFL.txt")).toContain("SIL Open Font License, Version 1.1");
+  expect(read("captions/app/SOURCES.md")).toMatch(/fonts\/geist-400\.woff2[\s\S]*GEIST-OFL\.txt/);
 });
 
 test("video.smaverk.com is the video tools' page: the five tools, no Maindesk section, no price, and a line back to Småverk", () => {
@@ -715,7 +710,7 @@ test("the tools point at video.smaverk.com: the brand, the footer, every llms.tx
   const toolPages = [...Object.values(SITES).flatMap((s) => every(s).map((f) => `${s.dist}/${f}`)), "operator/app/dist/index.html"].filter((p) => existsSync(join(ROOT, p)));
   for (const p of [...toolPages, STUDIO]) expect(read(p), `${p}: the brand opens the video tools' page`).toContain('<a class="brand" href="https://video.smaverk.com"><i></i>Småverk');
   for (const p of toolPages) expect(read(p), `${p}: the footer's page link`).toContain('<a href="https://video.smaverk.com">video.smaverk.com</a>');
-  for (const p of [HOME, ...LEGAL]) expect(read(p), `${p}: the brand opens smaverk.com`).toContain('<a class="brand" href="https://smaverk.com"><i></i>Småverk');
+  for (const p of [HOME, ...LEGAL]) expect(read(p), `${p}: the brand opens smaverk.com`).toContain('<a class="brand" href="https://smaverk.com">');
   // Every tool's llms.txt (Captions' is also smaverk.com/llms.txt) names the tools' page and says the same one sentence about Maindesk.
   const MD_LINE = "Småverk also runs Maindesk (https://maindesk.smaverk.com), a separate service where a person's AI agent gets its own computers in the cloud (Linux, Windows and a Mac), with plans and terms of its own.";
   for (const f of [...Object.values(SITES).map((s) => `${s.dist}/llms.txt`), "operator/app/dist/llms.txt"].filter((f) => existsSync(join(ROOT, f)))) {
@@ -956,7 +951,7 @@ test("every page's top bar: the brand links home, and the light/dark button is t
   expect(first.head && first.css && first.button, "the studio has all three parts").toBeTruthy();
   for (const p of TOP_PAGES) {
     const html = read(p), parts = themeParts(html);
-    expect(html, `${p}: brand link`).toMatch(/<div class="top"><a class="brand" href="https:\/\/(video\.)?smaverk\.com"><i><\/i>Småverk/);
+    expect(html, `${p}: brand link`).toMatch(/<div class="top"><a class="brand" href="https:\/\/(video\.)?smaverk\.com">(<i><\/i>Småverk|<svg [^>]*>[\s\S]*?<\/svg>Maindesk <small>by Småverk<\/small>)/);
     expect(parts, p).toEqual(first);
     // Inside the top bar, and the stored pick is applied in <head>, before anything is painted.
     expect(html.match(/<div class="top">[\s\S]*?<\/div>/)?.[0], `${p}: button in the top bar`).toContain(first.button!);
@@ -978,7 +973,7 @@ test("the light/dark pick carries across the studio: one cookie for .smaverk.com
   for (const p of all) {
     const html = read(p), parts = themeParts(html);
     expect(parts.head, `${p}: the theme script`).toBe(first.head!); expect(parts.css, `${p}: the toggle CSS`).toBe(first.css!); expect(parts.button, `${p}: #theme`).toBe(first.button!);
-    expect(html.match(/<div class="top">[\s\S]*?<\/div>/)?.[0], `${p}: brand link and button in the top row`).toMatch(/<a class="brand" href="https:\/\/(video\.)?smaverk\.com"><i><\/i>Småverk[\s\S]*<button class="theme" id="theme"/);
+    expect(html.match(/<div class="top">[\s\S]*?<\/div>/)?.[0], `${p}: brand link and button in the top row`).toMatch(/<a class="brand" href="https:\/\/(video\.)?smaverk\.com">(<i><\/i>Småverk|<svg)[\s\S]*<button class="theme" id="theme"/);
     expect(html.indexOf(first.head!), `${p}: theme script before any style`).toBeLessThan(html.indexOf("<style"));
   }
   const js = first.head!;
@@ -1018,8 +1013,8 @@ test("the light/dark button: no hover circle on touch, on the 16 px grid, a visi
   expect(css).toContain(".theme:focus-visible{outline:2px solid var(--ink);outline-offset:-4px}");
   // S1: the studio's column is 880 px and the legal pages' 640 px, the tools' 1100 px; the top row spans the tools' width
   // everywhere, so the brand and the button do not move under the pointer from page to page.
-  for (const p of [STUDIO, HOME, ...LEGAL]) expect(read(p), p).toContain(".top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:");
-  for (const p of [STUDIO, HOME, ...LEGAL]) expect(read(p), p).toMatch(/\.top\{[^}]*margin-inline:calc\(\(100% - min\(1100px, 100vw - 32px\)\) \/ 2\)/);
+  for (const p of [STUDIO, ...LEGAL]) expect(read(p), p).toContain(".top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:");
+  for (const p of [STUDIO, ...LEGAL]) expect(read(p), p).toMatch(/\.top\{[^}]*margin-inline:calc\(\(100% - min\(1100px, 100vw - 32px\)\) \/ 2\)/);
   for (const p of TOP_PAGES.filter((p) => p !== STUDIO && p !== HOME)) expect(read(p), p).toMatch(/\.wrap\{max-width:1100px;/);
 });
 

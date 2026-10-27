@@ -78,3 +78,7 @@
   tasks, shown as the app shows them. Nothing is redrawn. The card crops the desk still to the task list in CSS (`.shot .desk`)
   and lays the phone still on it. To replace: shoot the demo again at the same sizes, keep each file under 80 KB, same names.
 - `tests/fixtures/speech44.mp4`: test material only; not shipped.
+- `dist/fonts/geist-400.woff2`, `geist-600.woff2`, `geist-mono-400.woff2` (smaverk.com, direction B, 27 Oct 2026): Geist and Geist
+  Mono by The Geist Project Authors (https://github.com/vercel/geist-font), self-hosted, under the SIL Open Font License 1.1; the
+  licence is beside them in `dist/fonts/GEIST-OFL.txt`. The chart and log on smaverk.com are our own task log for Monday
+  26 Oct 2026 (CET, one Linux desk), pinned time by time in tests/site.test.ts.
