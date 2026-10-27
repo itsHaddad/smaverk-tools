@@ -71,4 +71,10 @@
   because a demo on the card today is worth more than a better demo later; do it the next time this is touched.
   To replace it: record the live page again (a runner, never the laptop), keep it under twenty seconds and no heavier than
   the other two cards' videos, put both files here, and rewrite the paragraphs above with what that run actually did.
+- `dist/maindesk/app-desktop-light.webp`, `app-desktop-dark.webp`, `app-phone-light.webp`, `app-phone-dark.webp`: the studio's
+  Maindesk card (design review r10, B1). Stills of Maindesk's live read-only demo app (https://maindesk.smaverk.com/demo), its
+  Tasks page at 1280 x 800 and on a 585 x 1266 phone screen, light and dark, shot on 2026-10-26 by a Maindesk task (kept in the
+  Maindesk repository as `web/proof/demo-app-*.webp`). Our own product; the tasks in the picture are the demo account's example
+  tasks, shown as the app shows them. Nothing is redrawn. The card crops the desk still to the task list in CSS (`.shot .desk`)
+  and lays the phone still on it. To replace: shoot the demo again at the same sizes, keep each file under 80 KB, same names.
 - `tests/fixtures/speech44.mp4`: test material only; not shipped.

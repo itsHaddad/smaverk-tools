@@ -285,9 +285,9 @@ test("each page says it in one line: AI, on your device", () => {
     for (const f of search(s)) expect(read(`${s.dist}/${f}`).match(/<p class="sub">([^<]*)<\/p>/)?.[1], `${f} line under the headline`).toMatch(/^AI [^.]*on your device\./);
   }
   const studio = read(STUDIO);
-  // A, 27 Oct 2026: the studio is Småverk's home for Maindesk and the video tools, so the headline covers both: the agent's
-  // own computers in the cloud, the tools on the visitor's device. The title names both (studio cold user 4: say what they are for).
-  expect(text(studio.match(/<h1>[\s\S]*?<\/h1>/)![0]).replace(/\s+/g, " ").replace(/ ,/g, ",").trim()).toBe("AI that works for you, in the cloud or on your device.");
+  // A, 27 Oct 2026: the studio is Småverk's home for Maindesk and the video tools, so the headline names both, each with who
+  // it is for (studio design review r10, B2: "AI that works for you" named neither). The title names both too.
+  expect(text(studio.match(/<h1>[\s\S]*?<\/h1>/)![0]).replace(/\s+/g, " ").replace(/ ([,.])/g, "$1").trim()).toBe("Computers for your AI agent. Free video tools on your device.");
   expect(studio.match(/<title>([^<]*)<\/title>/)?.[1]).toMatch(/Maindesk and free AI video tools/);
 });
 
@@ -648,22 +648,37 @@ test("the studio presents Maindesk first: what it does, one tagged link, no pric
   expect(studio.indexOf('<section class="md"'), "Maindesk comes before the tools").toBeLessThan(studio.indexOf('<section class="tools"'));
   expect(md).toContain('<h2 id="md-h">Maindesk</h2>');
   const t = text(md).replace(/\s+/g, " ");
-  for (const f of [/its own computers/, /keeps working/]) expect(t, String(f)).toMatch(f);
+  for (const f of [/Linux, Windows and a Mac/, /keeps working/]) expect(t, String(f)).toMatch(f);
   const links = [...md.matchAll(/<a [^>]*href="([^"]+)"[^>]*>([^<]*)<\/a>/g)].map((m) => [m[1], m[2]]);
   expect(links, "one link, tagged like the tool links").toEqual([["https://maindesk.smaverk.com/?src=studio", "Open Maindesk"]]);
   expect(md, "the link is a button like the cards'").toContain('<a class="btn" href="https://maindesk.smaverk.com/?src=studio">Open Maindesk</a>');
   // No price, and nothing that reads as free: the free wording belongs to the tools.
   expect(t, "a price or free wording in the Maindesk section").not.toMatch(/\$|€|£|\bUSD\b|\bSEK\b|\bkr\b|a month|per month|\bfree\b|\btrial\b/i);
-  // Its picture is drawn, named for a screen reader, and still for visitors who asked for less motion.
-  expect(md).toMatch(/<div class="pic" role="img" aria-label="[^"]{40,}"><svg viewBox="0 0 320 180" aria-hidden="true">/);
-  expect(studio).toContain("@media(prefers-reduced-motion:reduce){.pic .bar,.pic .ping,.pic .flow{animation:none}}");
+  // Its picture is the app itself, not a drawing (design review r10, B1: a drawn stand-in read as a wireframe beside real
+  // footage): image files of the real screens, desk and phone in each theme, small, named for a screen reader; the studio's
+  // theme (picked or the device's) picks the pair, and the other pair has no box, so its lazy images are not fetched.
+  expect(md, "no drawing in the Maindesk card").not.toMatch(/<svg\b|<canvas\b/);
+  expect(md).toMatch(/<div class="shot" role="img" aria-label="[^"]{40,}">/);
+  const shots = [...md.matchAll(/<img class="(desk|phone) (lt|dk)" src="([^"]+)"[^>]*>/g)].map((m) => ({ view: m[1]!, theme: m[2]!, src: m[3]!, tag: m[0]! }));
+  expect(shots.map((s) => `${s.view} ${s.theme}`).sort(), "a desk and a phone still for each theme").toEqual(["desk dk", "desk lt", "phone dk", "phone lt"]);
+  for (const s of shots) {
+    expect(s.src, `${s.src}: an image file`).toMatch(/^maindesk\/[a-z-]+\.(webp|avif|jpg|png)$/);
+    expect(existsSync(join(ROOT, "captions/app/dist", s.src)), `${s.src} exists`).toBe(true);
+    expect(statSync(join(ROOT, "captions/app/dist", s.src)).size, `${s.src} under 80 KB`).toBeLessThan(80e3);
+    for (const a of ['loading="lazy"', 'width="', 'height="', 'alt=""']) expect(s.tag, `${s.src}: ${a}`).toContain(a);
+  }
+  expect(studio).toContain(".shot .dk{display:none}");
+  expect(studio).toContain(":root[data-theme=dark] .shot .lt{display:none}");
+  expect(studio, "the drawing's CSS is gone").not.toMatch(/\.pic\b|@keyframes md/);
   // The video tools' promises (free, no account, nothing uploaded) are said of the video tools, so none reads as Maindesk's.
   expect(studio).toContain("<h2>Every video tool</h2>");
   const meta = (p: string) => studio.match(new RegExp(`<meta (?:name|property)="${p}" content="([^"]*)"`))?.[1] ?? "";
   const ld = JSON.parse(studio.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)![1]!).description as string;
   for (const [where, v] of [["title", studio.match(/<title>([^<]*)<\/title>/)?.[1] ?? ""], ["description", meta("description")], ["og:title", meta("og:title")], ["og:description", meta("og:description")], ["twitter:title", meta("twitter:title")], ["twitter:description", meta("twitter:description")], ["JSON-LD", ld]] as const)
     expect(v, `${where} names Maindesk`).toMatch(/Maindesk/);
-  expect(read(`${SITES.captions.dist}/llms.txt`), "smaverk.com/llms.txt (Captions' file) names Maindesk").toContain("https://maindesk.smaverk.com");
+  // Every tool's llms.txt (Captions' is also smaverk.com/llms.txt) says the same one sentence about Maindesk (review r10, S2).
+  const MD_LINE = "Småverk also runs Maindesk (https://maindesk.smaverk.com), a separate service where a person's AI agent gets its own computers in the cloud (Linux, Windows and a Mac), with plans and terms of its own.";
+  for (const f of [...Object.values(SITES).map((s) => `${s.dist}/llms.txt`), "operator/app/dist/llms.txt"].filter((f) => existsSync(join(ROOT, f)))) expect(read(f), `${f} names Maindesk`).toContain(MD_LINE);
   // The legal pages send a Maindesk reader to its own pages, and the support payment is the tools' only money, not Småverk's.
   expect(read(LEGAL[0]!)).toContain('<a href="https://maindesk.smaverk.com/privacy">');
   expect(read(LEGAL[1]!)).toContain('<a href="https://maindesk.smaverk.com/terms">');

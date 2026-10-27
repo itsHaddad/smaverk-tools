@@ -32,7 +32,7 @@ a{color:inherit}
 .brand{text-decoration:none;display:flex;align-items:center;gap:10px;font:700 15px/1 var(--display);letter-spacing:.01em;min-height:44px;width:max-content;max-width:100%}
 .top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:22px;margin-inline:calc((100% - min(1100px, 100vw - 32px)) / 2)}
 .brand i{display:inline-block;width:14px;height:14px;background:var(--hi);border-radius:3px}
-h1{font:800 clamp(32px,8vw,52px)/1.04 var(--display);letter-spacing:-.025em;margin:0 0 14px;text-wrap:balance;max-width:22ch}
+h1{font:800 clamp(32px,8vw,52px)/1.04 var(--display);letter-spacing:-.025em;margin:0 0 14px;text-wrap:balance;max-width:24ch}
 h1 mark{background:linear-gradient(transparent 55%,var(--hi) 55%);color:inherit;padding:0 .08em}
 @media(prefers-color-scheme:dark){:root:not([data-theme=light]) h1 mark{background:none;color:var(--hi);padding:0}}
 :root[data-theme=dark] h1 mark{background:none;color:var(--hi);padding:0}
@@ -44,20 +44,19 @@ h2{font:700 22px/1.2 var(--display);letter-spacing:-.01em;margin:40px 0 12px}
 .md h2{font:800 24px/1.1 var(--display);letter-spacing:-.02em;margin:0}
 .md p{color:var(--muted);font-size:16px;margin:0}
 .md .btn{width:100%}
-@media(min-width:720px){.md{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto auto 1fr;column-gap:calc(14px + 36px + 2px);align-items:start}.md>.pic{grid-row:1/span 3}.md>.btn{align-self:end}}
-/* Its picture is drawn, not filmed: three machines working through a task and the phone the result reaches. Fixed colours
-   on the demos' dark ground, so it reads the same in light and dark; still for visitors who asked for less motion. */
-.pic{position:relative;aspect-ratio:16/9;border-radius:10px;overflow:hidden;background:#0E0D12}
-.pic svg{display:block;width:100%;height:100%}
-.pic text{font:700 14px var(--display);fill:#F2F0F7}
-.pic .bar{transform-box:fill-box;transform-origin:0 50%;animation:mdBar 8s ease-in-out infinite backwards}
-.pic .b2{animation-delay:.8s}.pic .b3{animation-delay:1.6s}
-.pic .ping{animation:mdPing 8s ease-out infinite backwards}
-.pic .flow{animation:mdFlow 1.2s linear infinite}
-@keyframes mdBar{0%{transform:scaleX(.06)}55%,100%{transform:scaleX(1)}}
-@keyframes mdPing{0%,76%{opacity:0;transform:translateY(6px)}82%,96%{opacity:1;transform:none}100%{opacity:0}}
-@keyframes mdFlow{to{stroke-dashoffset:-16}}
-@media(prefers-reduced-motion:reduce){.pic .bar,.pic .ping,.pic .flow{animation:none}}
+@media(min-width:720px){.md{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto auto 1fr;column-gap:calc(14px + 36px + 2px);align-items:start}.md>.shot{grid-row:1/span 3}.md>.btn{align-self:end}}
+/* Its picture is the app itself, stills of the live demo (desk and phone, shot 26 Oct 2026), in the demos' 16:9 slot (design
+   review r10, B1: a drawing in this slot read as a wireframe beside real footage). The desk is cropped to the task list and the
+   phone sits on it the way Vertical's result does. Each theme has its own pair; the studio's theme, picked or the device's,
+   decides which is shown, and the hidden pair is not loaded (lazy images with no box are not fetched). */
+.shot{position:relative;aspect-ratio:16/9;border-radius:10px;overflow:hidden;background:#0E0D12}
+.shot img{position:absolute;display:block;max-width:none}
+.shot .desk{left:-43.4%;top:0;margin-top:-9.3%;width:170%;height:auto}
+.shot .phone{right:3%;top:9%;height:82%;width:auto;aspect-ratio:9/16;object-fit:cover;object-position:top;border:1.5px solid rgba(255,255,255,.85);border-radius:6px;box-shadow:0 6px 18px rgba(0,0,0,.45)}
+.shot .dk{display:none}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]) .shot .lt{display:none}:root:not([data-theme=light]) .shot .dk{display:block}}
+:root[data-theme=dark] .shot .lt{display:none}
+:root[data-theme=dark] .shot .dk{display:block}
 p{margin:0 0 12px;text-wrap:pretty;overflow-wrap:anywhere}
 /* Three tools, three columns — never two, which orphans the third card at every width from the breakpoint up, and the
    orphan was the card with no demo, whose card is its whole presentation. The row is the one part of the page wider than
@@ -78,7 +77,7 @@ p{margin:0 0 12px;text-wrap:pretty;overflow-wrap:anywhere}
 @media(min-width:720px){.tools{grid-template-columns:1fr 1fr}.tools>.tool:last-child:nth-child(odd){grid-column:1/-1}}
 /* The card given the whole row keeps its demo the size of its neighbours': picture on the left at one column's width, words on
    the right. A full-row demo was 842px of a 640px video beside two 395px ones (2026-09-23). */
-@media(min-width:720px){.tools>.tool:last-child:nth-child(odd):has(.demo){display:grid;grid-template-columns:1fr 1fr;column-gap:calc(14px + 36px + 2px);align-items:start}.tools>.tool:last-child:nth-child(odd):has(.demo)>.demo{grid-row:1/span 4}.tools>.tool:last-child:nth-child(odd):has(.demo)>.btn{margin-top:4px}}
+@media(min-width:720px){.tools>.tool:last-child:nth-child(odd):has(.demo){display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto auto auto 1fr;column-gap:calc(14px + 36px + 2px);align-items:start}.tools>.tool:last-child:nth-child(odd):has(.demo)>.demo{grid-row:1/span 4}.tools>.tool:last-child:nth-child(odd):has(.demo)>.btn{align-self:end}}
 /* There is no three-column rule, and that is the finding rather than a compromise. Three columns need a row wider than the
    880px measure, which gives the page a second left edge — and it buys a SMALLER demo: 292px in a 1012px row against 433px
    here at 1280. Measured on the shipping bytes: the Captions caption holds one line at a 253px demo in two columns and
@@ -143,19 +142,15 @@ footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--line);color:v
 <body>
 <main class="wrap">
   <div class="top"><a class="brand" href="https://smaverk.com"><i></i>Småverk</a><button class="theme" id="theme" type="button" aria-pressed="false" aria-label="Switch to dark mode"><svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg><svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/></svg></button></div>
-  <h1>AI that <mark class="nb">works for you</mark>, <span class="nb">in the cloud</span> or on your device.</h1>
+  <h1>Computers for <span class="nb">your <mark>AI agent</mark>.</span><br> Free video tools on <span class="nb">your device.</span></h1>
 
   <section class="md" aria-labelledby="md-h">
-    <div class="pic" role="img" aria-label="Three computers in the cloud, Linux, Windows and a Mac, each working through a task, and a phone that gets the result."><svg viewBox="0 0 320 180" aria-hidden="true">
-      <rect x="20" y="16" width="150" height="44" rx="7" fill="#1E1B27" stroke="#3A3646"/><text x="32" y="36">Linux</text><rect x="32" y="44" width="126" height="6" rx="3" fill="#34303F"/><rect class="bar" x="32" y="44" width="126" height="6" rx="3" fill="#FFD84D"/>
-      <rect x="44" y="68" width="150" height="44" rx="7" fill="#1E1B27" stroke="#3A3646"/><text x="56" y="88">Windows</text><rect x="56" y="96" width="126" height="6" rx="3" fill="#34303F"/><rect class="bar b2" x="56" y="96" width="126" height="6" rx="3" fill="#FFD84D"/>
-      <rect x="68" y="120" width="150" height="44" rx="7" fill="#1E1B27" stroke="#3A3646"/><text x="80" y="140">Mac</text><rect x="80" y="148" width="126" height="6" rx="3" fill="#34303F"/><rect class="bar b3" x="80" y="148" width="126" height="6" rx="3" fill="#FFD84D"/>
-      <path class="flow" d="M198 77H244" stroke="#FFD84D" stroke-width="2" stroke-dasharray="3 5" stroke-linecap="round"/>
-      <rect x="246" y="26" width="56" height="128" rx="11" fill="#16141D" stroke="#F2F0F7" stroke-opacity=".8" stroke-width="2"/><rect x="266" y="33" width="16" height="3" rx="1.5" fill="#3A3646"/>
-      <g class="ping"><rect x="252" y="62" width="44" height="30" rx="6" fill="#F2F0F7"/><circle cx="264" cy="77" r="7" fill="#FFD84D"/><path d="M260.5 77l2.5 2.5 4.5-5" fill="none" stroke="#16141D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><rect x="275" y="72" width="15" height="3" rx="1.5" fill="#16141D" opacity=".55"/><rect x="275" y="79" width="10" height="3" rx="1.5" fill="#16141D" opacity=".3"/></g>
-    </svg></div>
+    <div class="shot" role="img" aria-label="Maindesk itself: the Tasks page asks what your agent should do and lists the tasks that need you, are running, waiting or done. The same tasks show on a phone.">
+      <img class="desk lt" src="maindesk/app-desktop-light.webp" width="1280" height="800" alt="" loading="lazy" decoding="async"><img class="phone lt" src="maindesk/app-phone-light.webp" width="585" height="1266" alt="" loading="lazy" decoding="async">
+      <img class="desk dk" src="maindesk/app-desktop-dark.webp" width="1280" height="800" alt="" loading="lazy" decoding="async"><img class="phone dk" src="maindesk/app-phone-dark.webp" width="585" height="1266" alt="" loading="lazy" decoding="async">
+    </div>
     <h2 id="md-h">Maindesk</h2>
-    <p>Your AI agent gets its own computers. Close your laptop and it keeps working.</p>
+    <p>Linux, Windows and a Mac in the cloud. Close your laptop and your agent keeps working.</p>
     <a class="btn" href="https://maindesk.smaverk.com/?src=studio">Open Maindesk</a>
   </section>
 
