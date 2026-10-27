@@ -23,7 +23,8 @@ const SITES = {
 const SUPPORT = "https://buy.polar.sh/polar_cl_dDSll8mftHzvbuFi5j0OMjqduigiYhMEw4NIm3HTCkb";
 const FREE_TAG = '<a class="tag" id="tag" href="#support"><b>Free</b></a>';
 const SUPPORT_LINE = '<p class="fine" id="support">Free. If it helped you, you can <a href="https://buy.polar.sh/polar_cl_dDSll8mftHzvbuFi5j0OMjqduigiYhMEw4NIm3HTCkb" target="_blank" rel="noopener">support Småverk</a>.</p>';
-const STUDIO = "captions/app/dist/studio.html"; const HOME = "captions/app/dist/home.html"; // studio.html: video.smaverk.com; home.html: smaverk.com (A, 27 Oct 2026) const LEGAL = ["captions/app/dist/privacy.html", "captions/app/dist/terms.html"];
+// studio.html is the video tools' page (video.smaverk.com) and home.html is smaverk.com, Maindesk's page (A, 27 Oct 2026).
+const STUDIO = "captions/app/dist/studio.html"; const HOME = "captions/app/dist/home.html"; const LEGAL = ["captions/app/dist/privacy.html", "captions/app/dist/terms.html"];
 const read = (p: string) => readFileSync(join(ROOT, p), "utf8");
 const pages = () => Object.values(SITES).flatMap((s) => readdirSync(join(ROOT, s.dist)).filter((f) => /\.(html|txt)$/.test(f) && !/^google/.test(f)).map((f) => `${s.dist}/${f}`));
 // The search pages (tools/pages.ts): every .html in a dist that is not one of the tool's hand-written pages.
