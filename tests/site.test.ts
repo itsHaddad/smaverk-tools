@@ -667,6 +667,12 @@ test("smaverk.com leads with Maindesk: what it does, its demo, one tagged link, 
   for (const f of new Set(files)) expect(statSync(join(ROOT, "captions/app/dist", f)).size, `${f} under 80 KB`).toBeLessThan(80e3);
   expect(home).toContain(".app::after{content:\"\";position:absolute;inset:0;border-radius:inherit;box-shadow:inset 0 0 0 1px var(--line);pointer-events:none}");
   expect(home).toContain(":root[data-theme=dark] .app .lt{display:none}");
+  // r11 H1: on a phone the frame starts at "Needs you", so the demo shows the agent's question and the running tasks, not an empty form.
+  expect(home).toContain("@media(max-width:719px){.app{aspect-ratio:10/9}.app .main{margin-top:-92%}}");
+  // r11 H3: the share image is a JPG every link preview shows, 1200 x 630, made from the real stills; H4: Terms never wraps alone.
+  expect(home).toMatch(/<meta property="og:image" content="https:\/\/smaverk\.com\/maindesk\/og\.jpg\?v=\d+"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">/);
+  expect(statSync(join(ROOT, "captions/app/dist/maindesk/og.jpg")).size, "og.jpg under 200 KB").toBeLessThan(200e3);
+  expect(home).toContain('<span class="pair"><a href="https://smaverk.com/privacy">Privacy</a><a href="https://smaverk.com/terms">Terms</a></span>');
   expect(home, "the pair on screen loads first").toMatch(/i\.loading="eager";i\.fetchPriority="high"/);
   expect(home, "the other pair is warmed after load").toMatch(/addEventListener\("load",function\(\)\{setTimeout\(/);
   // Everything that says what this page is names Maindesk.

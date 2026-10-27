@@ -12,7 +12,7 @@
 <meta property="og:title" content="Maindesk by Småverk: computers for your AI agent">
 <meta property="og:description" content="Maindesk gives your AI agent its own computers in the cloud: Linux, Windows and a Mac. Close your laptop and your agent keeps working.">
 <meta property="og:url" content="https://smaverk.com/"><meta property="og:type" content="website"><meta property="og:site_name" content="Småverk">
-<meta property="og:image" content="https://smaverk.com/maindesk/app-desktop-light.webp">
+<meta property="og:image" content="https://smaverk.com/maindesk/og.jpg?v=20261027"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="Maindesk's Tasks page on a computer and on a phone.">
 <meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Maindesk by Småverk: computers for your AI agent"><meta name="twitter:description" content="Maindesk gives your AI agent its own computers in the cloud: Linux, Windows and a Mac. Close your laptop and your agent keeps working.">
 <link rel="preload" href="fonts/bricolage-grotesque-latin.woff2" as="font" type="font/woff2" crossorigin>
 <style>@font-face{font-family:"Bricolage Grotesque";font-style:normal;font-weight:200 800;font-stretch:100%;font-display:swap;src:url(fonts/bricolage-grotesque-latin.woff2) format("woff2")}</style>
@@ -55,13 +55,17 @@ p{margin:0 0 12px;text-wrap:pretty;overflow-wrap:anywhere}
 .app .main{width:100%;height:auto}
 .app .inset{display:none;position:absolute;right:3%;bottom:5%;height:74%;width:auto;aspect-ratio:9/16;object-fit:cover;object-position:top;border:1.5px solid rgba(255,255,255,.85);border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,.45)}
 @media(min-width:720px){.app{aspect-ratio:16/10}.app .inset{display:block}}
+/* design review r11, H1: on a phone the frame starts at "Needs you", so it shows the agent's question with its answers and the
+   running tasks, not the empty form above them */
+@media(max-width:719px){.app{aspect-ratio:10/9}.app .main{margin-top:-92%}}
 .app .dk{display:none}
 @media(prefers-color-scheme:dark){:root:not([data-theme=light]) .app .lt{display:none}:root:not([data-theme=light]) .app .dk{display:block}}
 :root[data-theme=dark] .app .lt{display:none}
 :root[data-theme=dark] .app .dk{display:block}
 .more{display:inline-flex;align-items:center;min-height:44px;margin-top:22px;font:600 16px var(--body)}
-footer a,footer span{display:inline-flex;align-items:center;min-height:44px}footer a{justify-content:center;min-width:44px}
+footer a,footer span{display:inline-flex;align-items:center;min-height:44px}footer a{justify-content:flex-start;min-width:44px}
 footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--line);color:var(--muted);font-size:15px;display:flex;flex-wrap:wrap;gap:8px 18px}
+footer .pair{gap:18px} /* Privacy and Terms wrap together, so Terms never sits on a row of its own (design review r11, H4) */
 /* theme toggle: the same block on every page */
 .top>.brand{margin-right:auto}
 .theme{appearance:none;flex:none;width:44px;height:44px;margin:0 -10px 0 -4px;padding:0;border:0;border-radius:50%;background:transparent;color:var(--ink);display:grid;place-items:center;cursor:pointer}
@@ -94,8 +98,7 @@ footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--line);color:v
   <footer>
     <span>Småverk, Sweden</span>
     <a href="mailto:hello@smaverk.com">hello@smaverk.com</a>
-    <a href="https://smaverk.com/privacy">Privacy</a>
-    <a href="https://smaverk.com/terms">Terms</a>
+    <span class="pair"><a href="https://smaverk.com/privacy">Privacy</a><a href="https://smaverk.com/terms">Terms</a></span>
   </footer>
 </main>
 <script>/* old links to the studio's support line now live on the video tools' page */if(location.hash==="#support")location.replace("https://video.smaverk.com/#support");</script>
