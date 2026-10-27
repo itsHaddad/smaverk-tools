@@ -654,7 +654,12 @@ test("smaverk.com leads with Maindesk, shows one real evening on our desk as it 
   for (const f of [/Linux, Windows and a Mac in the cloud/, /keeps working/, /from your phone/]) expect(t, String(f)).toMatch(f);
   expect(wordsAtRest(home), "under the 240-word budget (chart and log both counted)").toBeLessThan(240);
   const links = [...home.matchAll(/<a [^>]*href="([^"]+)"[^>]*>([^<]*)<\/a>/g)].map((m) => [m[1]!, m[2]!.trim()]);
-  expect(links.filter(([h]) => /maindesk\.smaverk\.com/.test(h))).toEqual([["https://maindesk.smaverk.com/?src=smaverk", "Open Maindesk"]]);
+  expect(links.filter(([h]) => /maindesk\.smaverk\.com/.test(h))).toEqual([["https://maindesk.smaverk.com/?src=smaverk", "Open Maindesk"], ["https://maindesk.smaverk.com/demo?src=smaverk", "live demo"]]);
+  // the invite line sits with Open Maindesk until sign-up opens (r12 S9, cold user 8); RELEASE-2026-11 row 7 takes it out at launch
+  expect(t).toContain("Invite only for now. The live demo needs no account.");
+  // the replay plays once, in 5 s at most (cold user 8 re-check: WCAG 2.2.2), and nothing moves under reduced motion
+  expect(home).not.toMatch(/animation:[^;}]*infinite/); for (const m of home.matchAll(/animation:\w+ ([\d.]+)s/g)) expect(Number(m[1])).toBeLessThanOrEqual(5);
+  expect(home).toMatch(/\.now\{display:none;/);
   expect(links).toContainEqual(["https://video.smaverk.com/?src=smaverk", "Free video tools →"]);
   expect(t.replace("Free video tools", ""), "a price or free wording on smaverk.com").not.toMatch(/\$|€|£|\bUSD\b|\bSEK\b|\bkr\b|a month|per month|\bfree\b|\btrial\b/i);
   // the log (phones) is the task log, word for word
