@@ -17,7 +17,7 @@ test("every search page is what the generator makes from the home page today", (
 });
 
 test("dist holds exactly the pages that pages/ names", () => {
-  const OWN = /^(index|studio|privacy|terms|google[0-9a-f]+)\.html$/; // the hand-written pages of this tool
+  const OWN = /^(index|studio|home|privacy|terms|google[0-9a-f]+)\.html$/; // the hand-written pages of this tool
   const made = readdirSync(join(APP, "dist")).filter((f) => f.endsWith(".html") && !OWN.test(f)).sort();
   expect(made, "a generated page whose json is gone, or a json with no page").toEqual(pages.map((p) => `${p.slug}.html`).sort());
 });

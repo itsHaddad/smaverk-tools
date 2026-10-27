@@ -3,22 +3,22 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Småverk · Maindesk and free AI video tools</title>
-<meta name="description" content="Maindesk gives your AI agent its own computers in the cloud. Five free AI tools make short videos on your device, with nothing uploaded.">
+<title>Småverk video tools · small AI tools that run on your device</title>
+<meta name="description" content="Small AI tools that run on your device, in the browser. Nothing you put in leaves your device. Every tool is free.">
 <meta name="color-scheme" content="light dark">
 <script>/* theme: the device's setting until a tap picks light or dark, then that pick on every Småverk page (a cookie for .smaverk.com, as each tool is its own site; this site's storage as the fallback), applied before first paint */(function(){var d=document.documentElement,k="smaverk-theme",m=matchMedia("(prefers-color-scheme: dark)");function set(t){d.setAttribute("data-theme",t);d.style.colorScheme=t}function dark(){var t=d.getAttribute("data-theme");return t?t==="dark":m.matches}function sync(){var b=document.getElementById("theme");if(!b)return;var on=dark();b.setAttribute("aria-pressed",String(on));b.setAttribute("aria-label",on?"Switch to light mode":"Switch to dark mode")}var s=null;try{var c=document.cookie.match(/(?:^|; )smaverk-theme=(light|dark)/);s=c?c[1]:null}catch(e){}try{if(!s)s=localStorage.getItem(k)}catch(e){}if(s==="light"||s==="dark")set(s);m.addEventListener("change",sync);document.addEventListener("DOMContentLoaded",function(){var b=document.getElementById("theme");if(!b)return;sync();b.addEventListener("click",function(){var t=dark()?"light":"dark";set(t);try{localStorage.setItem(k,t)}catch(e){}try{document.cookie=k+"="+t+"; Path=/; Max-Age=31536000; SameSite=Lax; Secure"+(/(^|\.)smaverk\.com$/.test(location.hostname)?"; Domain=.smaverk.com":"")}catch(e){}sync();dispatchEvent(new Event("themechange"))})})})();</script>
-<link rel="canonical" href="https://smaverk.com/">
+<link rel="canonical" href="https://video.smaverk.com/">
 <meta name="google-site-verification" content="_eN1ywvXp9R-hebN0pJSivwAN8J8DuuaNGwfr_QqmnU">
-<meta property="og:title" content="Småverk: Maindesk and free AI video tools">
-<meta property="og:description" content="Maindesk gives your AI agent its own computers in the cloud. Five free tools make short videos on your device.">
-<meta property="og:url" content="https://smaverk.com/"><meta property="og:type" content="website"><meta property="og:site_name" content="Småverk">
-<meta property="og:image" content="https://smaverk.com/studio-demo/vertical-poster.jpg?v=1792264527">
-<meta name="twitter:card" content="summary"><meta name="twitter:title" content="Småverk: Maindesk and free AI video tools"><meta name="twitter:description" content="Maindesk gives your AI agent its own computers in the cloud. Five free tools make short videos on your device.">
+<meta property="og:title" content="Småverk video tools: small AI tools that run on your device">
+<meta property="og:description" content="Five tools, one job each, in your browser. Nothing uploaded. Every tool is free.">
+<meta property="og:url" content="https://video.smaverk.com/"><meta property="og:type" content="website"><meta property="og:site_name" content="Småverk">
+<meta property="og:image" content="https://video.smaverk.com/studio-demo/vertical-poster.jpg?v=1792264527">
+<meta name="twitter:card" content="summary"><meta name="twitter:title" content="Småverk video tools: small AI tools that run on your device"><meta name="twitter:description" content="Each tool does one job in your browser. Nothing uploaded. Every tool is free.">
 <link rel="preload" href="fonts/bricolage-grotesque-latin.woff2" as="font" type="font/woff2" crossorigin>
 <style>@font-face{font-family:"Bricolage Grotesque";font-style:normal;font-weight:200 800;font-stretch:100%;font-display:swap;src:url(fonts/bricolage-grotesque-latin.woff2) format("woff2")}</style>
 <link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="icon" type="image/png" sizes="64x64" href="/icon-64.png">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%277%27 fill=%27%23FFD84D%27/%3E%3Crect x=%277%27 y=%2720%27 width=%2718%27 height=%275%27 rx=%272.5%27 fill=%27%2316141D%27/%3E%3C/svg%3E">
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"Småverk","url":"https://smaverk.com","email":"hello@smaverk.com","description":"Småverk makes Maindesk (https://maindesk.smaverk.com), where a person's AI agent gets its own computers in the cloud (Linux, Windows and a Mac) that the person and the agent share, with plans of its own; and five free browser tools for short videos that run on the user's device: Captions, Vertical, Clip finder, Clips and Operator. The video tools upload nothing and are free; one optional support payment keeps them going."}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"Småverk video tools","url":"https://video.smaverk.com/","publisher":{"@type":"Organization","name":"Småverk","url":"https://smaverk.com","email":"hello@smaverk.com"},"description":"Five small browser tools for short videos that run on the user's device: Captions, Vertical, Clip finder, Clips and Operator. Nothing uploaded. Every tool is free; one optional support payment keeps them going. Småverk also makes Maindesk (https://smaverk.com), computers in the cloud for a person's AI agent."}</script>
 <style>
 :root{color-scheme:light dark;
   --ground:light-dark(#F3F2F7,#0E0D12);--surface:light-dark(#FFFFFF,#18161F);--ink:light-dark(#16141D,#F2F0F7);--muted:light-dark(#67637A,#9D99AE);
@@ -32,31 +32,12 @@ a{color:inherit}
 .brand{text-decoration:none;display:flex;align-items:center;gap:10px;font:700 15px/1 var(--display);letter-spacing:.01em;min-height:44px;width:max-content;max-width:100%}
 .top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:22px;margin-inline:calc((100% - min(1100px, 100vw - 32px)) / 2)}
 .brand i{display:inline-block;width:14px;height:14px;background:var(--hi);border-radius:3px}
-h1{font:800 clamp(32px,8vw,52px)/1.04 var(--display);letter-spacing:-.025em;margin:0 0 14px;text-wrap:balance;max-width:24ch}
+h1{font:800 clamp(32px,8vw,52px)/1.04 var(--display);letter-spacing:-.025em;margin:0 0 14px;text-wrap:balance;max-width:22ch}
 h1 mark{background:linear-gradient(transparent 55%,var(--hi) 55%);color:inherit;padding:0 .08em}
 @media(prefers-color-scheme:dark){:root:not([data-theme=light]) h1 mark{background:none;color:var(--hi);padding:0}}
 :root[data-theme=dark] h1 mark{background:none;color:var(--hi);padding:0}
+.sub{color:var(--muted);font-size:18px;margin:0 0 32px;text-wrap:pretty;max-width:36em}
 h2{font:700 22px/1.2 var(--display);letter-spacing:-.01em;margin:40px 0 12px}
-/* Maindesk, Småverk's paid service, comes first and stands outside the tools' grid: a card like theirs, its picture in the
-   same 16:9 slot as their demos. From 720px the picture sits left at one column's width and the words right, as on the
-   Operator card, and the button ends level with the picture. It names no price: its own page shows its plans. */
-.md{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;display:flex;flex-direction:column;gap:10px;min-width:0;margin-top:26px}
-.md h2{font:800 24px/1.1 var(--display);letter-spacing:-.02em;margin:0}
-.md p{color:var(--muted);font-size:16px;margin:0}
-.md .btn{width:100%}
-@media(min-width:720px){.md{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto auto 1fr;column-gap:calc(14px + 36px + 2px);align-items:start}.md>.shot{grid-row:1/span 3}.md>.btn{align-self:end}}
-/* Its picture is the app itself, stills of the live demo (desk and phone, shot 26 Oct 2026), in the demos' 16:9 slot (design
-   review r10, B1: a drawing in this slot read as a wireframe beside real footage). The desk is cropped to the task list and the
-   phone sits on it the way Vertical's result does. Each theme has its own pair; the studio's theme, picked or the device's,
-   decides which is shown, and the hidden pair is not loaded (lazy images with no box are not fetched). */
-.shot{position:relative;aspect-ratio:16/9;border-radius:10px;overflow:hidden;background:#0E0D12}
-.shot img{position:absolute;display:block;max-width:none}
-.shot .desk{left:-43.4%;top:0;margin-top:-9.3%;width:170%;height:auto}
-.shot .phone{right:3%;top:9%;height:82%;width:auto;aspect-ratio:9/16;object-fit:cover;object-position:top;border:1.5px solid rgba(255,255,255,.85);border-radius:6px;box-shadow:0 6px 18px rgba(0,0,0,.45)}
-.shot .dk{display:none}
-@media(prefers-color-scheme:dark){:root:not([data-theme=light]) .shot .lt{display:none}:root:not([data-theme=light]) .shot .dk{display:block}}
-:root[data-theme=dark] .shot .lt{display:none}
-:root[data-theme=dark] .shot .dk{display:block}
 p{margin:0 0 12px;text-wrap:pretty;overflow-wrap:anywhere}
 /* Three tools, three columns — never two, which orphans the third card at every width from the breakpoint up, and the
    orphan was the card with no demo, whose card is its whole presentation. The row is the one part of the page wider than
@@ -141,21 +122,11 @@ footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--line);color:v
 </head>
 <body>
 <main class="wrap">
-  <div class="top"><a class="brand" href="https://smaverk.com"><i></i>Småverk</a><button class="theme" id="theme" type="button" aria-pressed="false" aria-label="Switch to dark mode"><svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg><svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/></svg></button></div>
-  <h1>Computers for <span class="nb">your <mark>AI agent</mark>.</span><br> Free video tools on <span class="nb">your device.</span></h1>
+  <div class="top"><a class="brand" href="https://video.smaverk.com"><i></i>Småverk</a><button class="theme" id="theme" type="button" aria-pressed="false" aria-label="Switch to dark mode"><svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg><svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/></svg></button></div>
+  <h1>Short videos for your socials, made on <mark>your</mark> device.</h1>
+  <p class="sub">Five free tools, one job each.</p>
 
-  <section class="md" aria-labelledby="md-h">
-    <div class="shot" role="img" aria-label="Maindesk itself: the Tasks page asks what your agent should do and lists the tasks that need you, are running, waiting or done. The same tasks show on a phone.">
-      <img class="desk lt" src="maindesk/app-desktop-light.webp" width="1280" height="800" alt="" loading="lazy" decoding="async"><img class="phone lt" src="maindesk/app-phone-light.webp" width="585" height="1266" alt="" loading="lazy" decoding="async">
-      <img class="desk dk" src="maindesk/app-desktop-dark.webp" width="1280" height="800" alt="" loading="lazy" decoding="async"><img class="phone dk" src="maindesk/app-phone-dark.webp" width="585" height="1266" alt="" loading="lazy" decoding="async">
-    </div>
-    <h2 id="md-h">Maindesk</h2>
-    <p>Linux, Windows and a Mac in the cloud. Close your laptop and your agent keeps working.</p>
-    <a class="btn" href="https://maindesk.smaverk.com/?src=studio">Open Maindesk</a>
-  </section>
-
-  <h2 id="tools-h">Free video tools</h2>
-  <section class="tools" aria-labelledby="tools-h">
+  <section class="tools" aria-label="Tools">
     <article class="tool">
       <div class="demo" data-demo="captions">
         <video src="sample.mp4?v=1792264527" poster="poster.webp?v=1792264527" muted loop playsinline preload="metadata" aria-label="A sample clip. Captions appear on it as each word is spoken."></video>
@@ -216,7 +187,7 @@ footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--line);color:v
     </article>
   </section>
 
-  <h2>Every video tool</h2>
+  <h2>Every tool</h2>
   <ul class="facts">
     <li><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8.8a15 15 0 0 1 4.2-2.6M22 8.8A15 15 0 0 0 10.7 5M5 12.9a10 10 0 0 1 5.2-2.7M19 12.9a10 10 0 0 0-2.2-1.6M8.5 16.4a5 5 0 0 1 7 0"/><path d="M12 20h.01"/><path d="M3 3l18 18"/></svg></span>Works offline once loaded</li>
     <li><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17.5a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 18 9a4 4 0 0 1 .5 7.97"/><path d="M3 3l18 18"/></svg></span>Nothing uploaded</li>
@@ -232,6 +203,7 @@ footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--line);color:v
     <a href="mailto:hello@smaverk.com">hello@smaverk.com</a>
     <a href="https://smaverk.com/privacy">Privacy</a>
     <a href="https://smaverk.com/terms">Terms</a>
+    <a href="https://smaverk.com/?src=video">From Småverk, which also makes Maindesk</a>
     <a href="https://www.youtube.com/watch?v=96eBO8N3qn4" rel="noopener">Captions sample: Peter Kramm, CC BY</a>
     <a href="https://www.youtube.com/watch?v=GoE-e8u-P1g" rel="noopener">Vertical sample: Coach Javi, CC BY</a>
     <a href="https://images.nasa.gov/details/iss071m261311538_NASA_Astronaut_Matt_Dominick_Talks_with_KMGH_Denver_240510" rel="noopener">Clip finder and Clips samples: NASA, public domain</a>

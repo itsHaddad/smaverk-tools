@@ -2,7 +2,7 @@
 
 > AI that finds the moments worth posting in a long recording, on your device, in the page at https://clipfinder.smaverk.com. The recording is read on the device and is not uploaded. Free, with no account. It reads up to four hours of a recording and shows every moment it finds.
 
-Clip finder is one of the tools by Småverk; https://smaverk.com lists them all. Småverk also runs Maindesk (https://maindesk.smaverk.com), a separate service where a person's AI agent gets its own computers in the cloud (Linux, Windows and a Mac), with plans and terms of its own.
+Clip finder is one of the tools by Småverk; https://video.smaverk.com lists them all. Småverk also runs Maindesk (https://maindesk.smaverk.com), a separate service where a person's AI agent gets its own computers in the cloud (Linux, Windows and a Mac), with plans and terms of its own.
 
 ## What it does
 - Input: an audio or video file of a podcast, a talk or an interview (mp3, m4a, mp4, mov, webm, wav), English speech.

@@ -26,3 +26,7 @@
   Cache-Control: public, max-age=86400
 /studio.html
   Cache-Control: no-cache
+/home
+  Cache-Control: no-cache
+/home.html
+  Cache-Control: no-cache

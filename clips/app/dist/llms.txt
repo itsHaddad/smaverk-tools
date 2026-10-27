@@ -2,7 +2,7 @@
 
 > AI that turns a long recording into clips ready to post, on your device, in the page at https://clips.smaverk.com: it finds the moments, makes each one 9:16 with the speaker in frame, and writes the captions in. The recording is not uploaded. Free: every clip saved. There is no account.
 
-Clips is one of the tools by Småverk; https://smaverk.com lists them all. It runs the other three in a row: Clip finder finds the moments, Vertical frames them, Captions writes the words. Småverk also runs Maindesk (https://maindesk.smaverk.com), a separate service where a person's AI agent gets its own computers in the cloud (Linux, Windows and a Mac), with plans and terms of its own.
+Clips is one of the tools by Småverk; https://video.smaverk.com lists them all. It runs the other three in a row: Clip finder finds the moments, Vertical frames them, Captions writes the words. Småverk also runs Maindesk (https://maindesk.smaverk.com), a separate service where a person's AI agent gets its own computers in the cloud (Linux, Windows and a Mac), with plans and terms of its own.
 
 ## What it does
 - Input: a video of a podcast, a talk or an interview (mp4, mov, webm), recordings up to four hours, English speech.

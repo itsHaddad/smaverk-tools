@@ -23,11 +23,11 @@ const SITES = {
 const SUPPORT = "https://buy.polar.sh/polar_cl_dDSll8mftHzvbuFi5j0OMjqduigiYhMEw4NIm3HTCkb";
 const FREE_TAG = '<a class="tag" id="tag" href="#support"><b>Free</b></a>';
 const SUPPORT_LINE = '<p class="fine" id="support">Free. If it helped you, you can <a href="https://buy.polar.sh/polar_cl_dDSll8mftHzvbuFi5j0OMjqduigiYhMEw4NIm3HTCkb" target="_blank" rel="noopener">support Småverk</a>.</p>';
-const STUDIO = "captions/app/dist/studio.html"; const LEGAL = ["captions/app/dist/privacy.html", "captions/app/dist/terms.html"];
+const STUDIO = "captions/app/dist/studio.html"; const HOME = "captions/app/dist/home.html"; // studio.html: video.smaverk.com; home.html: smaverk.com (A, 27 Oct 2026) const LEGAL = ["captions/app/dist/privacy.html", "captions/app/dist/terms.html"];
 const read = (p: string) => readFileSync(join(ROOT, p), "utf8");
 const pages = () => Object.values(SITES).flatMap((s) => readdirSync(join(ROOT, s.dist)).filter((f) => /\.(html|txt)$/.test(f) && !/^google/.test(f)).map((f) => `${s.dist}/${f}`));
 // The search pages (tools/pages.ts): every .html in a dist that is not one of the tool's hand-written pages.
-const HAND = /^(index|studio|privacy|terms|google[0-9a-f]+)\.html$/;
+const HAND = /^(index|studio|home|privacy|terms|google[0-9a-f]+)\.html$/;
 const search = (s: { dist: string }) => readdirSync(join(ROOT, s.dist)).filter((f) => f.endsWith(".html") && !HAND.test(f));
 const every = (s: { dist: string; page: string }) => [s.page, ...search(s)]; // the home page and its search pages
 // What a visitor reads without touching anything: no script, style or svg, nothing hidden, no display:none block
@@ -149,7 +149,7 @@ test("every limit a tool enforces is stated wherever a searcher can land", () =>
 
 test("each sitemap lists only pages on its own host", () => {
   const check = (file: string, host: string) => { for (const m of read(file).matchAll(/<loc>https:\/\/([^/<]+)/g)) expect(`${file}: ${m[1]}`).toBe(`${file}: ${host}`); };
-  check("captions/app/dist/sitemap.xml", "captions.smaverk.com"); check("captions/app/dist/studio-sitemap.xml", "smaverk.com"); check("clipfinder/app/dist/sitemap.xml", "clipfinder.smaverk.com"); check("clips/app/dist/sitemap.xml", "clips.smaverk.com");
+  check("captions/app/dist/sitemap.xml", "captions.smaverk.com"); check("captions/app/dist/studio-sitemap.xml", "smaverk.com"); check("captions/app/dist/video-sitemap.xml", "video.smaverk.com"); check("clipfinder/app/dist/sitemap.xml", "clipfinder.smaverk.com"); check("clips/app/dist/sitemap.xml", "clips.smaverk.com");
 });
 
 test("the tools share one look: every style rule both pages have is identical, apart from the named exceptions", () => {
@@ -260,7 +260,7 @@ test("one footer on every tool, every link at least 44 px wide, and the support 
   for (const p of toolPages) {
     const html = read(p);
     const foot = [...(html.match(/<p class="foot">([\s\S]*?)<\/p>/)?.[1] ?? "").matchAll(/<a [^>]*>([^<]*)<\/a>/g)].map((m) => m[1]!);
-    expect(foot.slice(0, 5), `${p}: the footer's first five links`).toEqual(["hello@smaverk.com", "smaverk.com", "Privacy", "Terms", "For automations and agents"]);
+    expect(foot.slice(0, 5), `${p}: the footer's first five links`).toEqual(["hello@smaverk.com", "video.smaverk.com", "Privacy", "Terms", "For automations and agents"]);
     for (const credit of foot.slice(5)) expect(credit, `${p}: after the five, only sample credits`).toMatch(/^(Sample|Court)[^:]*: .+/);
     expect(html, `${p}: footer links 44 px wide`).toContain(".foot a{color:var(--muted);display:inline-flex;align-items:center;justify-content:center;min-height:44px;min-width:44px}");
     expect(html, `${p}: the support line lands clear of the top edge`).toContain("#support{scroll-margin-top:24px}");
@@ -285,10 +285,8 @@ test("each page says it in one line: AI, on your device", () => {
     for (const f of search(s)) expect(read(`${s.dist}/${f}`).match(/<p class="sub">([^<]*)<\/p>/)?.[1], `${f} line under the headline`).toMatch(/^AI [^.]*on your device\./);
   }
   const studio = read(STUDIO);
-  // A, 27 Oct 2026: the studio is Småverk's home for Maindesk and the video tools, so the headline names both, each with who
-  // it is for (studio design review r10, B2: "AI that works for you" named neither). The title names both too.
-  expect(text(studio.match(/<h1>[\s\S]*?<\/h1>/)![0]).replace(/\s+/g, " ").replace(/ ([,.])/g, "$1").trim()).toBe("Computers for your AI agent. Free video tools on your device.");
-  expect(studio.match(/<title>([^<]*)<\/title>/)?.[1]).toMatch(/Maindesk and free AI video tools/);
+  expect(text(studio.match(/<h1>[\s\S]*?<\/h1>/)![0]).replace(/\s+/g, " ").trim()).toBe("Short videos for your socials, made on your device."); // studio cold user 4: say what they are for
+  expect(studio.match(/<title>([^<]*)<\/title>/)?.[1]).toMatch(/AI tools that run on your device/);
 });
 
 test("the line under the main button is written once, in the page, and states the tool's limit", () => {
@@ -356,8 +354,9 @@ test("every host has a sitemap of its own pages, and its robots.txt points at it
   // 2026-09-19: vertical.smaverk.com/sitemap.xml answered with the page itself (no such file) and its robots.txt named another host's sitemap.
   const want: Record<string, { dist: string; file: string; hosts: string[] }> = {
     "vertical.smaverk.com": { dist: "vertical/app/dist", file: "sitemap.xml", hosts: ["vertical.smaverk.com"] },
-    "captions.smaverk.com": { dist: "captions/app/dist", file: "sitemap.xml", hosts: ["captions.smaverk.com", "smaverk.com"] }, // one deployment answers on both hosts
-    "smaverk.com": { dist: "captions/app/dist", file: "studio-sitemap.xml", hosts: ["captions.smaverk.com", "smaverk.com"] },
+    "captions.smaverk.com": { dist: "captions/app/dist", file: "sitemap.xml", hosts: ["captions.smaverk.com", "smaverk.com", "video.smaverk.com"] }, // one deployment answers on all three hosts
+    "smaverk.com": { dist: "captions/app/dist", file: "studio-sitemap.xml", hosts: ["captions.smaverk.com", "smaverk.com", "video.smaverk.com"] },
+    "video.smaverk.com": { dist: "captions/app/dist", file: "video-sitemap.xml", hosts: ["captions.smaverk.com", "smaverk.com", "video.smaverk.com"] },
     "clipfinder.smaverk.com": { dist: "clipfinder/app/dist", file: "sitemap.xml", hosts: ["clipfinder.smaverk.com"] },
     "clips.smaverk.com": { dist: "clips/app/dist", file: "sitemap.xml", hosts: ["clips.smaverk.com"] },
   };
@@ -372,7 +371,7 @@ test("every host has a sitemap of its own pages, and its robots.txt points at it
 test("search engines can verify and be told about every host", () => {
   // The principal, 2026-09-19: "isnt seo stuff done before?" It was done for Captions on day one and not carried to Vertical and the studio page.
   // Every page a host serves at "/" carries the Search Console tag; every deployment carries the IndexNow key file that `_tools/indexnow.ts` uses.
-  for (const p of ["captions/app/dist/index.html", "captions/app/dist/studio.html", "vertical/app/dist/index.html", "clipfinder/app/dist/index.html", "clips/app/dist/index.html"]) { const h = read(p); expect(h, `${p}: Search Console tag`).toMatch(/<meta name="google-site-verification" content="[\w-]{20,}">/); expect(h, `${p}: canonical`).toMatch(/<link rel="canonical" href="https:\/\/[a-z.]*smaverk\.com\/">/); expect(h, `${p}: description`).toMatch(/<meta name="description" content="[^"]{60,}">/); }
+  for (const p of ["captions/app/dist/index.html", "captions/app/dist/studio.html", "captions/app/dist/home.html", "vertical/app/dist/index.html", "clipfinder/app/dist/index.html", "clips/app/dist/index.html"]) { const h = read(p); expect(h, `${p}: Search Console tag`).toMatch(/<meta name="google-site-verification" content="[\w-]{20,}">/); expect(h, `${p}: canonical`).toMatch(/<link rel="canonical" href="https:\/\/[a-z.]*smaverk\.com\/">/); expect(h, `${p}: description`).toMatch(/<meta name="description" content="[^"]{60,}">/); }
   for (const d of ["captions/app/dist", "vertical/app/dist", "clipfinder/app/dist", "clips/app/dist"]) { const key = readdirSync(join(ROOT, d)).find((f) => /^[0-9a-f]{32}\.txt$/.test(f)); expect(key, `${d}: IndexNow key file`).toBeTruthy(); expect(read(`${d}/${key}`).trim()).toBe(key!.slice(0, 32)); }
 });
 
@@ -621,8 +620,7 @@ test("the studio lists every tool that is live, each one free", () => {
   const lines = [...studio.matchAll(/<p class="price">([^<]*)<\/p>/g)].map((m) => m[1]!);
   expect(lines, "one line per card, each starting Free").toEqual(["Free. It captions the first five minutes of a clip.", "Free. It works on the first five minutes of a clip.", "Free. It reads up to four hours of a recording.", "Free. Every clip saved.", "Free."]);
   expect(t, "nothing left from the paid or preview days").not.toMatch(/while it is (new|a preview)|pay once|\bonce:/i);
-  // The tools sit under a heading of their own, after Maindesk (A, 27 Oct 2026), and it says they are free.
-  expect(studio, "the tools' own heading").toMatch(/<h2 id="tools-h">Free video tools<\/h2>\s*<section class="tools" aria-labelledby="tools-h">/);
+  expect(text(studio.match(/<p class="sub">[\s\S]*?<\/p>/)![0]).trim()).toBe("Five free tools, one job each.");
   // The true claim for a tool that reads recordings, not the absolute.
   expect(t, "the clip finder's claim is about the recording").toContain("Your recording stays on your device");
   // Anything a machine reads must know about it too.
@@ -638,53 +636,95 @@ test("the studio lists every tool that is live, each one free", () => {
   }
 });
 
-// A, 27 Oct 2026: "we need to update smaverk.com as well as it doesnt say anything about maindesk". Maindesk is Småverk's
-// paid service: the studio shows it first, says what it does for the person, links it with the studio's ?src tag as every
-// tool link is, and names no price (its own page shows its plans). Everything else that says what Småverk is names it too.
-test("the studio presents Maindesk first: what it does, one tagged link, no price; and every description of Småverk names it", () => {
-  const studio = read(STUDIO);
-  const md = studio.match(/<section class="md" aria-labelledby="md-h">([\s\S]*?)<\/section>/)?.[1] ?? "";
-  expect(md, "a Maindesk section").toBeTruthy();
-  expect(studio.indexOf('<section class="md"'), "Maindesk comes before the tools").toBeLessThan(studio.indexOf('<section class="tools"'));
-  expect(md).toContain('<h2 id="md-h">Maindesk</h2>');
-  const t = text(md).replace(/\s+/g, " ");
-  for (const f of [/Linux, Windows and a Mac/, /keeps working/]) expect(t, String(f)).toMatch(f);
-  const links = [...md.matchAll(/<a [^>]*href="([^"]+)"[^>]*>([^<]*)<\/a>/g)].map((m) => [m[1], m[2]]);
-  expect(links, "one link, tagged like the tool links").toEqual([["https://maindesk.smaverk.com/?src=studio", "Open Maindesk"]]);
-  expect(md, "the link is a button like the cards'").toContain('<a class="btn" href="https://maindesk.smaverk.com/?src=studio">Open Maindesk</a>');
-  // No price, and nothing that reads as free: the free wording belongs to the tools.
-  expect(t, "a price or free wording in the Maindesk section").not.toMatch(/\$|€|£|\bUSD\b|\bSEK\b|\bkr\b|a month|per month|\bfree\b|\btrial\b/i);
-  // Its picture is the app itself, not a drawing (design review r10, B1: a drawn stand-in read as a wireframe beside real
-  // footage): image files of the real screens, desk and phone in each theme, small, named for a screen reader; the studio's
-  // theme (picked or the device's) picks the pair, and the other pair has no box, so its lazy images are not fetched.
-  expect(md, "no drawing in the Maindesk card").not.toMatch(/<svg\b|<canvas\b/);
-  expect(md).toMatch(/<div class="shot" role="img" aria-label="[^"]{40,}">/);
-  const shots = [...md.matchAll(/<img class="(desk|phone) (lt|dk)" src="([^"]+)"[^>]*>/g)].map((m) => ({ view: m[1]!, theme: m[2]!, src: m[3]!, tag: m[0]! }));
-  expect(shots.map((s) => `${s.view} ${s.theme}`).sort(), "a desk and a phone still for each theme").toEqual(["desk dk", "desk lt", "phone dk", "phone lt"]);
-  for (const s of shots) {
-    expect(s.src, `${s.src}: an image file`).toMatch(/^maindesk\/[a-z-]+\.(webp|avif|jpg|png)$/);
-    expect(existsSync(join(ROOT, "captions/app/dist", s.src)), `${s.src} exists`).toBe(true);
-    expect(statSync(join(ROOT, "captions/app/dist", s.src)).size, `${s.src} under 80 KB`).toBeLessThan(80e3);
-    for (const a of ['loading="lazy"', 'width="', 'height="', 'alt=""']) expect(s.tag, `${s.src}: ${a}`).toContain(a);
-  }
-  expect(studio).toContain(".shot .dk{display:none}");
-  expect(studio).toContain(":root[data-theme=dark] .shot .lt{display:none}");
-  expect(studio, "the drawing's CSS is gone").not.toMatch(/\.pic\b|@keyframes md/);
-  // The video tools' promises (free, no account, nothing uploaded) are said of the video tools, so none reads as Maindesk's.
-  expect(studio).toContain("<h2>Every video tool</h2>");
-  const meta = (p: string) => studio.match(new RegExp(`<meta (?:name|property)="${p}" content="([^"]*)"`))?.[1] ?? "";
-  const ld = JSON.parse(studio.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)![1]!).description as string;
-  for (const [where, v] of [["title", studio.match(/<title>([^<]*)<\/title>/)?.[1] ?? ""], ["description", meta("description")], ["og:title", meta("og:title")], ["og:description", meta("og:description")], ["twitter:title", meta("twitter:title")], ["twitter:description", meta("twitter:description")], ["JSON-LD", ld]] as const)
+// A, 27 Oct 2026, after the first Maindesk studio: "the page looks super busy, I am thinking video tools should go on their
+// own subdomain and the smaverk should be mostly about the computers or cloud for your agent and some demo there". So
+// smaverk.com (home.html) is Maindesk's short page with the app itself as its demo, and video.smaverk.com (studio.html)
+// is the video tools' page as it was. Every tool, llms.txt, sitemap and legal page says where each one lives.
+const HOST_MW = "captions/app/functions/_middleware.js";
+test("smaverk.com leads with Maindesk: what it does, its demo, one tagged link, no price, and a way to the video tools", () => {
+  const home = read(HOME), t = text(home.slice(home.indexOf("<body"))).replace(/\s+/g, " ");
+  expect(home.match(/<p class="kicker">([^<]*)<\/p>\s*<h1>/)?.[1], "Maindesk named above the headline").toBe("Maindesk");
+  expect(text(home.match(/<h1>[\s\S]*?<\/h1>/)![0]).replace(/\s+/g, " ").replace(/ ([,.])/g, "$1").trim()).toBe("Computers for your AI agent.");
+  for (const f of [/Linux, Windows and a Mac in the cloud/, /keeps working/, /from your phone/]) expect(t, String(f)).toMatch(f);
+  expect(wordsAtRest(home), "well under the 240-word budget").toBeLessThanOrEqual(80);
+  const links = [...home.matchAll(/<a [^>]*href="([^"]+)"[^>]*>([^<]*)<\/a>/g)].map((m) => [m[1]!, m[2]!.trim()]);
+  expect(links.filter(([h]) => /maindesk\.smaverk\.com/.test(h)), "one Maindesk link, tagged").toEqual([["https://maindesk.smaverk.com/?src=smaverk", "Open Maindesk"]]);
+  expect(links, "the video tools, one tap away").toContainEqual(["https://video.smaverk.com/?src=smaverk", "Free video tools →"]);
+  expect(home.indexOf("Open Maindesk"), "Maindesk before the video tools").toBeLessThan(home.indexOf("Free video tools"));
+  for (const need of ["Småverk, Sweden", "hello@smaverk.com", "Privacy", "Terms"]) expect(text(home.match(/<footer>[\s\S]*?<\/footer>/)![0]), `footer: ${need}`).toContain(need);
+  // No price, and "free" only in the link to the video tools.
+  expect(t.replace("Free video tools", ""), "a price or free wording on smaverk.com").not.toMatch(/\$|€|£|\bUSD\b|\bSEK\b|\bkr\b|a month|per month|\bfree\b|\btrial\b/i);
+  expect(home, "no tool cards here").not.toMatch(/<article class="tool|data-demo=/);
+  // The demo is the app itself (design review r10, B1): image files of real screens, desk and phone in each theme, small,
+  // named for a screen reader, with an edge in light mode (r10b R1); the pair on screen is eager and the other is warmed
+  // after load (R3, R4); no drawing.
+  const app = home.match(/<div class="app" id="app" role="img" aria-label="[^"]{40,}">([\s\S]*?)<\/div>\s*<script>/)?.[1] ?? "";
+  expect(app, "the demo").toBeTruthy();
+  expect(app, "no drawing").not.toMatch(/<svg\b|<canvas\b/);
+  const files = [...app.matchAll(/(?:src|srcset)="([^"]+)"/g)].map((m) => m[1]!);
+  expect([...new Set(files)].sort()).toEqual(["maindesk/app-desktop-dark.webp", "maindesk/app-desktop-light.webp", "maindesk/app-phone-dark.webp", "maindesk/app-phone-light.webp"]);
+  for (const f of new Set(files)) expect(statSync(join(ROOT, "captions/app/dist", f)).size, `${f} under 80 KB`).toBeLessThan(80e3);
+  expect(home).toContain(".app::after{content:\"\";position:absolute;inset:0;border-radius:inherit;box-shadow:inset 0 0 0 1px var(--line);pointer-events:none}");
+  expect(home).toContain(":root[data-theme=dark] .app .lt{display:none}");
+  expect(home, "the pair on screen loads first").toMatch(/i\.loading="eager";i\.fetchPriority="high"/);
+  expect(home, "the other pair is warmed after load").toMatch(/addEventListener\("load",function\(\)\{setTimeout\(/);
+  // Everything that says what this page is names Maindesk.
+  const meta = (p: string) => home.match(new RegExp(`<meta (?:name|property)="${p}" content="([^"]*)"`))?.[1] ?? "";
+  const ld = JSON.parse(home.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)![1]!).description as string;
+  for (const [where, v] of [["title", home.match(/<title>([^<]*)<\/title>/)?.[1] ?? ""], ["description", meta("description")], ["og:title", meta("og:title")], ["og:description", meta("og:description")], ["twitter:description", meta("twitter:description")], ["JSON-LD", ld]] as const)
     expect(v, `${where} names Maindesk`).toMatch(/Maindesk/);
-  // Every tool's llms.txt (Captions' is also smaverk.com/llms.txt) says the same one sentence about Maindesk (review r10, S2).
+  expect(ld, "JSON-LD points at the video tools").toContain("https://video.smaverk.com");
+  expect(home).toContain('<link rel="canonical" href="https://smaverk.com/">');
+  const lastmod = read("captions/app/dist/studio-sitemap.xml").match(/<loc>https:\/\/smaverk\.com\/<\/loc><lastmod>([\d-]+)</)?.[1] ?? "";
+  expect(lastmod >= "2026-10-27", `smaverk.com's sitemap dates the change (lastmod ${lastmod})`).toBe(true);
+});
+
+test("video.smaverk.com is the video tools' page: the five tools, no Maindesk section, no price, and a line back to Småverk", () => {
+  const studio = read(STUDIO);
+  expect(studio).toContain('<link rel="canonical" href="https://video.smaverk.com/">');
+  expect(studio).toContain('<meta property="og:url" content="https://video.smaverk.com/">');
+  expect(studio, "no Maindesk section on the tools' page").not.toMatch(/class="md"|class="shot"|maindesk\//);
+  expect(studio, "one quiet line back to Småverk").toContain('<a href="https://smaverk.com/?src=video">From Småverk, which also makes Maindesk</a>');
+  expect(wordsAtRest(studio), "inside the word budget").toBeLessThanOrEqual(225);
+  expect(read("captions/app/dist/video-sitemap.xml")).toContain("<loc>https://video.smaverk.com/</loc>");
+});
+
+test("each host gets its own page, and the studio's old address sends visitors to the video tools", () => {
+  const mw = read(HOST_MW), routes = JSON.parse(read("captions/app/dist/_routes.json")).include as string[];
+  for (const p of ["/", "/sitemap.xml", "/studio", "/studio.html", "/home", "/home.html"]) expect(routes, `_routes.json runs the function on ${p}`).toContain(p);
+  expect(mw).toContain('const STUDIO_HOSTS = new Set(["smaverk.com", "www.smaverk.com"]);');
+  expect(mw).toContain('const VIDEO_HOSTS = new Set(["video.smaverk.com"]);');
+  expect(mw).toContain('if (url.pathname === "/") return page(env, request, url, "/home");');
+  expect(mw).toContain('if (url.pathname === "/") return page(env, request, url, "/studio");');
+  expect(mw).toContain('if (url.pathname === "/sitemap.xml") return page(env, request, url, "/video-sitemap.xml");');
+  expect(mw).toMatch(/url\.pathname === "\/studio" \|\| url\.pathname === "\/studio\.html"\) return Response\.redirect\(`https:\/\/video\.smaverk\.com\/\$\{url\.search\}`, 301\)/);
+  // An old link to the studio's support line (smaverk.com/#support) lands on the video tools' support line.
+  expect(read(HOME)).toContain('if(location.hash==="#support")location.replace("https://video.smaverk.com/#support")');
+  if (existsSync(join(ROOT, "events/src/index.ts"))) // the count worker is not in the public mirror
+    expect(read("events/src/index.ts"), "the count worker accepts video.smaverk.com").toMatch(/const TOOLS = new Set\(\[[^\]]*"video"/);
+});
+
+test("the tools point at video.smaverk.com: the brand, the footer, every llms.txt; the legal pages say where each product lives", () => {
+  const toolPages = [...Object.values(SITES).flatMap((s) => every(s).map((f) => `${s.dist}/${f}`)), "operator/app/dist/index.html"].filter((p) => existsSync(join(ROOT, p)));
+  for (const p of [...toolPages, STUDIO]) expect(read(p), `${p}: the brand opens the video tools' page`).toContain('<a class="brand" href="https://video.smaverk.com"><i></i>Småverk');
+  for (const p of toolPages) expect(read(p), `${p}: the footer's page link`).toContain('<a href="https://video.smaverk.com">video.smaverk.com</a>');
+  for (const p of [HOME, ...LEGAL]) expect(read(p), `${p}: the brand opens smaverk.com`).toContain('<a class="brand" href="https://smaverk.com"><i></i>Småverk');
+  // Every tool's llms.txt (Captions' is also smaverk.com/llms.txt) names the tools' page and says the same one sentence about Maindesk.
   const MD_LINE = "Småverk also runs Maindesk (https://maindesk.smaverk.com), a separate service where a person's AI agent gets its own computers in the cloud (Linux, Windows and a Mac), with plans and terms of its own.";
-  for (const f of [...Object.values(SITES).map((s) => `${s.dist}/llms.txt`), "operator/app/dist/llms.txt"].filter((f) => existsSync(join(ROOT, f)))) expect(read(f), `${f} names Maindesk`).toContain(MD_LINE);
-  // The legal pages send a Maindesk reader to its own pages, and the support payment is the tools' only money, not Småverk's.
+  for (const f of [...Object.values(SITES).map((s) => `${s.dist}/llms.txt`), "operator/app/dist/llms.txt"].filter((f) => existsSync(join(ROOT, f)))) {
+    const l = read(f);
+    expect(l, `${f} names Maindesk`).toContain(MD_LINE);
+    expect(l, `${f}: the tools' page`).toMatch(/https:\/\/video\.smaverk\.com (is the page listing every tool|lists every tool|lists them all)/);
+    expect(l, `${f}: no tool list on smaverk.com`).not.toMatch(/https:\/\/smaverk\.com (is the studio page|lists)/);
+  }
+  for (const l of LEGAL) {
+    const h = read(l);
+    expect(h).toContain('For every Småverk video tool at <a href="https://video.smaverk.com">video.smaverk.com</a>');
+    expect(h).toContain('Maindesk, our service for AI agents at <a href="https://smaverk.com">smaverk.com</a>');
+  }
   expect(read(LEGAL[0]!)).toContain('<a href="https://maindesk.smaverk.com/privacy">');
   expect(read(LEGAL[1]!)).toContain('<a href="https://maindesk.smaverk.com/terms">');
   expect(text(read(LEGAL[0]!)), "privacy: the only money we take").not.toMatch(/the only money we take/);
-  const lastmod = read("captions/app/dist/studio-sitemap.xml").match(/<loc>https:\/\/smaverk\.com\/<\/loc><lastmod>([\d-]+)</)?.[1] ?? "";
-  expect(lastmod >= "2026-10-27", `the studio's sitemap dates the change (lastmod ${lastmod})`).toBe(true);
 });
 
 // ---------------------------------------------------------------------------------------------------------
@@ -887,7 +927,7 @@ test("Clips: the time it takes is the measured one, the same on the page and in 
 // ---------------------------------------------------------------------------------------------------------
 
 // The public mirror carries no Operator page (its code stays here, as opTest says): each page is checked where it is.
-const TOP_PAGES = [STUDIO, "captions/app/dist/index.html", "vertical/app/dist/index.html", "clipfinder/app/dist/index.html", "clips/app/dist/index.html", "operator/app/dist/index.html"].filter((p) => existsSync(join(ROOT, p)));
+const TOP_PAGES = [STUDIO, HOME, "captions/app/dist/index.html", "vertical/app/dist/index.html", "clipfinder/app/dist/index.html", "clips/app/dist/index.html", "operator/app/dist/index.html"].filter((p) => existsSync(join(ROOT, p)));
 const themeParts = (html: string) => ({
   head: html.match(/<script>\/\* theme:[\s\S]*?<\/script>/)?.[0],
   css: html.match(/\/\* theme toggle:[\s\S]*?\/\* \/theme toggle \*\//)?.[0],
@@ -909,7 +949,7 @@ test("every page's top bar: the brand links home, and the light/dark button is t
   expect(first.head && first.css && first.button, "the studio has all three parts").toBeTruthy();
   for (const p of TOP_PAGES) {
     const html = read(p), parts = themeParts(html);
-    expect(html, `${p}: brand link`).toMatch(/<div class="top"><a class="brand" href="https:\/\/smaverk\.com"><i><\/i>Småverk/);
+    expect(html, `${p}: brand link`).toMatch(/<div class="top"><a class="brand" href="https:\/\/(video\.)?smaverk\.com"><i><\/i>Småverk/);
     expect(parts, p).toEqual(first);
     // Inside the top bar, and the stored pick is applied in <head>, before anything is painted.
     expect(html.match(/<div class="top">[\s\S]*?<\/div>/)?.[0], `${p}: button in the top bar`).toContain(first.button!);
@@ -931,7 +971,7 @@ test("the light/dark pick carries across the studio: one cookie for .smaverk.com
   for (const p of all) {
     const html = read(p), parts = themeParts(html);
     expect(parts.head, `${p}: the theme script`).toBe(first.head!); expect(parts.css, `${p}: the toggle CSS`).toBe(first.css!); expect(parts.button, `${p}: #theme`).toBe(first.button!);
-    expect(html.match(/<div class="top">[\s\S]*?<\/div>/)?.[0], `${p}: brand link and button in the top row`).toMatch(/<a class="brand" href="https:\/\/smaverk\.com"><i><\/i>Småverk[\s\S]*<button class="theme" id="theme"/);
+    expect(html.match(/<div class="top">[\s\S]*?<\/div>/)?.[0], `${p}: brand link and button in the top row`).toMatch(/<a class="brand" href="https:\/\/(video\.)?smaverk\.com"><i><\/i>Småverk[\s\S]*<button class="theme" id="theme"/);
     expect(html.indexOf(first.head!), `${p}: theme script before any style`).toBeLessThan(html.indexOf("<style"));
   }
   const js = first.head!;
@@ -971,9 +1011,9 @@ test("the light/dark button: no hover circle on touch, on the 16 px grid, a visi
   expect(css).toContain(".theme:focus-visible{outline:2px solid var(--ink);outline-offset:-4px}");
   // S1: the studio's column is 880 px and the legal pages' 640 px, the tools' 1100 px; the top row spans the tools' width
   // everywhere, so the brand and the button do not move under the pointer from page to page.
-  for (const p of [STUDIO, ...LEGAL]) expect(read(p), p).toContain(".top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:");
-  for (const p of [STUDIO, ...LEGAL]) expect(read(p), p).toMatch(/\.top\{[^}]*margin-inline:calc\(\(100% - min\(1100px, 100vw - 32px\)\) \/ 2\)/);
-  for (const p of TOP_PAGES.slice(1)) expect(read(p), p).toMatch(/\.wrap\{max-width:1100px;/);
+  for (const p of [STUDIO, HOME, ...LEGAL]) expect(read(p), p).toContain(".top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:");
+  for (const p of [STUDIO, HOME, ...LEGAL]) expect(read(p), p).toMatch(/\.top\{[^}]*margin-inline:calc\(\(100% - min\(1100px, 100vw - 32px\)\) \/ 2\)/);
+  for (const p of TOP_PAGES.filter((p) => p !== STUDIO && p !== HOME)) expect(read(p), p).toMatch(/\.wrap\{max-width:1100px;/);
 });
 
 test("a picked theme wins: every dark-mode rule has its data-theme twin, on every page", () => {

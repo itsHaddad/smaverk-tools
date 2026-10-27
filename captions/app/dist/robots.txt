@@ -2,3 +2,4 @@ User-agent: *
 Allow: /
 Sitemap: https://captions.smaverk.com/sitemap.xml
 Sitemap: https://smaverk.com/sitemap.xml
+Sitemap: https://video.smaverk.com/sitemap.xml
