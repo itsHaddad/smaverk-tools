@@ -22,6 +22,9 @@ const sound = $<HTMLButtonElement>("sound"), soundtxt = $("soundtxt");
 const seek = $<HTMLInputElement>("seek"); attachSeek(seek, $("seekbar"), video);
 const chips = [...document.querySelectorAll<HTMLButtonElement>(".chip")];
 const ctx = canvas.getContext("2d", { alpha: false })!;
+// On a window 1,000 px tall or more the vertical clip itself shows under the stage, as tall as the page leaves room for
+// (dist/index.html, .outview: the same media query; design review r10c), and the small picture inside the stage is left out.
+const outview = $<HTMLCanvasElement>("outview"), octx = outview.getContext("2d", { alpha: false })!, tall = matchMedia("(min-width: 900px) and (min-height: 1000px)");
 
 let state: State = "sample", mode: Mode = "follow", holdX = 0.5, track: Point[] = [], samples: Sample[] = [], srcW = 16, srcH = 9;
 let currentFile: File | null = null, lastBlob: Blob | null = null, lastName = "";
@@ -92,6 +95,8 @@ sound.addEventListener("click", () => { video.muted = !video.muted; sound.setAtt
 function centre(t: number) { return mode === "follow" && track.length ? centreAt(track, t) : { cx: holdX, cy: 0.5 }; }
 let fastSaving = false;
 (function loop() { if (video.readyState >= 2 && !fastSaving) { const { cx, cy } = centre(video.currentTime); const r = cropRect(cx, cy, srcW, srcH); const W = canvas.width, H = canvas.height;
+  const big = tall.matches; dbg.outview = big;
+  if (big) { const ow = Math.max(1, Math.round(r.sw)), oh = Math.max(1, Math.round(r.sh)); if (outview.width !== ow || outview.height !== oh) { outview.width = ow; outview.height = oh; } octx.drawImage(video, r.sx, r.sy, r.sw, r.sh, 0, 0, ow, oh); }
   if ((view as "source" | "output") === "output") { ctx.drawImage(video, r.sx, r.sy, r.sw, r.sh, 0, 0, W, H); if (sound.dataset.side !== "bottom") sound.dataset.side = "bottom"; }
   else {
     ctx.drawImage(video, 0, 0, W, H);
@@ -101,8 +106,8 @@ let fastSaving = false;
       const slot = wr < S - 56 ? "right" : wl > 56 ? "left" : "bottom"; if (sound.dataset.side !== slot) sound.dataset.side = slot; }
     ctx.fillStyle = "rgba(0,0,0,.32)"; ctx.fillRect(0, 0, r.sx, H); ctx.fillRect(r.sx + r.sw, 0, W - r.sx - r.sw, H); ctx.fillRect(r.sx, 0, r.sw, r.sy); ctx.fillRect(r.sx, r.sy + r.sh, r.sw, H - r.sy - r.sh);
     ctx.lineWidth = Math.max(3, W * 0.004); ctx.strokeStyle = "#FFD84D"; ctx.strokeRect(r.sx, r.sy, r.sw, r.sh);
-    dbg.inset = r.sw < W - 4 && (track.length > 0 || mode === "hold"); // read by the phone UI gate
-    if (r.sw < W - 4 && (track.length || mode === "hold")) { const ih = H * 0.62, iw = (ih * r.sw) / r.sh, side = mode === "follow" && insetSide ? insetSide : r.sx + r.sw / 2 > W / 2 ? "left" : "right", ix = side === "left" ? W * 0.02 : W - iw - W * 0.02, iy = H - ih - H * 0.03; ctx.drawImage(video, r.sx, r.sy, r.sw, r.sh, ix, iy, iw, ih); ctx.lineWidth = 2; ctx.strokeStyle = "#fff"; ctx.strokeRect(ix, iy, iw, ih); }
+    dbg.inset = !big && r.sw < W - 4 && (track.length > 0 || mode === "hold"); // read by the phone UI gate
+    if (!big && r.sw < W - 4 && (track.length || mode === "hold")) { const ih = H * 0.62, iw = (ih * r.sw) / r.sh, side = mode === "follow" && insetSide ? insetSide : r.sx + r.sw / 2 > W / 2 ? "left" : "right", ix = side === "left" ? W * 0.02 : W - iw - W * 0.02, iy = H - ih - H * 0.03; ctx.drawImage(video, r.sx, r.sy, r.sw, r.sh, ix, iy, iw, ih); ctx.lineWidth = 2; ctx.strokeStyle = "#fff"; ctx.strokeRect(ix, iy, iw, ih); }
   } } requestAnimationFrame(loop); })();
 
 // ---------- own clip ----------

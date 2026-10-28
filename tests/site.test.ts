@@ -346,7 +346,8 @@ test("Captions: the defaults keep the words off the speaker's face and the main 
   const app = read("captions/app/src/draw.ts"); const at = app.match(/st === "big" \? ([\d.]+) : st === "bar" \? ([\d.]+) : ([\d.]+)/)!;
   for (const y of at.slice(1).map(Number)) { expect(y).toBeGreaterThanOrEqual(0.68); expect(y).toBeLessThanOrEqual(0.8); } // under a face, above the bottom fifth the apps cover
   // (a window taller than about 1,170 px gives the clip what the rest of the page leaves, which keeps the button on the screen too: the fill test below)
-  const sv = [...read("captions/app/dist/index.html").matchAll(/calc\((?:max\()?(\d+)svh[^*]*\* var\(--ar/g)].map((m) => Number(m[1])); expect(sv.length).toBe(3); for (const v of sv) expect(v).toBeLessThanOrEqual(56);
+  // (and on a window 1,000 px tall or more, the 40 px the page's end gives back as well: the fill test below)
+  const sv = [...read("captions/app/dist/index.html").matchAll(/calc\((?:max\()?(\d+)svh[^*]*\* var\(--ar/g)].map((m) => Number(m[1])); expect(sv.length).toBe(4); for (const v of sv) expect(v).toBeLessThanOrEqual(56);
   // A short screen (375x667) takes the stage down to 50svh, so the main button stays on the first screen (independent design review r10, B2).
   expect(read("captions/app/dist/index.html")).toContain("@media(max-height:700px){.demo{--sw:min(100%,calc(50svh * var(--ar,0.5625)))}}");
   for (const t of ["clipfinder", "clips"]) expect(read(`${t}/app/dist/index.html`), `${t}: the tool first on a short phone`).toContain('@media(max-width:899px) and (max-height:700px){.grid{grid-template-areas:"demo" "say" "rest"}.say{grid-area:say}.demo{grid-area:demo}.rest{grid-area:rest}}');
@@ -363,6 +364,25 @@ test("a tall window is filled: the sample grows with the window, and what is lef
   expect(read("captions/app/dist/index.html")).toContain(".demo{--sw:min(100%,calc(max(52svh,100svh - 560px) * var(--ar,0.5625)))}}");
   expect(read("vertical/app/dist/index.html")).toContain(".grid{grid-template-columns:clamp(440px,min(40svh + 80px,100% - 500px),600px) minmax(0,1fr)}}");
   expect(read("clips/app/dist/index.html")).toContain(".reel{height:clamp(min(44svh,560px),100svh - 700px,780px)}}");
+  // Design review r10c (28 Oct): on a tall window the words' column ended about 60% of the way down, and splitting the space
+  // left did not fill it (Vertical: 208 px under the header, 262 px under the tool). Qa.ts now fails a band over 64 px with
+  // nothing painted in it anywhere on a 1440x1300 screen. From 1,000 px tall: the page ends 32 px under its footer (not 72),
+  // the footer sits at the bottom of its column, level with the end of the tool, and the column keeps its spacing (in a flex
+  // column margins add up instead of collapsing, so the larger one is kept by hand). 1280x800 and phones are untouched.
+  const TALL = "@media(min-width:900px) and (min-height:1000px){/* a window 1,000 px tall or more: the page ends 32 px under its footer, and the footer sits at the bottom of its column, level with the end of the tool, with the column's spacing as it was (A, 28 Oct: no empty space at the bottom) */.wrap{padding-bottom:32px}.grid>section:not(.demo){align-self:stretch;display:flex;flex-direction:column}.grid>section:not(.demo)>:has(+h2,+.xlink){margin-bottom:0}.grid>section:not(.demo)>:has(+.foot){margin-bottom:36px}.grid>section:not(.demo)>.foot{margin-top:auto;margin-bottom:0}}";
+  for (const t of ["captions", "vertical", "clips"]) { const html = read(`${t}/app/dist/index.html`); expect(html, `${t}: the same tall-window rule`).toContain(TALL); expect(html.indexOf(TALL), `${t}: after the fill rule`).toBeGreaterThan(html.indexOf(FILL)); }
+  // The 40 px given back go to the sample: Captions' and Clips' clips grow by them, Vertical's room goes to the vertical clip it
+  // makes, drawn under the landscape one (its column is as wide as the words allow, so a taller window cannot widen it more).
+  expect(read("captions/app/dist/index.html")).toContain("@media(min-width:900px) and (min-height:1000px){/* and the 40 px the page's end gives back (72 to 32 px) go to the clip too */.demo{--sw:min(100%,calc(max(52svh,100svh - 520px) * var(--ar,0.5625)))}}");
+  expect(read("clips/app/dist/index.html")).toContain("@media(min-width:900px) and (min-height:1000px){/* and the 40 px the page's end gives back (72 to 32 px) go to the clip too */.reel{height:clamp(min(44svh,560px),100svh - 660px,780px)}}");
+  const vert = read("vertical/app/dist/index.html");
+  expect(vert).toContain('<div class="outview"><canvas id="outview" width="270" height="480" aria-hidden="true"></canvas></div>');
+  expect(vert).toContain(".outview{display:none}\n@media(min-width:900px) and (min-height:1000px){.grid{margin-block:0;flex:1 0 auto}.demo{align-self:stretch;max-height:calc(100svh - 32px)}.outview{display:block;position:relative;flex:1 1 0;min-height:0}");
+  expect(read("vertical/app/app.ts"), "app.ts draws the vertical clip under the same media query as the page shows it").toContain('matchMedia("(min-width: 900px) and (min-height: 1000px)")');
+  // A tapped moment scrolls the clip into view clear of the window's top edge, not flush against it (r10c should-fix 2: 0 px at 390x844).
+  expect(read("clips/app/dist/index.html")).toContain("#reelwrap{scroll-margin-top:16px}");
+  expect(read("clipfinder/app/dist/index.html")).toContain("#stage{scroll-margin-top:16px}");
+  for (const [f, id] of [["clips/app/app.ts", "reelwrap"], ["clipfinder/app/app.ts", "stage"]] as const) expect(read(f), `${f} scrolls #${id} into view`).toMatch(new RegExp(`(\\$\\("${id}"\\)|${id})\\.scrollIntoView\\(\\{ block: "nearest"`));
 });
 
 test("every host has a sitemap of its own pages, and its robots.txt points at it", () => {

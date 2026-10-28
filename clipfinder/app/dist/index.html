@@ -65,6 +65,8 @@ ul{padding-left:20px;margin:0 0 12px}li{margin-bottom:6px}
 /* The picture, for a recording that has one. The moment playing is named on it, so a person watching knows which card they are hearing. */
 .screen{position:relative;aspect-ratio:16/9;border-radius:var(--r);overflow:hidden;background:#000}
 .screen video{display:block;width:100%;height:100%;object-fit:contain;background:#000}
+/* a tapped moment brings the picture into view 16 px clear of the window's top edge as in Clips (design review r10c: should-fix 2) */
+#stage{scroll-margin-top:16px}
 .screen .play{position:absolute;inset:0;border:0;background:transparent;display:grid;place-items:center;cursor:pointer;padding:0}
 .screen .play i{width:64px;height:64px;border-radius:50%;background:var(--hi);color:var(--hi-ink);display:grid;place-items:center;box-shadow:0 4px 18px rgba(0,0,0,.35)}
 .screen .play svg{width:28px;height:28px;margin-left:3px}

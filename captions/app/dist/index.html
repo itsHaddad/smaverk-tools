@@ -57,10 +57,12 @@ ul{padding-left:20px;margin:0 0 12px}li{margin-bottom:6px}
 .grid{display:grid;gap:28px}
 @media(min-width:900px){.grid{grid-template-columns:440px minmax(0,1fr);gap:56px;align-items:start}.demo{position:sticky;top:16px}.top{margin-bottom:28px}}
 @media(min-width:900px){/* a tall window is filled: the page is as tall as the window, and the height the tool leaves goes evenly above and below it (A, 28 Oct); a page taller than the window is as it was */.wrap{display:flex;flex-direction:column;min-height:100vh;min-height:100svh}.grid{margin-block:auto}}
+@media(min-width:900px) and (min-height:1000px){/* a window 1,000 px tall or more: the page ends 32 px under its footer, and the footer sits at the bottom of its column, level with the end of the tool, with the column's spacing as it was (A, 28 Oct: no empty space at the bottom) */.wrap{padding-bottom:32px}.grid>section:not(.demo){align-self:stretch;display:flex;flex-direction:column}.grid>section:not(.demo)>:has(+h2,+.xlink){margin-bottom:0}.grid>section:not(.demo)>:has(+.foot){margin-bottom:36px}.grid>section:not(.demo)>.foot{margin-top:auto;margin-bottom:0}}
 .demo{display:flex;flex-direction:column;align-items:center;gap:var(--gap);--sw:min(100%,calc(54svh * var(--ar,0.5625)))}
 .demo>*{width:100%;max-width:100%;min-width:0}
 .demo>.btn.quiet{width:100%}
 @media(min-width:900px){/* on a window taller than about 1,170 px the clip takes the height the rest of the page leaves (560 px: the header, the clip's name, the styles, the button and the lines under it, with room to spare) */.demo{--sw:min(100%,calc(max(52svh,100svh - 560px) * var(--ar,0.5625)))}}
+@media(min-width:900px) and (min-height:1000px){/* and the 40 px the page's end gives back (72 to 32 px) go to the clip too */.demo{--sw:min(100%,calc(max(52svh,100svh - 520px) * var(--ar,0.5625)))}}
 @media(max-height:700px){.demo{--sw:min(100%,calc(50svh * var(--ar,0.5625)))}}
 .caplabel{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:10px;row-gap:2px;align-items:center;font-size:15px;color:var(--muted);min-height:22px;scroll-margin-top:12px}
 .caplabel b{color:var(--ink);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}

@@ -9,6 +9,7 @@
 //   console errors > 0 · failed or 4xx/5xx requests > 0 · sideways scroll · tap target under 44 px on phone
 //   body text under 15 px on phone · reading grade above --grade (default 7) · buttons disabled at rest > 0
 //   no media (img/video/canvas over 120x120) in the first phone screen · LCP over 2.5 s
+//   on a 1440x1300 screen the page fits: a band over 64 px tall with nothing painted in it, anywhere from top to bottom
 import { chromium, type Page } from "playwright";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -95,20 +96,39 @@ async function audit(page: Page, c: Ctx) {
     }
     await page.setViewportSize(c.viewport); await page.waitForTimeout(200);
   }
-  // A page that fits on a tall screen ends at the bottom of it, with no band of empty page under its footer (A, 28 Oct
-  // 2026, smaverk.com at about 1400x1064: "if the screen is big … we will get empty space at the bottom"). Desktop context only, once.
-  let emptyBelow = 0;
+  // A page that fits on a tall screen fills it (A, 28 Oct 2026, smaverk.com at about 1400x1064: "if the screen is big … we
+  // will get empty space at the bottom"): no band of the window with nothing in it, under the footer or anywhere else. The
+  // first version measured only under the last box, and a page as tall as the window (min-height:100svh) read 0 there while
+  // it split the same space above and below its tool (Vertical, design review r10c: 208 px under the header, 262 px under
+  // the tool). So it takes what paints (text, media, controls, a border, a fill or a shadow), never a wrapper's own box, and
+  // finds the tallest band across the whole width with none of it. Desktop context only, once.
+  let emptyBand = { px: 0, at: "" };
   if (c.name === "desktop-light") {
     await page.setViewportSize({ width: 1440, height: 1300 }); await page.waitForTimeout(300);
-    emptyBelow = await page.evaluate(() => {
-      if (document.documentElement.scrollHeight > innerHeight + 1) return 0;
-      // where the visible page ends (a hidden footer, or one fixed to the window, says nothing about it)
-      let bottom = 0;
+    emptyBand = await page.evaluate(() => {
+      const H = innerHeight;
+      if (document.documentElement.scrollHeight > H + 1) return { px: 0, at: "" }; // a page taller than the window: the reader scrolls on, nothing is left empty
+      const alpha = (c: string) => { const m = c.match(/rgba?\(([^)]+)\)/); if (!m) return c === "transparent" ? 0 : 1; const p = m[1]!.split(/[\s,/]+/).filter(Boolean); return p.length > 3 ? parseFloat(p[3]!) : 1; };
+      const paints = (el: Element, s: CSSStyleDeclaration) => {
+        if ([...el.childNodes].some((n) => n.nodeType === 3 && (n.textContent ?? "").trim())) return true;
+        if (/^(IMG|VIDEO|CANVAS|IFRAME|INPUT|SELECT|TEXTAREA|BUTTON|HR|PICTURE|svg)$/.test(el.tagName)) return true;
+        if (s.backgroundImage !== "none" || s.boxShadow !== "none" || alpha(s.backgroundColor) > 0) return true;
+        return (["Top", "Right", "Bottom", "Left"] as const).some((d) => parseFloat(s[`border${d}Width`]) > 0 && s[`border${d}Style`] !== "none" && alpha(s[`border${d}Color`]) > 0);
+      };
+      const name = (el: Element) => el.tagName.toLowerCase() + (el.id ? "#" + el.id : typeof el.className === "string" && el.className.trim() ? "." + el.className.trim().split(/\s+/)[0] : "");
+      const spans: [number, number, string][] = [];
       for (const el of document.body.querySelectorAll("*")) {
-        const s = getComputedStyle(el); if (s.display === "none" || s.visibility === "hidden" || s.position === "fixed") continue;
-        const r = el.getBoundingClientRect(); if (r.width > 0 && r.height > 0) bottom = Math.max(bottom, r.bottom);
+        if (el instanceof SVGElement && !(el instanceof SVGSVGElement)) continue; // a drawing's parts are inside its own box
+        const s = getComputedStyle(el); if (s.display === "none" || s.visibility !== "visible" || s.position === "fixed") continue; // a footer fixed to the window says nothing about the page
+        const r = el.getBoundingClientRect(); if (r.width < 1 || r.height < 1 || r.bottom <= 0 || r.top >= H || !paints(el, s)) continue;
+        let shown = true; for (let o: Element | null = el; o && o !== document.body; o = o.parentElement) if (getComputedStyle(o).opacity === "0") { shown = false; break; }
+        if (shown) spans.push([Math.max(0, r.top), Math.min(H, r.bottom), name(el)]);
       }
-      return Math.round(innerHeight - bottom);
+      spans.sort((a, b) => a[0] - b[0]);
+      let end = 0, prev = "the top of the window", best = { px: 0, at: "" };
+      for (const [t, b, n] of spans) { if (t - end > best.px) best = { px: t - end, at: `between ${prev} and ${n}, y ${Math.round(end)}-${Math.round(t)}` }; if (b > end) { end = b; prev = n; } }
+      if (H - end > best.px) best = { px: H - end, at: `under ${prev}, y ${Math.round(end)}-${H}` };
+      return { px: Math.round(best.px), at: best.at };
     });
     await page.setViewportSize(c.viewport); await page.waitForTimeout(200);
   }
@@ -126,10 +146,10 @@ async function audit(page: Page, c: Ctx) {
   if (c.isMobile && dom.mediaInFold === 0) blockers.push("no image/video/canvas/[data-demo] in the first phone screen");
   if (dom.mainAction && dom.mainAction.bottom > dom.mainAction.fold) blockers.push(`the main button "${dom.mainAction.text}" ends ${dom.mainAction.bottom - dom.mainAction.fold} px below the first screen`);
   if (dom.rows?.length) blockers.push(`row of cards misaligned: ${dom.rows.join(" | ")}`);
-  if (emptyBelow > 64) blockers.push(`empty page under the footer on a tall screen: ${emptyBelow} px at 1440x1300 (fill the window)`);
+  if (emptyBand.px > 64) blockers.push(`an empty band ${emptyBand.px} px tall on a tall screen (1440x1300), ${emptyBand.at}: fill the window (max 64)`);
   if (overlaps.length) blockers.push(`text runs into other text in the demo: ${overlaps.slice(0, 6).join(" | ")}`);
   if (dom.lcp !== null && dom.lcp > 2500) blockers.push(`LCP ${Math.round(dom.lcp)} ms (max 2500)`);
-  return { context: c.name, url, loadMs, lcpMs: dom.lcp === null ? null : Math.round(dom.lcp), transferKB: Math.round(dom.bytes / 1024), grade, words: dom.text.split(/\s+/).filter(Boolean).length, minTargetPx: minTarget, smallText: dom.small.slice(0, 8), disabledAtRest: dom.disabledAtRest, nativeSelects: dom.selects, mediaInFold: dom.mediaInFold, sideways: dom.sideways, consoleErrors, failedRequests: failed, screenshots: [shot, fold], blockers };
+  return { context: c.name, url, loadMs, lcpMs: dom.lcp === null ? null : Math.round(dom.lcp), transferKB: Math.round(dom.bytes / 1024), grade, words: dom.text.split(/\s+/).filter(Boolean).length, minTargetPx: minTarget, smallText: dom.small.slice(0, 8), disabledAtRest: dom.disabledAtRest, nativeSelects: dom.selects, mediaInFold: dom.mediaInFold, sideways: dom.sideways, ...(c.name === "desktop-light" ? { emptyBand1440x1300: emptyBand } : {}), consoleErrors, failedRequests: failed, screenshots: [shot, fold], blockers };
 }
 
 const browser = await chromium.launch({ args: ["--no-sandbox"] });
