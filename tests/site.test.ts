@@ -385,6 +385,21 @@ test("a tall window is filled: the sample grows with the window, and what is lef
   for (const [f, id] of [["clips/app/app.ts", "reelwrap"], ["clipfinder/app/app.ts", "stage"]] as const) expect(read(f), `${f} scrolls #${id} into view`).toMatch(new RegExp(`(\\$\\("${id}"\\)|${id})\\.scrollIntoView\\(\\{ block: "nearest"`));
 });
 
+test("smaverk.com fills a tall window with its chart: the rows share the free height, nothing splits it into empty bands", () => {
+  // A, 28 Oct 2026 (no empty space on big screens): splitting the free height above the hero and above the footer left two
+  // empty bands at 1440x1300 (186 and 190 px). From 720px the chart takes it all and its five rows share it; the hero stays
+  // under the header. Only a phone's log, which cannot grow, still puts it above the hero and the footer.
+  const home = read(HOME);
+  expect(home).toContain("@media(max-width:719px){.wrap>.hero,.wrap>footer{margin-top:auto}}");
+  expect(home).not.toMatch(/(^|[}\s])\.wrap>\.hero\{margin-top:auto\}/);
+  expect(home).toMatch(/\.chart\{display:none;flex-direction:column;flex:1 0 auto;/);
+  expect(home).toContain("@media(min-width:720px){.chart{display:flex}");
+  // a row's time and track sit at its bottom, and every mark in it is placed from the bottom, so a taller row only adds room above
+  expect(home).toMatch(/\.lane\{flex:1 0 auto;min-height:var\(--lh\);[^}]*align-content:end\}/);
+  for (const m of ["bar", "tail", "mg", "push"]) expect(home, `.${m} from the row's bottom`).toMatch(new RegExp(`\\.${m}\\{position:absolute;bottom:\\d+px;`));
+  expect(home, "nothing in a row placed from a fixed top").not.toMatch(/top:calc\(var\(--lh\)/);
+});
+
 test("every host has a sitemap of its own pages, and its robots.txt points at it", () => {
   // 2026-09-19: vertical.smaverk.com/sitemap.xml answered with the page itself (no such file) and its robots.txt named another host's sitemap.
   const want: Record<string, { dist: string; file: string; hosts: string[] }> = {

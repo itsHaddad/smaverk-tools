@@ -32,7 +32,10 @@
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 var(--body);padding:0 max(16px,env(safe-area-inset-right)) 32px max(16px,env(safe-area-inset-left))}
 a{color:inherit}a:focus-visible,button:focus-visible{outline:3px solid var(--run);outline-offset:2px}
 .wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;min-height:calc(100vh - 32px);min-height:calc(100dvh - 32px)} /* fills the window (A, 28 Oct) */
-.wrap>.hero{margin-top:auto}.wrap>footer{margin-top:auto}
+/* the window's free height: from 720px the chart takes all of it (below), so the hero stays under the header and no empty band
+   opens above the headline or the footer (A, 28 Oct; Qa.ts: none over 64 px at 1440x1300); a phone's log cannot grow, so
+   there it still goes above the hero and the footer */
+@media(max-width:719px){.wrap>.hero,.wrap>footer{margin-top:auto}}
 .top{display:flex;align-items:center;justify-content:space-between;padding:20px 0 36px}
 .brand{display:flex;align-items:center;gap:10px;min-height:44px;text-decoration:none;font:600 16px var(--body)}
 .brand svg{width:24px;height:24px}.brand small{font:400 15px var(--body);color:var(--soft)}
@@ -60,23 +63,26 @@ h1{font:600 clamp(38px,7vw,80px)/1 var(--body);letter-spacing:-.045em;margin:0;m
   .hero>.txt:last-child{display:flex;flex-direction:column;justify-content:space-between;gap:14px;padding-top:6px}
   .acts{position:relative}.acts .note{position:absolute;left:0;top:calc(100% + 10px);white-space:nowrap}}
 /* the evening, as a chart (720px and up): one row per task, started at the time on the left */
-.chart{display:none;position:relative;border-top:1px solid var(--line);padding-top:8px}
+.chart{display:none;flex-direction:column;flex:1 0 auto;position:relative;border-top:1px solid var(--line);padding-top:8px}
 .axis,.lane{display:grid;grid-template-columns:104px 1fr;align-items:center}
 .axis{position:relative;z-index:1}
 .axis b{font:400 13px var(--mono);color:var(--soft)}
 .axis .t{position:relative;height:28px;font:13px var(--mono);color:var(--soft)}
 .axis .t span{position:absolute;transform:translateX(-50%);background:var(--bg);padding:0 3px}
 @media(max-width:799px){.axis .t span:nth-child(5){visibility:hidden}} /* 02:00 would run into 03:00 (design review r12b N1) */
-:root{--lh:clamp(58px,6.6vh,84px)} /* a chart row: taller on taller screens */
-.lane{min-height:var(--lh);border-top:1px solid var(--line)}
+/* a chart row is at least --lh tall (more on taller screens), and the rows share whatever height the window has left (A, 28 Oct:
+   no empty space on big screens). A row's time and track sit at its bottom, and the bar, merges and tail are placed from the
+   track's bottom, so they sit the same way at any row height and the extra height opens above them */
+:root{--lh:clamp(58px,6.6vh,84px)}
+.lane{flex:1 0 auto;min-height:var(--lh);border-top:1px solid var(--line);align-content:end}
 .lane>b{font:400 13px var(--mono);color:var(--soft)}
 .track{position:relative;height:var(--lh)}
-.bar{position:absolute;top:calc(var(--lh) - 28px);height:12px;border-radius:3px;background:var(--done)}
+.bar{position:absolute;bottom:16px;height:12px;border-radius:3px;background:var(--done)}
 .bar span{position:absolute;bottom:15px;left:0;white-space:nowrap;font:14px var(--body);color:var(--ink)}
-.tail{position:absolute;top:calc(var(--lh) - 23px);border-top:2px dashed var(--run)}
+.tail{position:absolute;bottom:21px;border-top:2px dashed var(--run)}
 .tail span{position:absolute;left:10px;top:5px;white-space:nowrap;font:13px/1 var(--body);color:var(--soft)}
-.mg{position:absolute;top:calc(var(--lh) - 28px);width:12px;height:12px;margin-left:-6px;background:var(--run);transform:rotate(45deg);border-radius:2px}
-.push{position:absolute;top:calc(var(--lh) - 28px);width:12px;height:12px;margin-left:-6px;border-radius:50%;background:var(--done);box-shadow:0 0 0 4px color-mix(in srgb,var(--done) 22%,transparent)}
+.mg{position:absolute;bottom:16px;width:12px;height:12px;margin-left:-6px;background:var(--run);transform:rotate(45deg);border-radius:2px}
+.push{position:absolute;bottom:16px;width:12px;height:12px;margin-left:-6px;border-radius:50%;background:var(--done);box-shadow:0 0 0 4px color-mix(in srgb,var(--done) 22%,transparent)}
 .vline{position:absolute;top:0;bottom:0;pointer-events:none;left:calc(104px + (100% - 104px) * var(--x))}
 .live{border-left:2px dashed var(--live)}
 .live span{position:absolute;bottom:-24px;right:8px;white-space:nowrap;font:13px var(--body);color:var(--live)}
@@ -106,7 +112,7 @@ h1{font:600 clamp(38px,7vw,80px)/1 var(--body);letter-spacing:-.045em;margin:0;m
   .log .l::after{background:var(--live);margin-left:-2px}
   .log li::before{content:"";position:absolute;bottom:8px;height:14px;border-left:2px dashed var(--live);left:calc(86px + (100% - 86px) * .9185)}
 }
-@media(min-width:720px){.chart{display:block}.key{display:flex}.log{display:none}}
+@media(min-width:720px){.chart{display:flex}.key{display:flex}.log{display:none}}
 footer{display:flex;flex-wrap:wrap;gap:4px 20px;padding-top:12px;border-top:1px solid var(--line);color:var(--soft);font-size:15px}
 footer a,footer span{display:inline-flex;align-items:center;min-height:44px;min-width:44px}
 footer .pair{gap:20px} /* Privacy and Terms wrap together (design review r11, H4) */
