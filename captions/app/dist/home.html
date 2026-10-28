@@ -31,7 +31,8 @@
 *{box-sizing:border-box}html{-webkit-text-size-adjust:100%}html,body{overflow-x:clip}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 var(--body);padding:0 max(16px,env(safe-area-inset-right)) 32px max(16px,env(safe-area-inset-left))}
 a{color:inherit}a:focus-visible,button:focus-visible{outline:3px solid var(--run);outline-offset:2px}
-.wrap{max-width:1180px;margin:0 auto}
+.wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;min-height:calc(100vh - 32px);min-height:calc(100dvh - 32px)} /* fills the window (A, 28 Oct) */
+.wrap>.hero{margin-top:auto}.wrap>footer{margin-top:auto}
 .top{display:flex;align-items:center;justify-content:space-between;padding:20px 0 36px}
 .brand{display:flex;align-items:center;gap:10px;min-height:44px;text-decoration:none;font:600 16px var(--body)}
 .brand svg{width:24px;height:24px}.brand small{font:400 15px var(--body);color:var(--soft)}
@@ -56,15 +57,16 @@ h1{font:600 clamp(38px,7vw,80px)/1 var(--body);letter-spacing:-.045em;margin:0;m
 .axis .t{position:relative;height:28px;font:13px var(--mono);color:var(--soft)}
 .axis .t span{position:absolute;transform:translateX(-50%);background:var(--bg);padding:0 3px}
 @media(max-width:799px){.axis .t span:nth-child(5){visibility:hidden}} /* 02:00 would run into 03:00 (design review r12b N1) */
-.lane{min-height:58px;border-top:1px solid var(--line)}
+:root{--lh:clamp(58px,6.6vh,84px)} /* a chart row: taller on taller screens */
+.lane{min-height:var(--lh);border-top:1px solid var(--line)}
 .lane>b{font:400 13px var(--mono);color:var(--soft)}
-.track{position:relative;height:58px}
-.bar{position:absolute;top:30px;height:12px;border-radius:3px;background:var(--done)}
+.track{position:relative;height:var(--lh)}
+.bar{position:absolute;top:calc(var(--lh) - 28px);height:12px;border-radius:3px;background:var(--done)}
 .bar span{position:absolute;bottom:15px;left:0;white-space:nowrap;font:14px var(--body);color:var(--ink)}
-.tail{position:absolute;top:35px;border-top:2px dashed var(--run)}
+.tail{position:absolute;top:calc(var(--lh) - 23px);border-top:2px dashed var(--run)}
 .tail span{position:absolute;left:10px;top:5px;white-space:nowrap;font:13px/1 var(--body);color:var(--soft)}
-.mg{position:absolute;top:30px;width:12px;height:12px;margin-left:-6px;background:var(--run);transform:rotate(45deg);border-radius:2px}
-.push{position:absolute;top:30px;width:12px;height:12px;margin-left:-6px;border-radius:50%;background:var(--done);box-shadow:0 0 0 4px color-mix(in srgb,var(--done) 22%,transparent)}
+.mg{position:absolute;top:calc(var(--lh) - 28px);width:12px;height:12px;margin-left:-6px;background:var(--run);transform:rotate(45deg);border-radius:2px}
+.push{position:absolute;top:calc(var(--lh) - 28px);width:12px;height:12px;margin-left:-6px;border-radius:50%;background:var(--done);box-shadow:0 0 0 4px color-mix(in srgb,var(--done) 22%,transparent)}
 .vline{position:absolute;top:0;bottom:0;pointer-events:none;left:calc(104px + (100% - 104px) * var(--x))}
 .live{border-left:2px dashed var(--live)}
 .live span{position:absolute;bottom:-24px;right:8px;white-space:nowrap;font:13px var(--body);color:var(--live)}
@@ -77,11 +79,11 @@ h1{font:600 clamp(38px,7vw,80px)/1 var(--body);letter-spacing:-.045em;margin:0;m
   @keyframes veil{from{left:104px}to{left:100%}}
   @keyframes head{0%{left:104px;opacity:1}92%{opacity:1}100%{left:100%;opacity:0}}
 }
-.key{display:none;flex-wrap:wrap;gap:6px 22px;margin:36px 0 0 104px;font:13px var(--body);color:var(--soft)}
+.key{display:none;flex-wrap:wrap;gap:6px 22px;margin:36px 0 40px 104px;font:13px var(--body);color:var(--soft)}
 .key i{display:inline-block;width:10px;height:10px;margin-right:8px;vertical-align:-1px;border-radius:2px;background:var(--done)}
 .key .k-mg i{background:var(--run);transform:rotate(45deg)}.key .k-push i{border-radius:50%}
 /* the evening, as a log (phones) */
-.log{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
+.log{list-style:none;margin:0 0 40px;padding:0;border-top:1px solid var(--line)}
 .log li{display:grid;grid-template-columns:52px 14px 1fr;gap:10px;align-items:baseline;padding:11px 0;border-bottom:1px solid var(--line);font-size:16px}
 .log time{font:15px var(--mono);color:var(--soft)}
 .log i{width:10px;height:10px;border-radius:2px;background:var(--done);align-self:start;margin-top:7px}
@@ -95,7 +97,7 @@ h1{font:600 clamp(38px,7vw,80px)/1 var(--body);letter-spacing:-.045em;margin:0;m
   .log li::before{content:"";position:absolute;bottom:8px;height:14px;border-left:2px dashed var(--live);left:calc(86px + (100% - 86px) * .9185)}
 }
 @media(min-width:720px){.chart{display:block}.key{display:flex}.log{display:none}}
-footer{display:flex;flex-wrap:wrap;gap:4px 20px;margin-top:40px;padding-top:12px;border-top:1px solid var(--line);color:var(--soft);font-size:15px}
+footer{display:flex;flex-wrap:wrap;gap:4px 20px;padding-top:12px;border-top:1px solid var(--line);color:var(--soft);font-size:15px}
 footer a,footer span{display:inline-flex;align-items:center;min-height:44px;min-width:44px}
 footer .pair{gap:20px} /* Privacy and Terms wrap together (design review r11, H4) */
 /* theme toggle: the same block on every page */

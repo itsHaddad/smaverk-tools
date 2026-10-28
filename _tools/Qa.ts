@@ -95,6 +95,18 @@ async function audit(page: Page, c: Ctx) {
     }
     await page.setViewportSize(c.viewport); await page.waitForTimeout(200);
   }
+  // A page that fits on a tall screen ends at the bottom of it, with no band of empty page under its footer (A, 28 Oct
+  // 2026, smaverk.com at about 1400x1064: "if the screen is big … we will get empty space at the bottom"). Desktop context only, once.
+  let emptyBelow = 0;
+  if (c.name === "desktop-light") {
+    await page.setViewportSize({ width: 1440, height: 1300 }); await page.waitForTimeout(300);
+    emptyBelow = await page.evaluate(() => {
+      if (document.documentElement.scrollHeight > innerHeight + 1) return 0;
+      const last = document.querySelector("footer") ?? document.body.lastElementChild;
+      return last ? Math.round(innerHeight - last.getBoundingClientRect().bottom) : 0;
+    });
+    await page.setViewportSize(c.viewport); await page.waitForTimeout(200);
+  }
   const grade = fkGrade(dom.text);
   const minTarget = Math.min(...dom.targets.map((t) => t.h), 999);
   const blockers: string[] = [];
@@ -109,6 +121,7 @@ async function audit(page: Page, c: Ctx) {
   if (c.isMobile && dom.mediaInFold === 0) blockers.push("no image/video/canvas/[data-demo] in the first phone screen");
   if (dom.mainAction && dom.mainAction.bottom > dom.mainAction.fold) blockers.push(`the main button "${dom.mainAction.text}" ends ${dom.mainAction.bottom - dom.mainAction.fold} px below the first screen`);
   if (dom.rows?.length) blockers.push(`row of cards misaligned: ${dom.rows.join(" | ")}`);
+  if (emptyBelow > 64) blockers.push(`empty page under the footer on a tall screen: ${emptyBelow} px at 1440x1300 (fill the window)`);
   if (overlaps.length) blockers.push(`text runs into other text in the demo: ${overlaps.slice(0, 6).join(" | ")}`);
   if (dom.lcp !== null && dom.lcp > 2500) blockers.push(`LCP ${Math.round(dom.lcp)} ms (max 2500)`);
   return { context: c.name, url, loadMs, lcpMs: dom.lcp === null ? null : Math.round(dom.lcp), transferKB: Math.round(dom.bytes / 1024), grade, words: dom.text.split(/\s+/).filter(Boolean).length, minTargetPx: minTarget, smallText: dom.small.slice(0, 8), disabledAtRest: dom.disabledAtRest, nativeSelects: dom.selects, mediaInFold: dom.mediaInFold, sideways: dom.sideways, consoleErrors, failedRequests: failed, screenshots: [shot, fold], blockers };
