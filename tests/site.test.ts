@@ -649,7 +649,12 @@ test("smaverk.com leads with Maindesk, shows one real evening on our desk as it 
   const home = read(HOME), t = text(home.slice(home.indexOf("<body"))).replace(/\s+/g, " ");
   const at = (hm: string) => { const [h, m] = hm.split(":").map(Number); return (((h! + 24 - 18) % 24) * 60 + m!) / 540 * 100; };
   // design review r12 B1: the evening says who worked and when, on screen at every width, right above the chart and the log
-  expect(home.match(/<p class="cap">([^<]*)<\/p>\s*<section class="chart"/)?.[1]).toBe("Monday 26 Oct on our own Linux computer: five agents worked from 18:13, and the release went live at 02:16.");
+  expect(home.match(/<p class="cap">([^<]*)<\/p><button class="replay"[^>]*>[^<]*<\/button><\/div>\s*<section class="chart play"/)?.[1]).toBe("One evening on our own Linux computer: five agents worked from 18:13, and the release went live at 02:16.");
+  // A, 28 Oct: no date in what a visitor reads, the caption is not held to a narrow column, and Play again replays the evening
+  expect(text(home.slice(home.indexOf("<body"))), "a date on smaverk.com").not.toMatch(/\b(Mon|Tues|Wednes|Thurs|Fri|Satur|Sun)day\b|\b\d{1,2} (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\b/);
+  expect(home).not.toMatch(/aria-label="[^"]*\b\d{1,2} (Oct|Nov) 20\d\d/);
+  expect(home).not.toMatch(/\.cap\{[^}]*max-width/);
+  expect(home).toMatch(/c\.classList\.remove\("play"\);void c\.offsetWidth;c\.classList\.add\("play"\)/);
   expect(text(home.match(/<h1>[\s\S]*?<\/h1>/)![0]).trim()).toBe("Computers for your AI agent.");
   for (const f of [/Linux, Windows and a Mac in the cloud/, /keeps working/, /from your phone/]) expect(t, String(f)).toMatch(f);
   expect(wordsAtRest(home), "under the 240-word budget (chart and log both counted)").toBeLessThan(240);
@@ -659,12 +664,12 @@ test("smaverk.com leads with Maindesk, shows one real evening on our desk as it 
   expect(t).toContain("Invite only for now. The live demo needs no account.");
   // the replay plays once, in 5 s at most (cold user 8 re-check: WCAG 2.2.2), and nothing moves under reduced motion
   expect(home).not.toMatch(/animation:[^;}]*infinite/); for (const m of home.matchAll(/animation:\w+ ([\d.]+)s/g)) expect(Number(m[1])).toBeLessThanOrEqual(5);
-  expect(home).toMatch(/\.now\{display:none;/);
+  expect(home).toMatch(/\.now\{display:none;/); expect(home).toMatch(/\.chart\.play \.now\{/);
   expect(links).toContainEqual(["https://video.smaverk.com/?src=smaverk", "Free video tools →"]);
   expect(t.replace("Free video tools", ""), "a price or free wording on smaverk.com").not.toMatch(/\$|€|£|\bUSD\b|\bSEK\b|\bkr\b|a month|per month|\bfree\b|\btrial\b/i);
   // the log (phones) is the task log, word for word
   // the chart and the log are the page's demo (Qa.ts counts [data-demo] in the first screen), and each log row draws its bar on the same 18:00-03:00 scale (r12 B1)
-  expect(home).toMatch(/<section class="chart" data-demo="evening"/); expect(home).toMatch(/<ol class="log" data-demo="evening"/);
+  expect(home).toMatch(/<section class="chart play" data-demo="evening"/); expect(home).toMatch(/<ol class="log" data-demo="evening"/);
   const rows = [...home.matchAll(/<li(?: class="l")? style="--a:([\d.]+);--e:([\d.]+)"><time>/g)];
   expect(rows.length).toBe(EVENING.length);
   // each row draws the bar its chart lane draws (start, end), and the release row sits on the 02:16 line

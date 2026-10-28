@@ -102,8 +102,13 @@ async function audit(page: Page, c: Ctx) {
     await page.setViewportSize({ width: 1440, height: 1300 }); await page.waitForTimeout(300);
     emptyBelow = await page.evaluate(() => {
       if (document.documentElement.scrollHeight > innerHeight + 1) return 0;
-      const last = document.querySelector("footer") ?? document.body.lastElementChild;
-      return last ? Math.round(innerHeight - last.getBoundingClientRect().bottom) : 0;
+      // where the visible page ends (a hidden footer, or one fixed to the window, says nothing about it)
+      let bottom = 0;
+      for (const el of document.body.querySelectorAll("*")) {
+        const s = getComputedStyle(el); if (s.display === "none" || s.visibility === "hidden" || s.position === "fixed") continue;
+        const r = el.getBoundingClientRect(); if (r.width > 0 && r.height > 0) bottom = Math.max(bottom, r.bottom);
+      }
+      return Math.round(innerHeight - bottom);
     });
     await page.setViewportSize(c.viewport); await page.waitForTimeout(200);
   }
