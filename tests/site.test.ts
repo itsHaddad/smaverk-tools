@@ -385,18 +385,33 @@ test("a tall window is filled: the sample grows with the window, and what is lef
   for (const [f, id] of [["clips/app/app.ts", "reelwrap"], ["clipfinder/app/app.ts", "stage"]] as const) expect(read(f), `${f} scrolls #${id} into view`).toMatch(new RegExp(`(\\$\\("${id}"\\)|${id})\\.scrollIntoView\\(\\{ block: "nearest"`));
 });
 
-test("smaverk.com fills a tall window with its chart: the rows share the free height, nothing splits it into empty bands", () => {
-  // A, 28 Oct 2026 (no empty space on big screens): splitting the free height above the hero and above the footer left two
-  // empty bands at 1440x1300 (186 and 190 px). From 720px the chart takes it all and its five rows share it; the hero stays
-  // under the header. Only a phone's log, which cannot grow, still puts it above the hero and the footer.
+test("smaverk.com on a tall window: compact chart rows, one growth length, the free height in two spacers", () => {
+  // A, 28 Oct 2026 (no empty space on big screens). Rows stretched into the free height read as broken: each became a band of
+  // empty space (design review r12, fill window, B1). The Designer's spec: rows stay 58-100 px; one length, --g (0 up to 900 px
+  // tall, then the extra height, at most 540 px), grows the headline, lead, caption, chart labels, bars and spacing; what is left
+  // goes to two spacers, above the hero and above the footer, never smaller than the 36 and 40 px gaps they replace.
   const home = read(HOME);
-  expect(home).toContain("@media(max-width:719px){.wrap>.hero,.wrap>footer{margin-top:auto}}");
-  expect(home).not.toMatch(/(^|[}\s])\.wrap>\.hero\{margin-top:auto\}/);
-  expect(home).toMatch(/\.chart\{display:none;flex-direction:column;flex:1 0 auto;/);
-  expect(home).toContain("@media(min-width:720px){.chart{display:flex}");
-  // a row's time and track sit at its bottom, and every mark in it is placed from the bottom, so a taller row only adds room above
-  expect(home).toMatch(/\.lane\{flex:1 0 auto;min-height:var\(--lh\);[^}]*align-content:end\}/);
-  for (const m of ["bar", "tail", "mg", "push"]) expect(home, `.${m} from the row's bottom`).toMatch(new RegExp(`\\.${m}\\{position:absolute;bottom:\\d+px;`));
+  expect(home).toContain(".gap{flex:1 1 0;min-height:36px}.gap.b{min-height:40px}");
+  expect(home).toMatch(/<\/button><\/div>\s*<i class="gap" aria-hidden="true"><\/i>\s*<section class="hero">/);
+  expect(home).toMatch(/<\/ol>\s*<i class="gap b" aria-hidden="true"><\/i>\s*<footer>/);
+  // the spacers carry the 36 and 40 px, so the top bar, the legend and the log no longer do; nothing else takes the free height
+  expect(home).toMatch(/\.top\{[^}]*padding:calc\(20px \+ var\(--g\) \* \.02\) 0 0\}/);
+  expect(home).toMatch(/\.key\{[^}]*margin:calc\(36px \+ var\(--g\) \* \.09\) 0 0 104px;/); expect(home).toMatch(/\.log\{[^}]*margin:0;/);
+  expect(home).not.toMatch(/margin-top:auto|flex:1 0 auto|flex-grow/);
+  expect(home).toMatch(/\.chart\{display:none;flex-direction:column;flex:none;/); expect(home).toContain("@media(min-width:720px){.chart{display:flex}");
+  // the rows: 58 px at least, 100 px at most (at 96 the spacers at 1440x1300 come to 68 px, over Qa.ts's 64), exactly --lh tall
+  const [lo, vh, off, hi] = home.match(/:root\{--g:0px;--lh:clamp\((\d+)px,(\d+)vh - (\d+)px,(\d+)px\);/)!.slice(1).map(Number);
+  const row = (h: number) => Math.min(hi!, Math.max(lo!, h * vh! / 100 - off!));
+  expect([800, 900, 1064, 1300, 1440, 2160].map(row)).toEqual([58, 60, 76.4, 100, 100, 100]);
+  expect(home).toMatch(/\.lane\{height:var\(--lh\);border-top:1px solid var\(--line\)\}/);
+  // --g is 0 on phones and up to 900 px tall (their boxes stay as they were), then the extra height, at most 540 px
+  expect(home).toContain("@media(min-width:720px){:root{--g:clamp(0px,100vh - 900px,540px);--bt:calc(12px + var(--g) * .0074)}}");
+  expect(home).toContain("h1{font:600 clamp(38px,min(7vw,80px + var(--g) * .08),100px)/1 var(--body);");
+  // every mark in a row is placed from its bottom through --bb (16 px on a short window, centred in a taller row), sized by --bt
+  for (const m of ["mg", "push"]) expect(home, `.${m}`).toMatch(new RegExp(`\\.${m}\\{position:absolute;bottom:var\\(--bb\\);width:var\\(--bt\\);height:var\\(--bt\\);margin-left:calc\\(var\\(--bt\\) / -2\\);`));
+  expect(home).toMatch(/\.bar\{position:absolute;bottom:var\(--bb\);height:var\(--bt\);/); expect(home).toMatch(/\.bar span\{position:absolute;bottom:calc\(100% \+ 3px\);/);
+  expect(home).toMatch(/\.tail\{position:absolute;bottom:calc\(var\(--bb\) \+ var\(--bt\) \/ 2 - 1px\);/);
+  expect(home).toContain("--bt:12px;--bb:max(16px,calc(var(--lh) / 2 - 18px))}");
   expect(home, "nothing in a row placed from a fixed top").not.toMatch(/top:calc\(var\(--lh\)/);
 });
 
@@ -698,12 +713,23 @@ test("smaverk.com leads with Maindesk, shows one real evening on our desk as it 
   const home = read(HOME), t = text(home.slice(home.indexOf("<body"))).replace(/\s+/g, " ");
   const at = (hm: string) => { const [h, m] = hm.split(":").map(Number); return (((h! + 24 - 18) % 24) * 60 + m!) / 540 * 100; };
   // design review r12 B1: the evening says who worked and when, on screen at every width, right above the chart and the log
-  expect(home.match(/<p class="cap">([^<]*)<\/p><button class="replay"[^>]*>[^<]*<\/button><\/div>\s*<section class="chart play"/)?.[1]).toBe("One evening on our own Linux computer: five agents worked from 18:13, and the release went live at 02:16.");
-  // A, 28 Oct: no date in what a visitor reads, the caption is not held to a narrow column, and Play again replays the evening
+  expect(home.match(/<p class="cap">([^<]*)<\/p>\s*<section class="chart play"/)?.[1]).toBe("One evening on our own Linux computer: five agents worked from 18:13, and the release went live at 02:16.");
+  // A, 28 Oct: no date in what a visitor reads, the caption is not held to a narrow column
   expect(text(home.slice(home.indexOf("<body"))), "a date on smaverk.com").not.toMatch(/\b(Mon|Tues|Wednes|Thurs|Fri|Satur|Sun)day\b|\b\d{1,2} (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\b/);
   expect(home).not.toMatch(/aria-label="[^"]*\b\d{1,2} (Oct|Nov) 20\d\d/);
   expect(home).not.toMatch(/\.cap\{[^}]*max-width/);
-  expect(home).toMatch(/c\.classList\.remove\("play"\);void c\.offsetWidth;c\.classList\.add\("play"\)/);
+  // A, 28 Oct ("i dont like that button"): no Play again. The evening replays on load (class "play"), once more each time the
+  // chart comes back into view, and on a click, tap, Enter or Space on the chart, which is then focusable and says it replays;
+  // with reduced motion nothing moves and the chart is no control (design review r12, fill window, B2 and spec step 5)
+  expect(home, "a Play again button").not.toMatch(/id="replay"|class="(caprow|replay)"|Play again/);
+  const replay = home.match(/<script>\/\* the evening replays[\s\S]*?<\/script>/)?.[0] ?? "";
+  expect(replay).toContain('if(!c||!matchMedia("(prefers-reduced-motion: no-preference)").matches)return;');
+  expect(replay).toContain('function play(){c.classList.remove("play");void c.offsetWidth;c.classList.add("play")}');
+  expect(replay).toContain('c.tabIndex=0;c.setAttribute("role","button");c.setAttribute("aria-label","Replay the evening: five agents worked from 18:13, the queue merged three changes, and the release went live at 02:16.");');
+  expect(replay).toContain('c.addEventListener("click",play);c.addEventListener("keydown",function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault();play()}});');
+  expect(replay, "a replay each time the chart comes back into view").toMatch(/new IntersectionObserver\(function\(es\)\{es\.forEach\(function\(e\)\{if\(!e\.isIntersecting\)away=true;else if\(away&&e\.intersectionRatio>=\.5\)\{away=false;play\(\)\}\}\)\},\{threshold:\[0,\.5\]\}\)\.observe\(c\)/);
+  expect(home).toContain(".chart:focus-visible{outline:3px solid var(--run);outline-offset:6px;border-radius:4px}");
+  expect(home).toContain("@media(prefers-reduced-motion:no-preference){.chart[role=button]{cursor:pointer}}");
   expect(text(home.match(/<h1>[\s\S]*?<\/h1>/)![0]).trim()).toBe("Computers for your AI agent.");
   for (const f of [/Linux, Windows and a Mac in the cloud/, /keeps working/, /from your phone/]) expect(t, String(f)).toMatch(f);
   expect(wordsAtRest(home), "under the 240-word budget (chart and log both counted)").toBeLessThan(240);

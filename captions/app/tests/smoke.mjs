@@ -38,6 +38,25 @@ try {
   if (fit.lead.top < fit.h1.top - 2 || fit.lead.top > fit.h1.top + 16) fail(`home hero: the lead starts at ${Math.round(fit.lead.top)}, the headline at ${Math.round(fit.h1.top)}`);
   if (Math.abs(fit.go.bottom - fit.h1.bottom) > 3) fail(`home hero: Open Maindesk ends at ${Math.round(fit.go.bottom)}, the headline at ${Math.round(fit.h1.bottom)}`);
   if (fit.cap.height > 30) fail(`home: the caption breaks into ${Math.round(fit.cap.height)} px at 1440`);
+  // design review r12, fill window (28 Oct): on a tall window the rows stay compact (100 px at most), the page is exactly the
+  // window's height (nothing cut off, nothing to scroll) and the free height sits in the two spacers (Qa.ts blocks a band over
+  // 64 px); no Play again button (A, 28 Oct): the chart itself replays the evening on a click, Enter, and coming back into view
+  await s3.setViewportSize({ width: 1440, height: 1300 }); await s3.waitForTimeout(150);
+  const tall = await s3.evaluate(() => ({ lanes: [...document.querySelectorAll(".chart .lane")].map((e) => e.getBoundingClientRect().height), page: document.documentElement.scrollHeight, win: innerHeight, gaps: [...document.querySelectorAll(".wrap>.gap")].map((e) => e.getBoundingClientRect().height), replay: !!document.getElementById("replay"), role: document.querySelector(".chart").getAttribute("role") }));
+  if (tall.lanes.length !== 5 || tall.lanes.some((h) => h > 101)) fail(`home at 1440x1300: chart rows ${tall.lanes.map(Math.round).join("/")} px (five, 101 px at most)`);
+  if (tall.page !== tall.win) fail(`home at 1440x1300: the page is ${tall.page} px in a ${tall.win} px window`);
+  if (tall.gaps.length !== 2 || tall.gaps.some((h) => h > 64)) fail(`home at 1440x1300: spacers ${tall.gaps.map(Math.round).join("/")} px (two, 64 px at most)`);
+  if (tall.replay) fail("home: the Play again button is back"); if (tall.role !== "button") fail(`home: the chart is not the replay control (role ${tall.role})`);
+  const head = () => s3.evaluate(() => document.getAnimations().find((a) => a.animationName === "head")?.currentTime ?? -1);
+  const replays = async (what, act) => { await s3.waitForTimeout(1200); const before = await head(); await act(); await s3.waitForTimeout(100); const after = await head();
+    if (!(before > 1000 && after >= 0 && after < 700)) fail(`home: ${what} did not replay the evening (its head at ${Math.round(before)} ms, then ${Math.round(after)} ms)`); };
+  await replays("a click on the chart", () => s3.click(".chart"));
+  await replays("Enter on the chart", async () => { await s3.focus(".chart"); await s3.keyboard.press("Enter"); });
+  await replays("the chart coming back into view", async () => { await s3.evaluate(() => { const d = document.createElement("div"); d.style.height = "3000px"; document.body.append(d); scrollTo(0, 3000); }); await s3.waitForTimeout(300); await s3.evaluate(() => scrollTo(0, 0)); await s3.waitForTimeout(300); });
+  // with reduced motion nothing moves and the chart is no control
+  const rm = await b.newPage({ viewport: { width: 1440, height: 1300 }, reducedMotion: "reduce" }); await rm.goto(`http://localhost:${port}/home.html`, { waitUntil: "load" });
+  const still = await rm.evaluate(() => ({ moving: document.getAnimations().length, role: document.querySelector(".chart").getAttribute("role"), tab: document.querySelector(".chart").tabIndex }));
+  if (still.moving || still.role !== null || still.tab !== -1) fail(`home with reduced motion: ${still.moving} animations, role ${still.role}, tabIndex ${still.tab}`); await rm.close();
   if (!/your device/.test(st2.h1 ?? "")) fail("studio h1 " + st2.h1); if (st2.tools < 2) fail("studio tools " + st2.tools); if (!/captions\.smaverk\.com/.test(st2.captions ?? "")) fail("studio captions link " + st2.captions); if (st2.sideways) fail("studio scrolls sideways"); if (errs2.length) fail("studio: " + errs2.join(" | "));
   // Studio design review 3, 2026-09-19: the Captions card's words belong to the clip, not to the card. Every line of the sample, at a phone
   // width and a desktop width, stays inside the picture (it may wrap to two rows there, it may not hang off the sides).
