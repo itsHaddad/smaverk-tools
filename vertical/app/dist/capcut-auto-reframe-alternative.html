@@ -56,6 +56,8 @@ p{margin:0 0 12px;text-wrap:pretty}
 ul{padding-left:20px;margin:0 0 12px}li{margin-bottom:6px}
 .grid{display:grid;gap:28px}
 @media(min-width:900px){.grid{grid-template-columns:440px minmax(0,1fr);gap:56px;align-items:start}.demo{position:sticky;top:16px}.top{margin-bottom:18px}}
+@media(min-width:900px){/* a tall window is filled: the page is as tall as the window, and the height the tool leaves goes evenly above and below it (A, 28 Oct); a page taller than the window is as it was */.wrap{display:flex;flex-direction:column;min-height:100vh;min-height:100svh}.grid{margin-block:auto}}
+@media(min-width:900px){/* the landscape clip grows with a window taller than 900 px, up to 600 px wide, leaving the words at least 444 px */.grid{grid-template-columns:clamp(440px,min(40svh + 80px,100% - 500px),600px) minmax(0,1fr)}}
 .demo{display:flex;flex-direction:column;align-items:center;gap:var(--gap);--sw:min(100%,calc(56svh * var(--ar,1.7778)))}
 .demo>*{width:100%;max-width:100%;min-width:0}
 .demo>.btn.quiet{width:100%}

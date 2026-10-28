@@ -345,10 +345,24 @@ test("Captions: the defaults keep the words off the speaker's face and the main 
   // on a 1440 x 900 screen the stage took 78% of the height and the button sat below the fold (Qa.ts now fails on that too).
   const app = read("captions/app/src/draw.ts"); const at = app.match(/st === "big" \? ([\d.]+) : st === "bar" \? ([\d.]+) : ([\d.]+)/)!;
   for (const y of at.slice(1).map(Number)) { expect(y).toBeGreaterThanOrEqual(0.68); expect(y).toBeLessThanOrEqual(0.8); } // under a face, above the bottom fifth the apps cover
-  const sv = [...read("captions/app/dist/index.html").matchAll(/calc\((\d+)svh \* var\(--ar/g)].map((m) => Number(m[1])); expect(sv.length).toBe(3); for (const v of sv) expect(v).toBeLessThanOrEqual(56);
+  // (a window taller than about 1,170 px gives the clip what the rest of the page leaves, which keeps the button on the screen too: the fill test below)
+  const sv = [...read("captions/app/dist/index.html").matchAll(/calc\((?:max\()?(\d+)svh[^*]*\* var\(--ar/g)].map((m) => Number(m[1])); expect(sv.length).toBe(3); for (const v of sv) expect(v).toBeLessThanOrEqual(56);
   // A short screen (375x667) takes the stage down to 50svh, so the main button stays on the first screen (independent design review r10, B2).
   expect(read("captions/app/dist/index.html")).toContain("@media(max-height:700px){.demo{--sw:min(100%,calc(50svh * var(--ar,0.5625)))}}");
   for (const t of ["clipfinder", "clips"]) expect(read(`${t}/app/dist/index.html`), `${t}: the tool first on a short phone`).toContain('@media(max-width:899px) and (max-height:700px){.grid{grid-template-areas:"demo" "say" "rest"}.say{grid-area:say}.demo{grid-area:demo}.rest{grid-area:rest}}');
+});
+
+test("a tall window is filled: the sample grows with the window, and what is left goes evenly above and below the tool", () => {
+  // A, 28 Oct 2026, smaverk.com on a big screen: "if the screen is big … we will get empty space at the bottom". Qa.ts fails a
+  // page that fits a 1440x1300 window with more than 64 px of empty page under it (Vertical had 429, Captions 100, Clips 69).
+  // Every rule is for desktop widths and gives way to the page's own height, so phones and short windows stay as they were.
+  const FILL = "@media(min-width:900px){/* a tall window is filled: the page is as tall as the window, and the height the tool leaves goes evenly above and below it (A, 28 Oct); a page taller than the window is as it was */.wrap{display:flex;flex-direction:column;min-height:100vh;min-height:100svh}.grid{margin-block:auto}}";
+  for (const t of ["captions", "vertical", "clips"]) expect(read(`${t}/app/dist/index.html`), `${t}: the same fill rule`).toContain(FILL);
+  // The sample is what grows: Captions' 9:16 clip takes the height the page leaves, Vertical's 16:9 clip widens its column,
+  // Clips' finished clip takes the height its column leaves. Each starts where the window outgrows the page, so nothing jumps.
+  expect(read("captions/app/dist/index.html")).toContain(".demo{--sw:min(100%,calc(max(52svh,100svh - 560px) * var(--ar,0.5625)))}}");
+  expect(read("vertical/app/dist/index.html")).toContain(".grid{grid-template-columns:clamp(440px,min(40svh + 80px,100% - 500px),600px) minmax(0,1fr)}}");
+  expect(read("clips/app/dist/index.html")).toContain(".reel{height:clamp(min(44svh,560px),100svh - 700px,780px)}}");
 });
 
 test("every host has a sitemap of its own pages, and its robots.txt points at it", () => {
