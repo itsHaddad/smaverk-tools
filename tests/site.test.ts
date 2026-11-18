@@ -1059,9 +1059,39 @@ test("every page's top bar: the brand links home, and the light/dark button is t
   expect(first.button).toMatch(/class="moon"/); expect(first.button).toMatch(/class="sun"/);
 });
 
-test("the light/dark pick carries across the studio: one cookie for .smaverk.com, on every page incl. the search pages, Privacy and Terms", () => {
-  // Design review r8 X1: localStorage belongs to one site, and smaverk.com and each tool are six sites, so a pick made on
-  // the studio was lost one tap later. The cookie is read first, then this site's storage; a tap writes both.
+// Runs the shared theme script against a stand-in page: the cookies the page can read, this site's storage and its host.
+// Returns the theme it set, what it stored, every cookie it wrote, and a tap on the button.
+const runTheme = (head: string, o: { host: string; cookie?: string; stored?: string }) => {
+  const attrs = new Map<string, string>(), store = new Map<string, string>(), on = new Map<string, () => void>();
+  const writes: string[] = [], fired: string[] = [];
+  if (o.stored) store.set("smaverk-theme", o.stored);
+  const button = { setAttribute() {}, addEventListener: (t: string, f: () => void) => void on.set(`button ${t}`, f) };
+  const document = {
+    documentElement: { style: {} as Record<string, string>, setAttribute: (n: string, v: string) => void attrs.set(n, v), getAttribute: (n: string) => attrs.get(n) ?? null },
+    get cookie() { return o.cookie ?? ""; },
+    set cookie(v: string) { writes.push(v); },
+    getElementById: (id: string) => (id === "theme" ? button : null),
+    addEventListener: (t: string, f: () => void) => void on.set(t, f),
+  };
+  const localStorage = { getItem: (k: string) => store.get(k) ?? null, setItem: (k: string, v: string) => void store.set(k, v) };
+  const matchMedia = () => ({ matches: false, addEventListener() {} });
+  const Event = class { type: string; constructor(t: string) { this.type = t; } };
+  new Function("document", "localStorage", "matchMedia", "location", "dispatchEvent", "Event", head.replace(/^<script>|<\/script>$/g, ""))(
+    document, localStorage, matchMedia, { hostname: o.host }, (e: { type: string }) => fired.push(e.type), Event);
+  return {
+    theme: () => attrs.get("data-theme") ?? null, stored: () => store.get("smaverk-theme") ?? null, writes, fired,
+    tap: () => { on.get("DOMContentLoaded")?.(); on.get("button click")?.(); },
+  };
+};
+
+test("the light/dark pick: each site keeps its own and no cookie is set; the old .smaverk.com cookie is moved and expired, on every page incl. the search pages, Privacy and Terms", () => {
+  // Design review r8 X1 (27 Sep) carried a pick from site to site in a cookie for .smaverk.com. A cookie cannot be scoped to
+  // some subdomains and not others, so that one went with every request to every host under smaverk.com: ours, which do not
+  // read it (the count script, the unlock worker, Maindesk), and nightsteady.smaverk.com, a separate site with no toggle
+  // whose privacy page says it uses no cookies. The owner, Nov 2026: the theme cookie stops reaching sites that do not use
+  // it. So each site keeps the pick in its own storage, the device's setting still holds everywhere, and a pick made on one
+  // site is made once more on another. Do not bring the cookie back for the carry-over: it cannot reach our sites without
+  // reaching all of them.
   const first = themeParts(read(TOP_PAGES[0]!));
   const all = [...TOP_PAGES, ...LEGAL, ...Object.values(SITES).flatMap((s) => search(s).map((f) => `${s.dist}/${f}`))];
   for (const p of all) {
@@ -1071,12 +1101,35 @@ test("the light/dark pick carries across the studio: one cookie for .smaverk.com
     expect(html.indexOf(first.head!), `${p}: theme script before any style`).toBeLessThan(html.indexOf("<style"));
   }
   const js = first.head!;
-  expect(js).toContain('document.cookie.match(/(?:^|; )smaverk-theme=(light|dark)/)');
-  expect(js.indexOf("document.cookie.match")).toBeLessThan(js.indexOf("localStorage.getItem"));
-  for (const need of ["Domain=.smaverk.com", "Path=/", "Max-Age=31536000", "SameSite=Lax", "Secure"]) expect(js, need).toContain(need);
-  // Privacy names the cookie (it also says the analytics count visits without cookies), and so does every llms.txt.
-  expect(text(read(LEGAL[0]!)).replace(/\s+/g, " ")).toContain("If you pick light or dark, one small cookie remembers that choice across the tools. It holds nothing else.");
-  for (const f of ["captions", "vertical", "clipfinder", "clips", "operator"].map((t) => `${t}/app/dist/llms.txt`).filter((f) => existsSync(join(ROOT, f)))) expect(read(f), f).toContain("`smaverk-theme` cookie for `.smaverk.com`");
+  // The one cookie the script writes is the expiry of the old one; nothing is written with a lifetime.
+  expect(js.match(/document\.cookie=/g)?.length, "one cookie write, the expiry").toBe(1);
+  expect(js).toContain(String.raw`document.cookie=k+"=; Path=/; Max-Age=0; SameSite=Lax; Secure"+(/(^|\.)smaverk\.com$/.test(location.hostname)?"; Domain=.smaverk.com":"")`);
+  expect(js).not.toMatch(/Max-Age=[1-9]|Expires=/);
+  // What it does, run: a visitor who has the old cookie keeps the pick on the first visit after the change (the cookie was the
+  // latest pick, so it wins over an older one in this site's storage), it is moved here, and the cookie is expired for the
+  // whole domain, so it stops going to the other hosts too. On a preview host the old cookie was this host's alone.
+  const old = runTheme(js, { host: "vertical.smaverk.com", cookie: "_x=1; smaverk-theme=dark", stored: "light" });
+  expect([old.theme(), old.stored()]).toEqual(["dark", "dark"]);
+  expect(old.writes).toEqual(["smaverk-theme=; Path=/; Max-Age=0; SameSite=Lax; Secure; Domain=.smaverk.com"]);
+  old.tap(); expect([old.theme(), old.stored(), old.writes.length], "a tap after the move: storage only").toEqual(["light", "light", 1]);
+  expect(runTheme(js, { host: "preview.vertical-8ab.pages.dev", cookie: "smaverk-theme=light" }).writes).toEqual(["smaverk-theme=; Path=/; Max-Age=0; SameSite=Lax; Secure"]);
+  // Without the old cookie: this site's pick, or the device's setting, and no cookie at all, before or after a tap.
+  const kept = runTheme(js, { host: "captions.smaverk.com", stored: "light" });
+  expect([kept.theme(), kept.writes]).toEqual(["light", []]);
+  const fresh = runTheme(js, { host: "smaverk.com" });
+  expect([fresh.theme(), fresh.stored(), fresh.writes]).toEqual([null, null, []]);
+  fresh.tap(); expect([fresh.theme(), fresh.stored(), fresh.writes, fresh.fired]).toEqual(["dark", "dark", [], ["themechange"]]);
+  // Nothing else on these pages or in the tools' scripts writes a cookie.
+  const others = [...all.map((p) => [p, read(p).replace(first.head!, "")]), ...[...Object.values(SITES).flatMap((s) => s.src), "operator/app/app.ts"].filter((f) => existsSync(join(ROOT, f))).map((f) => [f, code(read(f))])];
+  for (const [p, src] of others) expect(src, `${p}: writes a cookie`).not.toMatch(/document\.cookie|cookieStore/);
+  // Privacy says so in plain words (it also says the counts carry no cookie), and so does every llms.txt.
+  const privacy = text(read(LEGAL[0]!)).replace(/\s+/g, " ");
+  expect(privacy).toContain("If you pick light or dark, your browser keeps that choice on your device, for that site only. It is not a cookie, it is not sent anywhere, and it holds nothing else.");
+  expect(privacy).not.toMatch(/cookie remembers/);
+  for (const f of ["captions", "vertical", "clipfinder", "clips", "operator"].map((t) => `${t}/app/dist/llms.txt`).filter((f) => existsSync(join(ROOT, f)))) {
+    expect(read(f), f).toContain("keeps the choice in this site's own `localStorage` (`smaverk-theme`), so the studio and each tool remember their own pick. It sets no cookie and sends nothing;");
+    expect(read(f), f).not.toMatch(/carries across the studio and every tool/);
+  }
 });
 
 test("Operator: one set of mode names everywhere (Everyone / Follow / Talking), and a sample that is the program, playing at rest", () => {

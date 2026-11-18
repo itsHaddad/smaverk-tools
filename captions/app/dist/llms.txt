@@ -24,7 +24,7 @@ await dl.saveAs("clip-captions.mp4");
 - `?style=bar|karaoke|big` preselects the caption style. `window.captions.style("big")` changes it.
 - `window.__cap` mirrors state: `state`, `words`, `ms`, `exportBytes`, `error`.
 - There is no key, account or paywall: everything is open to everyone. Each page links one optional support payment (`#support`, any amount, through Polar); it unlocks nothing.
-- The light/dark button (`#theme`) keeps the choice in a `smaverk-theme` cookie for `.smaverk.com` (and in `localStorage`), so it carries across the studio and every tool. It holds nothing else.
+- The light/dark button (`#theme`) keeps the choice in this site's own `localStorage` (`smaverk-theme`), so the studio and each tool remember their own pick. It sets no cookie and sends nothing; a `smaverk-theme` cookie for `.smaverk.com` left by earlier versions of these pages is read once, moved to `localStorage` and expired. It holds nothing else.
 
 ## Pages
 - https://captions.smaverk.com/capcut-captions-alternative — For people who met CapCut Pro when saving auto captions: the same job here, free.

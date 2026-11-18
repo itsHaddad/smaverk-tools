@@ -23,7 +23,7 @@ const [dl] = await Promise.all([page.waitForEvent("download"), page.click("#acti
 await dl.saveAs("talk-vertical.mp4");
 ```
 - There is no key, account or paywall: everything is open to everyone. Each page links one optional support payment (`#support`, any amount, through Polar); it unlocks nothing.
-- The light/dark button (`#theme`) keeps the choice in a `smaverk-theme` cookie for `.smaverk.com` (and in `localStorage`), so it carries across the studio and every tool. It holds nothing else.
+- The light/dark button (`#theme`) keeps the choice in this site's own `localStorage` (`smaverk-theme`), so the studio and each tool remember their own pick. It sets no cookie and sends nothing; a `smaverk-theme` cookie for `.smaverk.com` left by earlier versions of these pages is read once, moved to `localStorage` and expired. It holds nothing else.
 
 After a save, `window.__vert` holds `exportMs` and `found` (the share of the clip in which the speaker was found). After the search, it also holds `bothFound` (the share of the clip with two people in it) and `switches` (the times, in seconds, at which the window changed who it follows).
 

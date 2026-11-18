@@ -27,7 +27,7 @@ const made = await page.evaluate(() => window.__clips.made); // [{name, seconds,
 
 - `window.__clips.state` is `sample` / `reading` / `found` / `making` / `made`; `list` holds the moments, `made` the finished clips.
 - There is no key, account or paywall: everything is open to everyone. Each page links one optional support payment (`#support`, any amount, through Polar); it unlocks nothing.
-- The light/dark button (`#theme`) keeps the choice in a `smaverk-theme` cookie for `.smaverk.com` (and in `localStorage`), so it carries across the studio and every tool. It holds nothing else.
+- The light/dark button (`#theme`) keeps the choice in this site's own `localStorage` (`smaverk-theme`), so the studio and each tool remember their own pick. It sets no cookie and sends nothing; a `smaverk-theme` cookie for `.smaverk.com` left by earlier versions of these pages is read once, moved to `localStorage` and expired. It holds nothing else.
 
 ## The other tools
 - https://clipfinder.smaverk.com — the moments worth posting in a long recording, and timeline files for editing programs.
